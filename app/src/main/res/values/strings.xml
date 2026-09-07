@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">WorkToEarn</string>
+    <string name="protection_service_name">WorkToEarn · 小红书保护</string>
+    <string name="return_to_app">返回 WorkToEarn</string>
+    <string name="accessibility_description">用于自用测试：检测小红书窗口变化，在娱乐余额耗尽时显示阻止界面。不会读取页面文字、输入内容或截图，不上传数据。你可以随时在应用中停止保护，或在系统中关闭此服务。</string>
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#236B55</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowBackground">#F4F6F1</item>
+    </style>
+</resources>
