@@ -18,7 +18,7 @@ UsageEvents → 应用前后台/锁屏事件 → BalanceEngine → 实验版本�
 
 ## 运行与恢复边界
 
-- 悬浮窗授权入口：Xiaomi 设备先显示经本机核对的“权限管理 → 其他权限 → 显示悬浮窗”引导，通过 ACTION_APPLICATION_DETAILS_SETTINGS + package URI 打开本应用详情；保留标准 ACTION_MANAGE_OVERLAY_PERMISSION 列表入口。应用详情无法启动（不存在或无权访问）时回退到列表。其他厂商直接沿用标准入口；不依赖小米私有组件名，不代授权限。首页依据实际 canDrawOverlays 状态更新按钮标签。
+- 悬浮窗授权入口：Xiaomi 设备先显示经本机核对的“权限管理 → 其他权限 → 显示悬浮窗”引导，通过 ACTION_APPLICATION_DETAILS_SETTINGS + package URI 打开本应用详情；引导弹窗只显示进入本应用设置与取消按钮。应用详情无法启动（不存在或无权访问）时回退到列表。其他厂商直接沿用标准入口；不依赖小米私有组件名，不代授权限。首页依据实际 canDrawOverlays 状态更新按钮标签。
 
 - 从用户可见的 MainActivity 调用 startForegroundService；Android 14+ 指定 specialUse 类型。通知使用低重要度频道与不可变 PendingIntent，服务不导出。
 - 服务只在保护开启且两项必要权限均有效时开始循环。通知权限不是启动服务的前置条件，首页显示通知是否允许。

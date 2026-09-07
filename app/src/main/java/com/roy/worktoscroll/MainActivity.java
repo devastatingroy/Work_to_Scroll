@@ -173,7 +173,6 @@ public final class MainActivity extends Activity {
                     openOverlayList();
                 }
             })
-            .setNeutralButton(R.string.overlay_open_list, (dialog, which) -> openOverlayList())
             .setNegativeButton(android.R.string.cancel, null)
             .show();
     }
