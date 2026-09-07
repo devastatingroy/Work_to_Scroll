@@ -1,5 +1,7 @@
 # WorkToEarn — DESIGN v0.2
 
+> **本分支实验覆盖说明（2026-09-07，用户已授权）**：本 worktree 为 `experiment/no-accessibility`，单独验证“使用情况访问 + 普通悬浮窗 + 带通知的前台服务”。应用 ID 为 `com.roy.worktoscroll.overlaytest`，不声明无障碍服务，不迁移原版余额。先验收真实授权警告与零余额阻止页，再进入五分钟消费及可靠性测试。服务从可见首页启动；使用 `START_NOT_STICKY`，未实现开机接收器，不承诺进程死亡后自动重启；此前开启且权限仍有效时重新打开首页会请求恢复服务，中断期间不补扣。候选采用 `specialUse`，公开发布需另行核验；这次实验授权不等于正式替换产品路线。实际结构见 [ARCHITECTURE](../ARCHITECTURE.md)，进度见 [TASK](../TASK.md)。下文保留的是原版及完整 MVP 的设计背景，不代表此实验安装包的当前实现。
+
 > 当前状态：技术路线讨论稿  
 > 对应需求：[SPEC v0.4](./SPEC.md)  
 > 历史基线名称：`Work_to_Scroll_DESIGN_v0.1.md`（当前项目未包含该原件）  

@@ -5,11 +5,11 @@ android {
     compileSdk 36
     buildToolsVersion '36.1.0'
     defaultConfig {
-        applicationId 'com.roy.worktoscroll'
+        applicationId 'com.roy.worktoscroll.overlaytest'
         minSdk 29
         targetSdk 36
-        versionCode 3
-        versionName '0.1.2-gate1'
+        versionCode 1
+        versionName '0.1.0-overlay-test'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

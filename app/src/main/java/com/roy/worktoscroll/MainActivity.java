@@ -52,26 +52,46 @@ public final class MainActivity extends Activity {
         });
         setContentView(scroll);
         text(getString(R.string.app_name), 28, true);
-        text("GATE 1 · 手机限制闭环测试", 13, false);
+        text("独立实验 · 不使用无障碍服务", 13, false);
+        text("测试前请在原版 WorkToEarn 中停止保护，避免两版同时拦截。此版本有独立余额，不会覆盖原版。", 14, false);
         text("可用娱乐时间", 17, false);
         balance = text("00:00", 52, true);
         status = text("正在检查状态…", 18, true);
         permissions = text("", 14, false);
         button("1 · 授权使用情况访问", () -> openSettings(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
             Uri.parse("package:" + getPackageName()))));
-        button("2 · 授权无障碍保护服务", () -> {
-            openSettings(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        button("2 · 授权显示在其他应用上层", () -> openSettings(
+            new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
+        button("显示保护通知（建议开启）", () -> {
+            if (android.os.Build.VERSION.SDK_INT >= 33
+                    && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[] {android.Manifest.permission.POST_NOTIFICATIONS}, 10);
+            } else openSettings(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()));
         });
         toggle = button("开启保护", () -> {
-            if (!ledger.enabled && (!Permissions.usage(this) || !Permissions.accessibility(this))) {
+            if (!ledger.enabled && (!Permissions.usage(this) || !Permissions.overlay(this))) {
                 Toast.makeText(this, "请先完成上面两项系统授权", Toast.LENGTH_LONG).show();
                 return;
             }
-            prepareChange();
-            ledger.enabled = !ledger.enabled;
-            if (ledger.enabled) ledger.note = "";
-            ledger.save();
-            if (ProtectionService.current() != null) ProtectionService.current().refresh();
+            if (ledger.enabled) {
+                if (ProtectionService.current() != null) ProtectionService.current().stopProtection();
+                else {
+                    ledger.enabled = false;
+                    ledger.engine.resetObservation(System.currentTimeMillis());
+                    ledger.save();
+                    stopService(new Intent(this, ProtectionService.class));
+                }
+            } else {
+                prepareChange();
+                ledger.enabled = true;
+                if (ledger.save()) startProtection();
+                else {
+                    ledger.enabled = false;
+                    Toast.makeText(this, "设置保存失败，未开启保护", Toast.LENGTH_LONG).show();
+                }
+            }
             render();
         });
         button("加入 5 分钟（测试）", () -> {
@@ -93,9 +113,9 @@ public final class MainActivity extends Activity {
                 prepareChange(); ledger.engine.balanceMs = 0; ledger.save(); render();
             }).show());
         text("测试方法", 18, true);
-        text("① 两项授权完成后开启保护，零余额打开小红书。\n② 加入 5 分钟，验证连续或分段使用。\n③ 退出或锁屏后应停止扣减，耗尽后再次拦截。", 14, false);
+        text("① 先体验授权提醒，再开启保护，零余额打开小红书。\n② 确认阻止页稳定且能正常退出后，再测试 5 分钟消费。\n③ 此实验不保证服务自动重启；中断后重新打开测试版检查状态。", 14, false);
         diagnostics = text("", 13, false);
-        text("本机处理 · 无网络权限\n仅观察应用切换与锁屏状态，不读取页面正文、输入内容或截图。余额与状态保存在本机。\n\n这是可关闭、可绕过的自用原型。摄像头工作验证尚未接入。", 13, false);
+        text("本机处理 · 无网络权限\n使用情况访问用于判断应用切换和计算用时；悬浮窗用于在小红书上显示阻止页。这两项仍是敏感授权。\n不读取页面正文、输入内容或截图，余额与状态保存在本机。\n\n这是可关闭、可绕过的实验版，摄像头尚未接入。", 13, false);
     }
 
     private void prepareChange() {
@@ -105,13 +125,14 @@ public final class MainActivity extends Activity {
 
     private void render() {
         boolean usage = Permissions.usage(this);
-        boolean access = Permissions.accessibility(this);
+        boolean access = Permissions.overlay(this);
         ProtectionService service = ProtectionService.current();
         boolean running = service != null && SystemClock.elapsedRealtime() - service.heartbeatElapsed < 3_000;
         balance.setText(formatTime(ledger.engine.balanceMs));
         permissions.setText("使用情况访问：" + (usage ? "已授权" : "未授权")
-            + "\n无障碍服务：" + (access ? "已授权" : "未授权")
-            + "\n服务连接：" + (running ? "运行中" : "未连接"));
+            + "\n显示在其他应用上层：" + (access ? "已授权" : "未授权")
+            + "\n运行通知：" + (getSystemService(android.app.NotificationManager.class).areNotificationsEnabled() ? "已允许" : "未允许")
+            + "\n监测服务：" + (running ? "运行中" : "未连接"));
         if (!ledger.enabled) status.setText("保护未开启");
         else if (!usage || !access) status.setText("保护失效 · 请恢复系统授权");
         else if (!running) status.setText("保护失效 · 服务未连接");
@@ -123,6 +144,15 @@ public final class MainActivity extends Activity {
             + "\n" + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL
             + " · Android " + android.os.Build.VERSION.RELEASE
             + (ledger.note.isEmpty() ? "" : "\n" + ledger.note));
+    }
+
+    private void startProtection() {
+        try { startForegroundService(new Intent(this, ProtectionService.class)); }
+        catch (RuntimeException ex) {
+            ledger.note = "监测服务启动失败，请检查系统设置后重新打开测试版。";
+            ledger.save();
+            Toast.makeText(this, ledger.note, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void openSettings(Intent intent) {
@@ -157,6 +187,8 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onResume() {
         super.onResume();
+        if (ledger.enabled && Permissions.usage(this) && Permissions.overlay(this)
+                && ProtectionService.current() == null) startProtection();
         if (ProtectionService.current() != null) ProtectionService.current().dismissForNavigation();
         handler.post(update);
     }

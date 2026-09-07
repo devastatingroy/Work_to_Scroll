@@ -1,53 +1,36 @@
-# WorkToEarn — 当前 Android Gate 1 原型结构
+# WorkToEarn 悬浮窗实验版实际结构
 
-本文件记录当前代码，完整 MVP 目标见 [SPEC](docs/SPEC.md)。Android 为当前私有真机验证平台；[DESIGN](docs/DESIGN.md) 中保留的 iOS/PC 候选组件不是本工程已经实现的能力。测试数据和验收停点统一见 [TASK](TASK.md)。
+本 worktree 属于 `experiment/no-accessibility`。原版的无障碍结构保存在提交 `8a98c84` 和原项目目录；完整产品要求见 docs/SPEC.md。本文件只描述本分支已实现机制，不宣称真机验收通过。
 
-## 模块与职责
+## 模块与数据流
 
-单个 `app` 模块，原生 Java / Android 系统控件，无第三方运行时依赖。
-
-显示名称统一来自 `res/values/strings.xml`，当前为用户确认的 WorkToEarn。应用 ID 和 Java 包名仍为 `com.roy.worktoscroll`，更新覆盖原安装，保留余额、授权与厂商配置；目录名不影响用户界面名称。
+单个原生 Java app 模块，无第三方运行时依赖。应用 ID `com.roy.worktoscroll.overlaytest`，Java namespace 保留 `com.roy.worktoscroll`；独立应用沙箱隔离余额与权限。
 
 | 文件 | 职责 |
 |---|---|
-| `MainActivity.java` | 权限引导、保护开关、测试余额按钮、实时余额与服务健康状态 |
-| `Permissions.java` | 实际查询系统使用情况访问和无障碍授权 |
-| `ProtectionService.java` | 读取应用前后台事件、检查锁屏、驱动账本并显示无障碍阻止浮层 |
-| `BalanceEngine.java` | 不依赖 Android 的时间区间结算；只显式发放能增加余额 |
-| `LedgerStore.java` | 同进程单例与 SharedPreferences 原子快照保存、重启恢复 |
+| MainActivity.java | 使用情况/悬浮窗/通知授权入口、保护启停、测试余额、状态展示；回到可见首页时按已保存开关尝试恢复服务 |
+| Permissions.java | 查询使用情况访问和 Settings.canDrawOverlays，不查询或申请无障碍 |
+| ProtectionService.java | 普通 Service，使用 specialUse 前台服务运行监测；通知提供回首页和停止操作；显示 TYPE_APPLICATION_OVERLAY |
+| BalanceEngine.java | 原版复用的纯余额算法，按使用区间扣减，仅显式奖励能增加余额 |
+| LedgerStore.java | 实验版同进程单例与 SharedPreferences 快照，原版私有数据不读取、不迁移 |
 
-## 数据流
+UsageEvents → 应用前后台/锁屏事件 → BalanceEngine → 实验版本机账本 → 零余额且小红书在前台时显示普通悬浮窗。
 
-系统 UsageEvents → 仅转换为“目标 App 是否前台”的状态变化 → BalanceEngine 按区间扣减 → 本机账本快照。
+## 运行与恢复边界
 
-无障碍服务还监听窗口切换的包名，用于零余额打开小红书时尽早显示阻止界面。浮层类型为 `TYPE_ACCESSIBILITY_OVERLAY`，不依赖系统悬浮窗授权。浮层提供回桌面和回本应用入口；它不是系统暂停 App，不能承诺停止后台音频或抵抗主动绕过。
+- 从用户可见的 MainActivity 调用 startForegroundService；Android 14+ 指定 specialUse 类型。通知使用低重要度频道与不可变 PendingIntent，服务不导出。
+- 服务只在保护开启且两项必要权限均有效时开始循环。通知权限不是启动服务的前置条件，首页显示通知是否允许。
+- 500 ms 轮询、750 ms 事件结算缓冲沿用原版；没有无障碍快速窗口回调，参数不构成实测延迟上界。
+- 普通全屏浮层使用 FLAG_NOT_FOCUSABLE，并接收浮层范围内触摸；意图是避免浮层夺取焦点生成目标 Activity 暂停事件，导致拦截反复显隐。焦点/触摸行为仍待真机验证。
+- 返回测试版/桌面使用普通 Intent，不调用无障碍全局动作。导航短暂抑制过期事件的重拦截；仍需真实手势、按钮和后台启动兼容性验证。
+- START_NOT_STICKY；没有开机自动启动。服务终止时保留 enabled，回到可见首页且权限仍有效时尝试恢复。首次开始监测重建观察起点，中断期间不补扣。停止保护则保存 enabled=false，移除浮层与通知并停止服务。
+- 运行中权限失效暂停结算并移除浮层，推进观察起点；服务仍在时恢复权限后可继续。整体进程冻结或终止不能由自身通知证明仍在保护。
+- 快照、计时改时处理和未知区间保护沿用原版；未增加交易日志或通用存储故障兜底。
 
-返回本应用时直接请求启动 Activity，并在 MainActivity 恢复可见后移除浮层；不同时发送 HOME，以避免两个导航动作竞争。导航后给事件缓冲留短暂宽限，避免旧的小红书前台状态重新盖住目的页面。零余额的窗口事件也有短暂保持期，防止较慢的使用事件计时器立即移除新出现的浮层。
+## 隐私与平台约束
 
-## 时间与持久化
+声明 PACKAGE_USAGE_STATS、SYSTEM_ALERT_WINDOW、FOREGROUND_SERVICE、FOREGROUND_SERVICE_SPECIAL_USE、POST_NOTIFICATIONS。不声明无障碍服务、联网、摄像头、麦克风或存储权限，关闭应用备份。只声明可查询小红书，使用事件中其他包名仅用于判断目标离开，不保留完整应用历史或读取页面内容。
 
-- 事件区间为 `[cursor_ms, end)`，已结算事件不重复扣款；扣减最多到 0。
-- 500 ms 轮询，落后当前时间 750 ms 结算，为系统事件到达留出缓冲。这是实验值，延迟超过缓冲的事件可能影响准确度，必须真机测量。
-- 余额、累计实际扣减、处理游标、目标前台状态、保护开关、设备启动次数、简短状态提示和浮层次数保存在同一快照中。
-- `LedgerStore` 初始化时，若设备启动次数未变、游标距当前不超过 6 小时且未出现时间回退，则保留游标，供恢复后的服务重放系统仍可查询到的事件。这是初始化时的恢复窗口检查，不是每轮查询都硬性限制 6 小时，也不是系统一定提供完整历史的保证。设备重启、超过窗口或时间回退时保留余额，重建观察状态并显示未核实提示。
-- 使用单调时钟对比墙钟差值，检测明显改时后重建事件时间基准。事件本身由系统提供墙钟时间，不声称可以防主动作弊。
-- 在本应用可见时手动加余额、清空或切换保护，会先结算，再关闭事件缓冲尾段；缓冲和轮询之间的未结算尾段可能未扣减，不应写成严格小于 750 ms 的误差保证。
-- 服务循环实际运行且发现保护关闭或缺少使用情况访问时，会暂停计费、推进观察游标并移除浮层，因此不补扣已跳过的时段。但进程冻结或无障碍服务停止时，循环不能推进游标；恢复后可能重放中断区间的系统事件，不能概括为“任何权限恢复都不追溯扣费”。
-- 首页检查权限、服务连接、最近心跳及服务健康状态。启用保护时这些检查异常会显示失效提示；用户已停止保护时优先显示“保护未开启”。当前没有独立于本进程的监测器，整个进程冻结时无法主动刷新首页或发出提醒。
-- 当前持久化是单份 SharedPreferences 快照，不是交易事件日志。服务正常结算路径的保存失败会进入健康提示；其他保存调用、初始化读取异常和损坏数据尚无统一完整兜底，不能承诺所有读写故障均已处理。
+普通浮层在系统关键窗口之下；目标应用可拒绝覆盖，系统可调整可见性。浮层添加成功、账本记录计数不等于用户看到有效阻止页。省电、系统回收、锁屏恢复、延迟、音频及不同设备的行为必须分别验证。Google Play 对 specialUse 的审核不由构建通过替代。
 
-## 隐私与权限
-
-- 唯一显式请求权限为 `PACKAGE_USAGE_STATS`；无障碍组件由系统授权绑定。
-- `canRetrieveWindowContent=false`，只订阅窗口切换事件；不读取节点树、页面文字或事件文本。
-- 应用可见范围只声明 `com.xingin.xhs`。
-- 系统使用事件可能包含其他应用包名，代码仅用于判断目标离开前台，即刻丢弃；账本不保存其他应用身份或完整使用历史。
-- 无网络、摄像头、麦克风、存储、通知权限；关闭系统备份，不设置远端服务。
-
-## 验证与限制
-
-`BalanceEngineTest` 覆盖连续/分段使用、离开及锁屏状态、不重复扣减、进程快照恢复、区间边界、余额归零、未知时段保留及改时保护。服务投递时机、权限页面、浮层、后台存活、实际计时与系统重启需真机验证，结果归 TASK.md。
-
-当前只面向一台 Xiaomi 14 Pro 的普通全屏标准版小红书；多窗口、画中画、分身、多用户及其他厂商尚未验证。单机通过不能推广为 Android 全机型可靠。
-
-API 依据：[UsageEvents](https://developer.android.com/reference/android/app/usage/UsageEvents.Event)、[AccessibilityService](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService)、[AGP 8.10 兼容性](https://developer.android.com/build/releases/agp-8-10-0-release-notes)。
+验证结果、已安装版本与停点统一见 [TASK.md](TASK.md)。

@@ -1,10 +1,8 @@
 package com.roy.worktoscroll;
 
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.AppOpsManager;
-import android.content.ComponentName;
 import android.content.Context;
-import android.view.accessibility.AccessibilityManager;
+import android.provider.Settings;
 
 final class Permissions {
     static boolean usage(Context context) {
@@ -13,13 +11,7 @@ final class Permissions {
             android.os.Process.myUid(), context.getPackageName()) == AppOpsManager.MODE_ALLOWED;
     }
 
-    static boolean accessibility(Context context) {
-        ComponentName expected = new ComponentName(context, ProtectionService.class);
-        for (AccessibilityServiceInfo info : context.getSystemService(AccessibilityManager.class)
-                .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)) {
-            var service = info.getResolveInfo().serviceInfo;
-            if (expected.equals(new ComponentName(service.packageName, service.name))) return true;
-        }
-        return false;
+    static boolean overlay(Context context) {
+        return Settings.canDrawOverlays(context);
     }
 }
