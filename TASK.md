@@ -2,7 +2,7 @@
 
 ## 当前结论与停点
 
-当前用户停点：Roy 希望再比较原版与悬浮窗实验版的区别，暂不接受或否决替代路线；两版均已安装，交还前确认保护均关闭且余额均为 0。等待用户对照反馈，不自动开始下一阶段测试。实验详细记录见 `D:/Software_Projects/Work_to_Scroll-overlay/TASK.md`。
+当前用户停点：Roy 已再次比较授权警告，明确反馈新版更好：原版两项授权都吓人，新版只有“使用情况访问”仍明显吓人，尤其警告中的“财产安全将会受到威胁”。这是相对体验偏好，不等于授权门槛或替代路线已验收通过；未自动开始下一阶段测试。用户提供的两张系统原图已保存在 [使用情况访问警告](tasks/hyperos-usage-access-warning.png) 与 [无障碍警告](tasks/hyperos-accessibility-warning.png)。只证明本机 HyperOS 此次提示，不推及所有 Android 或分发渠道。实验详细记录见 `D:/Software_Projects/Work_to_Scroll-overlay/TASK.md`。
 
 2026-09-07：WorkToEarn 0.1.2-gate1 的核心功能已完成本机技术验证，等待 Roy 体验验收；不是完整 MVP，也没有完成长期或跨机型可靠性验证。
 
