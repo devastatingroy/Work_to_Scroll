@@ -1,10 +1,12 @@
 # Task：WorkToEarn Android Gate 1 真机原型
 
+> 本文件是合入新版前的原版 TASK 历史快照；正文中的“当前”均指归档时状态。现行进度见 [当前 TASK](../TASK.md)，原版代码见标签 `checkpoint/gate1-before-overlay-20260907`。
+
 ## 当前结论与停点
 
 **最新决定（2026-09-07）**：Roy 已选择普通悬浮窗新版作为当前 Android 路线，并要求优化授权入口。本轮在已有独立 worktree 中实现并验证 Xiaomi 本应用设置导航，通过后合入主分支；原版的代码标签和 APK 备份保留。选择路线不等于长期可靠性或公开发布验收通过。
 
-当前用户停点：Roy 已再次比较授权警告，明确反馈新版更好：原版两项授权都吓人，新版只有“使用情况访问”仍明显吓人，尤其警告中的“财产安全将会受到威胁”。这是相对体验偏好，不等于授权门槛或替代路线已验收通过；未自动开始下一阶段测试。用户提供的两张系统原图已保存在 [使用情况访问警告](tasks/hyperos-usage-access-warning.png) 与 [无障碍警告](tasks/hyperos-accessibility-warning.png)。只证明本机 HyperOS 此次提示，不推及所有 Android 或分发渠道。实验详细记录见 `D:/Software_Projects/Work_to_Scroll-overlay/TASK.md`。
+当前用户停点：Roy 已再次比较授权警告，明确反馈新版更好：原版两项授权都吓人，新版只有“使用情况访问”仍明显吓人，尤其警告中的“财产安全将会受到威胁”。这是相对体验偏好，不等于授权门槛或替代路线已验收通过；未自动开始下一阶段测试。用户提供的两张系统原图已保存在 [使用情况访问警告](../tasks/hyperos-usage-access-warning.png) 与 [无障碍警告](../tasks/hyperos-accessibility-warning.png)。只证明本机 HyperOS 此次提示，不推及所有 Android 或分发渠道。实验详细记录见 `D:/Software_Projects/Work_to_Scroll-overlay/TASK.md`。
 
 2026-09-07：WorkToEarn 0.1.2-gate1 的核心功能已完成本机技术验证，等待 Roy 体验验收；不是完整 MVP，也没有完成长期或跨机型可靠性验证。
 
@@ -23,7 +25,7 @@
 - 名称为 WorkToEarn；保留旧项目目录和应用 ID `com.roy.worktoscroll`，便于覆盖更新并保留已有测试数据与配置。
 - 第一阶段用手边 Android 真机验证，不等待 iPhone；这不等于最终只发布 Android。
 - 仅验证标准版小红书 `com.xingin.xhs` 的“零余额拦截 → 人工加入 5 分钟 → 按前台使用扣减 → 耗尽再拦截”。
-- 当前不加入摄像头、PC 扩展、云同步或应用商店上架；后续候选顺序见 [DESIGN](docs/DESIGN.md) 第 19 节，不视为已授权实施。
+- 当前不加入摄像头、PC 扩展、云同步或应用商店上架；后续候选顺序见 [DESIGN](../docs/DESIGN.md) 第 19 节，不视为已授权实施。
 
 ## 本阶段验收清单
 
@@ -61,14 +63,14 @@
 
 | 场景 | 结果与证据 |
 |---|---|
-| 分段 5 分钟 | 14:20:15–14:26:16；余额 300000 → 0，累计扣减 286156 → 586156 ms，浮层次数 2 → 3；[分段日志](app/build/device-check-0.1.2-unrestricted.log) |
+| 分段 5 分钟 | 14:20:15–14:26:16；余额 300000 → 0，累计扣减 286156 → 586156 ms，浮层次数 2 → 3；[分段日志](../app/build/device-check-0.1.2-unrestricted.log) |
 | 桌面暂停 | 14:22:22–14:22:42，余额均为 176734 ms，游标推进约 20 秒；返回小红书后继续扣减，见同一分段日志 |
-| 连续 5 分钟 | 14:36:19 开始，14:41:20.665 记录耗尽浮层；最终余额 0，累计扣减 586156 → 886156 ms，浮层次数 5 → 6；[连续日志](app/build/device-check-continuous-0.1.2.log)、[耗尽画面](app/build/wte-continuous-exhausted.png) |
-| 返回按钮 | 0.1.2 浮层上的返回按钮进入本应用首页；再次拦截后回桌面按钮进入 MIUI Launcher；[浮层](app/build/wte-block-review.png)、[返回首页](app/build/wte-return-review.png) |
-| 使用情况权限 | 临时把本应用 GET_USAGE_STATS 从 allow 改为 ignore，首页正确显示失效；随后恢复并读回 allow，未改其他应用权限；[失效画面](app/build/wte-permission-off.png) |
-| 强行停止与恢复 | 旧截图显示冷启动后“无障碍未授权/服务未连接”及恢复后的运行状态，但不能证明恢复动作由 Roy 亲手完成；[失效状态](app/build/wte-restart.png)、[恢复状态](app/build/wte-restart-recovered.png)。2026-09-07 再次用 ADB `am force-stop` 复测：服务列表由目标组件变为 `null`、`accessibility_enabled` 由 `1` 变为 `0`，冷启动后仍未恢复；余额 `15636 ms`、累计扣减 `1320912 ms`、浮层次数 `19` 均未变化。为避免留下失效状态，本次用 ADB 按测试前值恢复并确认服务重新绑定；真实手动恢复体验仍待 Roy 验收。 |
+| 连续 5 分钟 | 14:36:19 开始，14:41:20.665 记录耗尽浮层；最终余额 0，累计扣减 586156 → 886156 ms，浮层次数 5 → 6；[连续日志](../app/build/device-check-continuous-0.1.2.log)、[耗尽画面](../app/build/wte-continuous-exhausted.png) |
+| 返回按钮 | 0.1.2 浮层上的返回按钮进入本应用首页；再次拦截后回桌面按钮进入 MIUI Launcher；[浮层](../app/build/wte-block-review.png)、[返回首页](../app/build/wte-return-review.png) |
+| 使用情况权限 | 临时把本应用 GET_USAGE_STATS 从 allow 改为 ignore，首页正确显示失效；随后恢复并读回 allow，未改其他应用权限；[失效画面](../app/build/wte-permission-off.png) |
+| 强行停止与恢复 | 旧截图显示冷启动后“无障碍未授权/服务未连接”及恢复后的运行状态，但不能证明恢复动作由 Roy 亲手完成；[失效状态](../app/build/wte-restart.png)、[恢复状态](../app/build/wte-restart-recovered.png)。2026-09-07 再次用 ADB `am force-stop` 复测：服务列表由目标组件变为 `null`、`accessibility_enabled` 由 `1` 变为 `0`，冷启动后仍未恢复；余额 `15636 ms`、累计扣减 `1320912 ms`、浮层次数 `19` 均未变化。为避免留下失效状态，本次用 ADB 按测试前值恢复并确认服务重新绑定；真实手动恢复体验仍待 Roy 验收。 |
 | 锁屏暂停 | 首次旧版本实验在自动锁屏时余额 181796 ms，之后至少 20 秒未变；来源为本轮早期 ADB 采样记录，不能冒充 0.1.2 完整锁屏回归 |
-| 收尾 | 停止保护、余额 0、两项授权保留、超时恢复；[收尾画面](app/build/wte-handoff.png)，精确账本值见当前停点 |
+| 收尾 | 停止保护、余额 0、两项授权保留、超时恢复；[收尾画面](../app/build/wte-handoff.png)，精确账本值见当前停点 |
 
 ### 测量口径
 
@@ -78,9 +80,9 @@
 
 ## 已知限制与下一步
 
-- 0.1.1 曾在桌面停留后冻结：服务仍绑定，但主线程 `wchan=do_freezer_trap`，adbd 报告 cgroup.freeze=1。0.1.2 在“无限制”下的两轮受控测试未复现；不据此保证长期稳定。复用排查方法见 [README](README.md)。
-- 无障碍保护在进程终止后的恢复，2026-09-07 已按场景实测（Xiaomi 14 Pro，adb 驱动）：手机重启会自动重绑恢复、余额保留；普通内存回收（`am kill`）杀不动本进程（服务保护其优先级）；仅崩溃式死亡与用户主动强行停止需手动“先关再开”无障碍才恢复，恢复后余额不丢；真·SIGKILL 因无 root 未验证。据此不构成 Gate 1 阻塞。详见子任务 [tasks/accessibility-recovery.md](tasks/accessibility-recovery.md)。
-- 旧版返回按钮的 HOME/启动 Activity 竞争已修复并在 0.1.2 回归，不再是当前待办；实际机制见 [ARCHITECTURE](ARCHITECTURE.md)。
+- 0.1.1 曾在桌面停留后冻结：服务仍绑定，但主线程 `wchan=do_freezer_trap`，adbd 报告 cgroup.freeze=1。0.1.2 在“无限制”下的两轮受控测试未复现；不据此保证长期稳定。复用排查方法见 [README](../README.md)。
+- 无障碍保护在进程终止后的恢复，2026-09-07 已按场景实测（Xiaomi 14 Pro，adb 驱动）：手机重启会自动重绑恢复、余额保留；普通内存回收（`am kill`）杀不动本进程（服务保护其优先级）；仅崩溃式死亡与用户主动强行停止需手动“先关再开”无障碍才恢复，恢复后余额不丢；真·SIGKILL 因无 root 未验证。据此不构成 Gate 1 阻塞。详见子任务 [tasks/accessibility-recovery.md](../tasks/accessibility-recovery.md)。
+- 旧版返回按钮的 HOME/启动 Activity 竞争已修复并在 0.1.2 回归，不再是当前待办；实际机制见 [ARCHITECTURE](../ARCHITECTURE.md)。
 - 当前拦截是检测后浮层覆盖，不是系统暂停小红书；不承诺停止音频、防绕过或支持分身、多窗口、画中画及其他机型。
 - 用户体验确认前不启动 Gate 2。下一步先反馈拦截与恢复体验，再确定摄像头原型的详细方案；CameraX 等候选不自动升级为已经确定。
 
@@ -101,12 +103,12 @@
 
 ## 子任务索引
 
-- [进程终止/重启后的无障碍保护恢复](tasks/accessibility-recovery.md)：2026-09-07 实测——重启自动恢复、普通内存回收（`am kill`）杀不动本进程（均放心）；仅崩溃与用户主动强行停止需手动恢复（真·SIGKILL 无 root 未验证）。据此不构成 Gate 1 阻塞。
+- [进程终止/重启后的无障碍保护恢复](../tasks/accessibility-recovery.md)：2026-09-07 实测——重启自动恢复、普通内存回收（`am kill`）杀不动本进程（均放心）；仅崩溃与用户主动强行停止需手动恢复（真·SIGKILL 无 root 未验证）。据此不构成 Gate 1 阻塞。
 
 ## 文档入口
 
-- [README](README.md)：安装使用、构建、自测和故障排查。
-- [SPEC](docs/SPEC.md)：已确认的完整产品行为，不是当前功能清单。
-- [DESIGN](docs/DESIGN.md)：当前验证路线、原有候选方案和待确认选择。
-- [ARCHITECTURE](ARCHITECTURE.md)：实际代码结构、数据流与恢复边界。
-- [AGENTS](AGENTS.md)：项目规则与文件维护职责。
+- [README](../README.md)：安装使用、构建、自测和故障排查。
+- [SPEC](../docs/SPEC.md)：已确认的完整产品行为，不是当前功能清单。
+- [DESIGN](../docs/DESIGN.md)：当前验证路线、原有候选方案和待确认选择。
+- [ARCHITECTURE](../ARCHITECTURE.md)：实际代码结构、数据流与恢复边界。
+- [AGENTS](../AGENTS.md)：项目规则与文件维护职责。
