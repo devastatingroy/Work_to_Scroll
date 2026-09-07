@@ -1,112 +1,73 @@
-# Task：WorkToEarn Android Gate 1 真机原型
+# Task：当前 Android 悬浮窗原型
 
 ## 当前结论与停点
 
-**最新决定（2026-09-07）**：Roy 已选择普通悬浮窗新版作为当前 Android 路线，并要求优化授权入口。本轮在已有独立 worktree 中实现并验证 Xiaomi 本应用设置导航，通过后合入主分支；原版的代码标签和 APK 备份保留。选择路线不等于长期可靠性或公开发布验收通过。
+**2026-09-07 最新决定与当前任务**：Roy 明确选择普通悬浮窗新版作为当前 Android 路线，并要求优化悬浮窗授权入口；这不等于认定 Android 只有两种实现，也不等于剩余可靠性检查已通过。0.1.1-overlay-test 已实现 Xiaomi“本应用设置 + 已验证路径说明”，保留标准应用列表入口作为备选；其他厂商保持标准入口。构建及 lint 通过，已更新安装，手机报告 versionCode=2；实际新引导页面导航验证因手机锁屏尚未完成。当前正将所选新版合入主分支，原版保留检查点、记录和独立 APK；不改应用 ID、不迁移数据。
 
-当前用户停点：Roy 已再次比较授权警告，明确反馈新版更好：原版两项授权都吓人，新版只有“使用情况访问”仍明显吓人，尤其警告中的“财产安全将会受到威胁”。这是相对体验偏好，不等于授权门槛或替代路线已验收通过；未自动开始下一阶段测试。用户提供的两张系统原图已保存在 [使用情况访问警告](tasks/hyperos-usage-access-warning.png) 与 [无障碍警告](tasks/hyperos-accessibility-warning.png)。只证明本机 HyperOS 此次提示，不推及所有 Android 或分发渠道。实验详细记录见 `D:/Software_Projects/Work_to_Scroll-overlay/TASK.md`。
+2026-09-07，Roy 已亲自完成使用情况访问和普通悬浮窗授权，此前读取两项 appops 均为 allow。Roy 再次对照明确反馈新版更好：原版两项授权都吓人，新版只有使用情况访问仍明显吓人，关键语句为“财产安全将会受到威胁”；第二项需在大量应用列表里找工具的操作不便仍存在。零余额阻止页与返回测试版通过本机技术检查，回桌面复测有成功画面但首次采样不一致，暂不升级为稳定通过。上次测试结束已停止实验保护，余额为 0；本轮未重新读取手机状态或进入五分钟消费测试。
 
-2026-09-07：WorkToEarn 0.1.2-gate1 的核心功能已完成本机技术验证，等待 Roy 体验验收；不是完整 MVP，也没有完成长期或跨机型可靠性验证。
+当前采用方向已确定，授权信任风险与入口优化继续记录；五分钟消费及后续可靠性验证仍未执行，本轮只处理入口优化，不把选择路线作为测试通过。
 
-- 最新用户体验反馈（2026-09-07）：Roy 已亲手恢复强行停止后的保护，评价为“中等麻烦”，走了一次弯路、找错一次入口；更重要的是，无障碍授权的系统警告造成明显不信任与劝退感。手动路径已体验，不等于体验验收通过；当前讨论重点为授权信任门槛及同类产品对照，尚未确定改动方案。下文先前 ADB 测试时“手动体验待验收”的描述属于当时记录。
-- 当前工作（实现，2026-09-07）：用户已同意制作独立的无障碍权限替代验证版。原版及研究记录已保存于提交 `8a98c84` / 标签 `checkpoint/gate1-before-overlay-20260907`；实验在分支 `experiment/no-accessibility`、独立目录 `D:/Software_Projects/Work_to_Scroll-overlay` 中执行，进度以该目录 TASK.md 为准。原目录保留无障碍版代码，不与实验版互相覆盖。独立源码 bundle 与旧 APK 位于 `D:/Software_Projects/Work_to_Scroll-backup-20260907`；备份不含手机应用私有数据或被 Git 忽略的历史测试日志（原目录仍保留）。
-- 实验交付停点：提交 `fdd3706` 已生成独立 APK，9 项单元测试通过、lint 0 errors / 4 warnings、包名及无无障碍组件检查通过；首次安装被手机取消后，经 Roy 确认重试已安装成功，首页冷启动和显示正常。等待 Roy 亲自体验并授权使用情况访问及悬浮窗，然后验证零余额拦截；尚未开启实验保护或加入余额，不启动第二阶段消费测试。安装前只读原版状态为保护关闭、余额 0，未改原版数据。
-- 最新实验反馈：Roy 已完成两项授权，反馈悬浮窗需在大量应用中找本工具，入口不方便；警告本身是否更易接受尚待反馈。新版零余额覆盖、返回测试版与停止服务已取得本机技术证据；回桌面有一次采样不一致、一次截图成功，仍待确认。另已在本机找到“本应用信息 → 权限管理 → 其他权限 → 显示悬浮窗”的替代导航候选，未改入口代码。详细记录以实验目录 TASK.md 为准；当前实验保护已停止、余额 0，没有开始五分钟消费。
+Roy 的选型依据：新版的授权警告体验相对更好，但共同依赖的使用情况访问仍有明显劝退风险。两张用户提供的原图保存在主项目 `tasks/hyperos-usage-access-warning.png` 与 `tasks/hyperos-accessibility-warning.png`；原图均显示“危险”、隐私/财产安全警告及自行承担后果确认。本轮仅更新入口代码与安装包，没有撤销或代授任何系统权限。
 
-- 本阶段为可侧载的自用测试 APK；人工加入余额，不验证工作行为或自动发放工作奖励。
-- 2026-09-07 本次强停复测收尾时已恢复保护：`enabled=true`，余额 `15636 ms`，累计扣减 `1320912 ms`，浮层次数 `19`；无障碍服务重新绑定。上述数值是复测后的设备快照，不代表以后手机状态不变。
-- 使用情况访问未在本次复测中改动；无障碍配置在测试前读取、测试后按原值通过 ADB 恢复。没有测试脚本继续运行。
-- 支撑文档已按源码、测试日志及本轮真机记录核对，本机文档链接与两轮消费摘要检查通过；本轮不改 App 代码和 SPEC 产品规则。项目此前无 Git 仓库，本轮按用户要求建立本地版本基线，构建产物与本机配置保持忽略。
+## 隔离与备份
 
-## 已确认范围
+- 主目录：`D:/Software_Projects/Work_to_Scroll`，分支 `master`，采用新版代码；原版应用 `com.roy.worktoscroll` 仍在手机上独立保留。
+- 实验目录：`D:/Software_Projects/Work_to_Scroll-overlay`，分支 `experiment/no-accessibility`，应用 `com.roy.worktoscroll.overlaytest`，名称 `WorkToEarn 悬浮窗测试`。
+- 起点提交：`8a98c84`，标签 `checkpoint/gate1-before-overlay-20260907`。包含原版代码及当时未提交的 README、TASK、恢复研究记录。合入前的原版记录完整保存在主项目 `tasks/gate1-accessibility-baseline.md`。
+- 独立源码备份：`D:/Software_Projects/Work_to_Scroll-backup-20260907/gate1-before-overlay.bundle`，已通过 git bundle verify。
+- 原版安装包备份：同目录 `WorkToEarn-0.1.2-gate1.apk`；SHA-256 `FFF088C3758EB6EA1E7DA766EA16C0479F954934FCDDFC9466865EFEB4A68004`，与原版记录一致。
+- worktree 共享 Git 对象库，不是独立灾备；bundle 是额外源码副本。手机私有余额与系统授权不在 bundle 中，原应用保留不动；被 Git 忽略的历史构建日志仍在原目录，不包含于 bundle。
+- 安装前只读原版账本：`enabled=false`、余额 `0`、累计扣减 `1620912 ms`、阻止计数 `22`。本轮没有改变原版开关或余额；该快照不保证此后状态不变。
 
-- 名称为 WorkToEarn；保留旧项目目录和应用 ID `com.roy.worktoscroll`，便于覆盖更新并保留已有测试数据与配置。
-- 第一阶段用手边 Android 真机验证，不等待 iPhone；这不等于最终只发布 Android。
-- 仅验证标准版小红书 `com.xingin.xhs` 的“零余额拦截 → 人工加入 5 分钟 → 按前台使用扣减 → 耗尽再拦截”。
-- 当前不加入摄像头、PC 扩展、云同步或应用商店上架；后续候选顺序见 [DESIGN](docs/DESIGN.md) 第 19 节，不视为已授权实施。
+## 已完成
 
-## 本阶段验收清单
+- [x] 原版检查点、标签、独立备份与实验 worktree。
+- [x] 独立应用 ID 和名称，不覆盖或迁移原版数据。
+- [x] 移除无障碍组件及配置；使用普通 Service / specialUse、运行通知和停止入口。
+- [x] 使用情况与普通悬浮窗授权入口；通知授权单独、可选。
+- [x] 复用 UsageEvents 与余额算法；普通浮层、正常 Intent 返回路径。
+- [x] 停止保护移除服务、通知和浮层；重新打开首页按已有开关尝试恢复，中断期间不补扣；不自动开机启动。
+- [x] 既有分段测试脚本改读实验版账本，增加原版保护关闭检查与第一阶段接受开关。
+- [x] 更新 README、ARCHITECTURE、DESIGN 的实验范围；SPEC 未改。
+- [x] APK 构建、9 项单元测试、lint、签名、包 ID 和组件/权限检查。
 
-- [x] 构建测试 APK、完成安装和必要的用户授权。
-- [x] 零余额打开小红书出现阻止界面；首页和浮层显示 WorkToEarn。
-- [x] 人工加入 5 分钟后可以使用小红书。
-- [x] 连续及分段消费均扣满 300000 ms 后归零并重新拦截。
-- [x] 桌面暂停期间余额不变且监测游标推进；回到小红书继续扣减。
-- [x] 首次实验观察到锁屏后至少 20 秒余额不变；不是完整锁屏/解锁组合矩阵。
-- [x] “返回 WorkToEarn”与“回到桌面”按钮真机回归通过。
-- [x] 强行停止再冷启动后余额与累计扣减保留；无障碍服务会被系统移出启用列表，冷启动不会自动恢复。本次复测通过 ADB 恢复测试前配置；Roy 尚未验收真实手动恢复路径。
-- [x] 使用情况访问暂时关闭时明确提示失效，恢复原授权后识别正常。
-- [x] 完成计时对照、三次零余额拦截延迟粗测并记录测量边界。
-- [~] 拦截速度、退出路径（回应用/回桌面）经 Roy 体验确认可接受（2026-09-07）；Roy 已完成手动恢复，反馈中等麻烦、找错一次入口，且授权警告明显劝退，恢复与授权体验尚未通过。既有样本中强停与模拟崩溃需要手动恢复；重启恢复、`am kill` 未终止进程，不代表所有实际内存回收路径均已验证。
-- [ ] 扩展可靠性验证：普通进程回收、手机重启、跨日、长时间后台、反复锁屏/解锁；不与强行停止测试混为一谈。
-- [ ] 建立可接受误差与延迟标准，并补测切换边界；当前粗测不构成精度承诺。
+## 第一阶段：待真机与 Roy 验收
 
-## 当前交付与构建证据
+- [x] Roy 确认后重试安装成功，冷启动 `Status: ok`，首页展示独立名称、零余额、未开启保护和两项权限入口；截图 `app/build/wte-overlay-start.png`。
+- [~] Roy 已亲自授权并再次对照，明确新版警告体验更好；使用情况访问的“财产安全将会受到威胁”仍明显劝退，悬浮窗列表入口难找，尚不算授权体验整体验收通过。
+- [~] 零余额打开小红书已显示实验版阻止页，再次打开后 10 秒采样仍显示，前两次进入对应 blocks=2，未见反复新增浮层；截图 `app/build/wte-overlay-block.png`、`wte-overlay-stable.png`。这不是连续录像或完整触摸防穿透验收。
+- [~] 返回测试版成功，topResumedActivity 与 `wte-overlay-return.png` 一致。回桌面首次点击后的 Activity 采样仍为小红书，复测截图 `wte-overlay-home.png` 为桌面；首次未同时保存画面，不能确定原因，保留可靠性待核对。
+- [x] 点击停止保护后首页显示未开启，账本 enabled=false，服务列表为空，浮层消失；运行通知未获用户授权，本次不验证通知抽屉显示/停止按钮。截图 `app/build/wte-overlay-stopped.png`。
 
-| 项目 | 已核对值 |
-|---|---|
-| 设备 | Xiaomi 14 Pro / 23116PN5BC，Android 16 / API 36，HyperOS OS3.0.307.0.WNBCNXM |
-| 本次系统条件 | 用户设置 WorkToEarn 省电策略为“无限制”，两项必要权限由用户授权 |
-| 应用 | `com.roy.worktoscroll`，`0.1.2-gate1`，versionCode `3` |
-| APK | `app/build/outputs/apk/debug/app-debug.apk`，debug 签名，仅供测试 |
-| SHA-256 | `FFF088C3758EB6EA1E7DA766EA16C0479F954934FCDDFC9466865EFEB4A68004` |
-| 构建环境 | Java 17、Gradle 8.11.1、AGP 8.10.1、compile/target SDK 36、Build Tools 36.1.0；min SDK 29 不代表 API 29 已真机验证 |
-| 静态验证 | `assembleDebug` 成功；`testDebugUnitTest` 9 项、0 失败；`lintDebug` 0 errors、6 warnings |
+### 授权入口优化
 
-构建和测试报告位于 `app/build/`。这些结果来自当前 APK 的构建记录，本轮文档更新未重新构建。
+- 0.1.0 的按钮使用标准 ACTION_MANAGE_OVERLAY_PERMISSION 且带 package URI；[Android 11 官方变更](https://developer.android.com/about/versions/11/privacy/permissions) 说明该入口进入顶层列表并忽略 package，符合 Roy 的体验，不能承诺标准接口直接到单应用开关。
+- 本机只读导航发现替代路径：ACTION_APPLICATION_DETAILS_SETTINGS + 本应用 package → 本应用“应用信息” → “权限管理” → “其他权限” → “显示悬浮窗”。最后页面确实显示本应用权限项且已允许，未点击改变开关。截图 `app/build/wte-overlay-appdetails.png`、`wte-overlay-permissiondetails.png`、`wte-overlay-otherpermissions.png`。
+- 0.1.1 已按用户要求实施：Xiaomi 上先显示路径说明，再直接进入本应用详情；提供“应用列表入口”，启动异常时回退至标准列表。已授权时第二项改显示“悬浮窗已授权 · 查看设置”。其他厂商沿用标准入口，不推广为全机型直达方案。
+- [ ] 新引导弹窗与按钮跳转的真机检查：版本已安装，但 2026-09-07 本轮检查时屏幕处于锁屏/休眠，未得到新页面画面；不能用此前手动打开系统设置的截图替代。
 
-## 真机证据摘要
+## 第二阶段：第一阶段通过后再执行
 
-下列日志和图片均为 2026-09-07 本轮调试产物。`app/build/` 被 Git 忽略且可能被清理；表内摘要保留在本文件中，原始文件仅在当前本机可复查，不能假设克隆仓库后仍存在。未另行创建归档目录。
+- [ ] 连续与分段 5 分钟扣减、锁屏暂停、耗尽再拦截；记录误差、实际显示延迟和漏拦。
+- [ ] 长时间后台运行、进程终止、强停后重新打开恢复；单独记录系统行为，不能混为自动恢复通过。
+- [ ] 耗电与厂商省电限制；是否需要用户额外设置须真机确认。
 
-| 场景 | 结果与证据 |
-|---|---|
-| 分段 5 分钟 | 14:20:15–14:26:16；余额 300000 → 0，累计扣减 286156 → 586156 ms，浮层次数 2 → 3；[分段日志](app/build/device-check-0.1.2-unrestricted.log) |
-| 桌面暂停 | 14:22:22–14:22:42，余额均为 176734 ms，游标推进约 20 秒；返回小红书后继续扣减，见同一分段日志 |
-| 连续 5 分钟 | 14:36:19 开始，14:41:20.665 记录耗尽浮层；最终余额 0，累计扣减 586156 → 886156 ms，浮层次数 5 → 6；[连续日志](app/build/device-check-continuous-0.1.2.log)、[耗尽画面](app/build/wte-continuous-exhausted.png) |
-| 返回按钮 | 0.1.2 浮层上的返回按钮进入本应用首页；再次拦截后回桌面按钮进入 MIUI Launcher；[浮层](app/build/wte-block-review.png)、[返回首页](app/build/wte-return-review.png) |
-| 使用情况权限 | 临时把本应用 GET_USAGE_STATS 从 allow 改为 ignore，首页正确显示失效；随后恢复并读回 allow，未改其他应用权限；[失效画面](app/build/wte-permission-off.png) |
-| 强行停止与恢复 | 旧截图显示冷启动后“无障碍未授权/服务未连接”及恢复后的运行状态，但不能证明恢复动作由 Roy 亲手完成；[失效状态](app/build/wte-restart.png)、[恢复状态](app/build/wte-restart-recovered.png)。2026-09-07 再次用 ADB `am force-stop` 复测：服务列表由目标组件变为 `null`、`accessibility_enabled` 由 `1` 变为 `0`，冷启动后仍未恢复；余额 `15636 ms`、累计扣减 `1320912 ms`、浮层次数 `19` 均未变化。为避免留下失效状态，本次用 ADB 按测试前值恢复并确认服务重新绑定；真实手动恢复体验仍待 Roy 验收。 |
-| 锁屏暂停 | 首次旧版本实验在自动锁屏时余额 181796 ms，之后至少 20 秒未变；来源为本轮早期 ADB 采样记录，不能冒充 0.1.2 完整锁屏回归 |
-| 收尾 | 停止保护、余额 0、两项授权保留、超时恢复；[收尾画面](app/build/wte-handoff.png)，精确账本值见当前停点 |
+## 安装包与验证证据
 
-### 测量口径
+- 当前 APK：`app/build/outputs/apk/debug/app-debug.apk`，`0.1.1-overlay-test`，versionCode `2`；本轮构建文件位于独立 worktree 同一路径。
+- 当前 SHA-256：`38B173B96C82757EA5F9FE680F738C3C605736FFAE28EBF2644735211D22F1C9`。
+- 0.1.1 的 assembleDebug 成功，lint 0 errors / 4 warnings；只改权限入口与版本，不改计时/服务逻辑，没有为本次低风险引导改动新增或重跑余额单元测试。
+- `assembleDebug` 成功；`testDebugUnitTest` 9 项，0 失败/错误；`lintDebug` 0 errors / 4 warnings（既有备份兼容性提示与文本国际化提示）。
+- APK v2 签名验证通过；aapt 确认独立包名、5 项声明权限；合并 manifest 无无障碍组件、无 INTERNET 权限，服务不导出。
+- 测试脚本通过 PowerShell 语法解析；本轮未运行五分钟设备脚本。
+- 首次安装曾返回 `INSTALL_FAILED_USER_RESTRICTED`；Roy 确认继续后重试返回 `Success`。随后启动首页成功，初始使用情况访问为 default、普通悬浮窗为 ignore，首页也显示未授权；未授予任何系统权限，未开启保护或加入测试余额。
 
-- 连续日志采样 1–9：主机时间差 `243931.1908 ms`，账本扣减 `243899 ms`，差约 `-32.19 ms`。包含读取时延、缓冲和两端采样误差，不能宣称全程精度为 32 ms，也不能代表切换/锁屏边界误差。
-- 三次零余额热启动：启动命令前的设备 uptime 分别为 `198566000`、`198586650`、`198603660 ms`，对应 `BLOCK_SHOWN elapsed` 为 `198566328`、`198586997`、`198603998 ms`，差为 `328`、`347`、`338 ms`。方向为“浮层日志时间减去启动前时间”；包含 ADB 启动开销，终点不是屏幕首帧。原始值来自本轮终端输出，不是独立保存的延迟日志。
-- 脚本 PASS 只证明被检查的账本与浮层添加条件；不自动代表视觉验收或用户体验验收。连续测试是本轮一次性流程，现有 `scripts/gate1-device-check.ps1` 只覆盖分段场景。
+证据边界：单元测试只验证复用的余额算法；编译、manifest 和签名检查不验证前台服务运行、覆盖效果或恢复体验。浮层 FLAG_NOT_FOCUSABLE 旨在避免焦点暂停造成显隐循环，仍需真机验证。新权限也敏感，不能预先承诺更易接受。
 
-## 已知限制与下一步
+## 入口与来源
 
-- 0.1.1 曾在桌面停留后冻结：服务仍绑定，但主线程 `wchan=do_freezer_trap`，adbd 报告 cgroup.freeze=1。0.1.2 在“无限制”下的两轮受控测试未复现；不据此保证长期稳定。复用排查方法见 [README](README.md)。
-- 无障碍保护在进程终止后的恢复，2026-09-07 已按场景实测（Xiaomi 14 Pro，adb 驱动）：手机重启会自动重绑恢复、余额保留；普通内存回收（`am kill`）杀不动本进程（服务保护其优先级）；仅崩溃式死亡与用户主动强行停止需手动“先关再开”无障碍才恢复，恢复后余额不丢；真·SIGKILL 因无 root 未验证。据此不构成 Gate 1 阻塞。详见子任务 [tasks/accessibility-recovery.md](tasks/accessibility-recovery.md)。
-- 旧版返回按钮的 HOME/启动 Activity 竞争已修复并在 0.1.2 回归，不再是当前待办；实际机制见 [ARCHITECTURE](ARCHITECTURE.md)。
-- 当前拦截是检测后浮层覆盖，不是系统暂停小红书；不承诺停止音频、防绕过或支持分身、多窗口、画中画及其他机型。
-- 用户体验确认前不启动 Gate 2。下一步先反馈拦截与恢复体验，再确定摄像头原型的详细方案；CameraX 等候选不自动升级为已经确定。
-
-## 无障碍替代路线调查（2026-09-07，候选，未实施）
-
-用户目标：尽可能不用无障碍权限，同时保留识别小红书前台使用、按实际用时扣余额、零余额阻止继续使用的核心流程。验证范围仍是标准版小红书普通全屏，不新增防主动绕过要求。
-
-- **源码事实**：`ProtectionService.settleUntil` 已用 UsageEvents 结算，余额算法本身不依赖无障碍事件。当前无障碍承担服务运行、窗口切换快速拦截、`TYPE_ACCESSIBILITY_OVERLAY` 浮层和 HOME 全局动作；因此不能只删除权限声明或换一个浮层常量。
-- **候选机制**：保留使用情况访问；以用户从可见首页启动的前台服务运行监测，带运行通知；以 `SYSTEM_ALERT_WINDOW` 授权的 `TYPE_APPLICATION_OVERLAY` 显示阻止页。返回首页/桌面需改为正常 Activity/Intent 导航并验证。Android 14+ 可评估 `specialUse` 类型，须如实声明用途，Google Play 发布需接受对应审核，不保证通过。
-- **计时依据**：[UsageStatsManager.queryEvents](https://developer.android.com/reference/android/app/usage/UsageStatsManager#queryEvents(long,%20long)) 要求使用情况访问，不要求无障碍。它是查询接口，不保证切换事件即时可见。保留现有 750 ms 缓冲、500 ms 轮询但移除快速拦截后，首次零余额拦截可能更慢；这些参数不能推导成实际延迟上界。
-- **显示依据与限制**：[普通悬浮窗](https://developer.android.com/reference/android/view/WindowManager.LayoutParams#TYPE_APPLICATION_OVERLAY) 可显示在应用 Activity 之上，但在关键系统窗口之下，系统可调整其可见性；[Android 12+ 目标窗口可拒绝普通悬浮窗](https://developer.android.com/security/fraud-prevention/activities)。这是覆盖阻止机制，非系统暂停目标 App，不能保证停止音频或防绕过。若目标窗口拒绝覆盖，本候选浮层路径不通过，需要另行评估正常阻止 Activity 的兼容性，不能继续声称浮层可靠。
-- **后台依据与限制**：[前台服务](https://developer.android.com/develop/background-work/services/fgs) 需带通知；[后台启动规则](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start) 限制从后台新建服务，Android 15+ 单靠悬浮窗权限豁免还需可见浮层。优先从用户可见操作启动；不能据此保证崩溃、强停、重启或厂商冻结后自愈。[specialUse 说明](https://developer.android.com/develop/background-work/services/fgs/service-types#special-use)。
-- **信任边界**：移除无障碍可避免本应用的无障碍授权流程，但仍需使用情况访问、悬浮窗授权与运行通知；使用情况访问涉及 App 使用记录，悬浮窗也有安全风险。具体 HyperOS 警告和是否更易接受必须亲自体验，不能承诺“低风险权限”或“不再吓人”。恢复时是否只需回首页启动服务也待验证，不能承诺强停期间继续保护。
-- **同类证据边界**：[AppBlock 官方权限说明](https://appblock.app/help/android/personal-data/) 把使用情况访问、显示于其他应用之上、无障碍高级拦截分开说明，但本轮没有实测其最新版关闭无障碍后的完整流程；不得据此声称竞品已证实同等可靠。[TimeLimit 官方说明](https://legal.timelimit.io/en/privacy/) 将当前应用判断与用时计算归于使用情况访问，将无障碍用途描述为拦截前回桌面、修复部分场景，支持“计时与无障碍可分离”，不证明我们的兼容性。
-- **其他路线**：[本地 VPN](https://developer.android.com/develop/connectivity/vpn) 可按应用处理网络，但断网不能阻止已缓存内容或应用界面使用，且同一用户/配置文件只能运行一个 VPN；不等价替代现有核心体验。[设备/工作资料管理](https://developer.android.com/reference/android/app/admin/DevicePolicyManager#setPackagesSuspended(android.content.ComponentName,%20java.lang.String[],%20boolean)) 可真正暂停包，但需 owner/受委托管理等资格，非普通设备管理员授权即可；引入管理范围与设置成本，不优先用于降低普通个人用户授权门槛。
-- **本轮设备边界**：ADB 一度列出连接设备，下一次只读查询小红书包信息时返回 device not found；未取得小红书 `HIDE_OVERLAY_WINDOWS` 声明结果，未读屏、未改设备授权、未安装新版本。
-- **建议的下一步（待确定）**：制作独立验证 APK，不声明无障碍服务，使用独立应用 ID；不迁移现有余额，避免与旧保护同时测试造成假通过。第一步验收真实悬浮窗授权警告和零余额覆盖；通过后再验证 5 分钟连续/分段扣减、锁屏暂停、耗尽再拦截、返回路径、后台持续运行及强停后重新打开恢复。记录延迟分布、漏拦次数、计时偏差和耗电，而非先承诺阈值。若授权依然劝退、无法覆盖目标窗口或普通使用中持续漏拦，不把候选升级为采用方案。
-
-## 子任务索引
-
-- [进程终止/重启后的无障碍保护恢复](tasks/accessibility-recovery.md)：2026-09-07 实测——重启自动恢复、普通内存回收（`am kill`）杀不动本进程（均放心）；仅崩溃与用户主动强行停止需手动恢复（真·SIGKILL 无 root 未验证）。据此不构成 Gate 1 阻塞。
-
-## 文档入口
-
-- [README](README.md)：安装使用、构建、自测和故障排查。
-- [SPEC](docs/SPEC.md)：已确认的完整产品行为，不是当前功能清单。
-- [DESIGN](docs/DESIGN.md)：当前验证路线、原有候选方案和待确认选择。
-- [ARCHITECTURE](ARCHITECTURE.md)：实际代码结构、数据流与恢复边界。
-- [AGENTS](AGENTS.md)：项目规则与文件维护职责。
+- [README](README.md)：安装、两阶段操作与恢复原版方法。
+- [ARCHITECTURE](ARCHITECTURE.md)：此分支实际代码、数据流与生命周期边界。
+- [DESIGN](docs/DESIGN.md)：用户已授权的独立实验方案，原 MVP 设计保留作背景。
+- 原版研究结论及官方来源：[原版记录](tasks/gate1-accessibility-baseline.md) “无障碍替代路线调查”；既有 `tasks/accessibility-recovery.md` 仅属于原版研究，不能当作此版验证结果。

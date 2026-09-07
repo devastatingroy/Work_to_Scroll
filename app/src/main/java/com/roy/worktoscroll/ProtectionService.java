@@ -1,6 +1,11 @@
 package com.roy.worktoscroll;
 
-import android.accessibilityservice.AccessibilityService;
+import android.app.Service;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.pm.ServiceInfo;
 import android.app.KeyguardManager;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
@@ -8,6 +13,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Handler;
+import android.os.Build;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -15,14 +22,16 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.lang.ref.WeakReference;
 
-public final class ProtectionService extends AccessibilityService {
+public final class ProtectionService extends Service {
+    private static final String CHANNEL = "overlay_protection";
+    private static final String ACTION_STOP = "com.roy.worktoscroll.overlaytest.STOP";
+    private static final int NOTIFICATION_ID = 1;
     // Initial experiment values, not an accuracy promise. Leave time for UsageEvents delivery.
     static final long POLL_MS = 500;
     static final long EVENT_LAG_MS = 750;
@@ -34,7 +43,7 @@ public final class ProtectionService extends AccessibilityService {
     private long lastWall;
     private long lastElapsed;
     private long dismissUntilElapsed;
-    private long fastBlockUntilElapsed;
+    private boolean monitoring;
     long heartbeatElapsed;
     boolean healthy;
     String failure = "";
@@ -42,16 +51,76 @@ public final class ProtectionService extends AccessibilityService {
     private final Runnable loop = new Runnable() {
         @Override public void run() {
             refresh();
-            handler.postDelayed(this, POLL_MS);
+            if (monitoring) handler.postDelayed(this, POLL_MS);
         }
     };
 
-    @Override protected void onServiceConnected() {
+    @Override public void onCreate() {
+        super.onCreate();
         reference = new WeakReference<>(this);
         ledger = LedgerStore.get(this);
         lastWall = System.currentTimeMillis();
         lastElapsed = SystemClock.elapsedRealtime();
-        handler.post(loop);
+        getSystemService(NotificationManager.class).createNotificationChannel(
+            new NotificationChannel(CHANNEL, "悬浮窗保护运行状态", NotificationManager.IMPORTANCE_LOW));
+    }
+
+    @Override public IBinder onBind(Intent intent) { return null; }
+
+    @Override public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && ACTION_STOP.equals(intent.getAction())) {
+            stopProtection();
+            return START_NOT_STICKY;
+        }
+        Notification notification = notification();
+        if (Build.VERSION.SDK_INT >= 34) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        } else startForeground(NOTIFICATION_ID, notification);
+        if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this)) {
+            ledger.note = "监测未启动，请检查使用情况访问和悬浮窗授权。";
+            ledger.save();
+            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        if (!monitoring) {
+            // The experimental service does not charge time when it was not running.
+            ledger.engine.resetObservation(System.currentTimeMillis());
+            ledger.note = "监测已启动；中断期间不补扣。";
+            ledger.save();
+            monitoring = true;
+            handler.post(loop);
+        }
+        // Recovery is deliberately tested by reopening the app, not assumed after process death.
+        return START_NOT_STICKY;
+    }
+
+    private Notification notification() {
+        PendingIntent open = PendingIntent.getActivity(this, 0,
+            new Intent(this, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent stop = PendingIntent.getService(this, 1,
+            new Intent(this, ProtectionService.class).setAction(ACTION_STOP),
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return new Notification.Builder(this, CHANNEL)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("WorkToEarn 悬浮窗测试监测服务")
+            .setContentText("点击查看保护状态 · 可随时停止")
+            .setContentIntent(open).setOngoing(true).setOnlyAlertOnce(true)
+            .addAction(new Notification.Action.Builder(null, "停止保护", stop).build())
+            .build();
+    }
+
+    void stopProtection() {
+        refresh();
+        ledger.enabled = false;
+        ledger.engine.resetObservation(System.currentTimeMillis());
+        ledger.save();
+        monitoring = false;
+        healthy = false;
+        handler.removeCallbacks(loop);
+        hideBlocker();
+        stopForeground(STOP_FOREGROUND_REMOVE);
+        stopSelf();
     }
 
     void refresh() {
@@ -62,9 +131,9 @@ public final class ProtectionService extends AccessibilityService {
         lastWall = now;
         lastElapsed = heartbeatElapsed;
         try {
-            if (!ledger.enabled || !Permissions.usage(this)) {
+            if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this)) {
                 healthy = false;
-                failure = ledger.enabled ? "使用情况访问权限未开启，保护已失效" : "保护未开启";
+                failure = ledger.enabled ? "系统授权未开启，保护已失效" : "保护未开启";
                 ledger.engine.resetObservation(now);
                 ledger.save();
                 hideBlocker();
@@ -79,7 +148,7 @@ public final class ProtectionService extends AccessibilityService {
             failure = healthy ? "" : "余额保存失败，保护状态异常";
             boolean visible = getSystemService(PowerManager.class).isInteractive()
                 && !getSystemService(KeyguardManager.class).isKeyguardLocked();
-            if (visible && (ledger.engine.targetActive || heartbeatElapsed < fastBlockUntilElapsed)
+            if (visible && ledger.engine.targetActive
                     && ledger.engine.balanceMs == 0 && heartbeatElapsed >= dismissUntilElapsed) showBlocker();
             else hideBlocker();
         } catch (RuntimeException ex) {
@@ -128,24 +197,7 @@ public final class ProtectionService extends AccessibilityService {
     void dismissForNavigation() {
         // The user's departure must win over the short, delayed usage-event tail.
         dismissUntilElapsed = SystemClock.elapsedRealtime() + EVENT_LAG_MS + POLL_MS;
-        fastBlockUntilElapsed = 0;
         hideBlocker();
-    }
-
-    @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (ledger == null || !ledger.enabled || !Permissions.usage(this)) return;
-        if (event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
-        CharSequence pkg = event.getPackageName();
-        // Fast zero-balance interception; usage accounting remains independent of window messages.
-        if (pkg != null && LedgerStore.TARGET.contentEquals(pkg) && ledger.engine.balanceMs == 0
-                && getSystemService(PowerManager.class).isInteractive()
-                && !getSystemService(KeyguardManager.class).isKeyguardLocked()) {
-            fastBlockUntilElapsed = SystemClock.elapsedRealtime() + EVENT_LAG_MS + POLL_MS;
-            try {
-                if (SystemClock.elapsedRealtime() >= dismissUntilElapsed) showBlocker();
-            }
-            catch (RuntimeException ex) { healthy = false; failure = "阻止界面未能显示，请重新开启保护"; }
-        }
     }
 
     private void showBlocker() {
@@ -153,6 +205,7 @@ public final class ProtectionService extends AccessibilityService {
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setGravity(Gravity.CENTER);
+        panel.setClickable(true);
         int pad = Math.round(28 * getResources().getDisplayMetrics().density);
         panel.setPadding(pad, pad * 2, pad, pad * 2);
         panel.setBackgroundColor(Color.rgb(244, 246, 241));
@@ -171,17 +224,28 @@ public final class ProtectionService extends AccessibilityService {
         panel.addView(open, new LinearLayout.LayoutParams(-1, -2));
         Button home = new Button(this);
         home.setText("回到桌面");
-        home.setOnClickListener(v -> { dismissForNavigation(); performGlobalAction(GLOBAL_ACTION_HOME); });
+        home.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                dismissForNavigation();
+            } catch (RuntimeException ex) {
+                android.widget.Toast.makeText(this, "请使用系统主页手势返回桌面", android.widget.Toast.LENGTH_LONG).show();
+            }
+        });
         panel.addView(home, new LinearLayout.LayoutParams(-1, -2));
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-            -1, -1, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.OPAQUE);
+            -1, -1, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            // Take touches inside the full overlay, but keep focus on the underlying activity
+            // so showing the blocker does not fabricate an ACTIVITY_PAUSED / hide loop.
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.OPAQUE);
         params.setTitle(getString(R.string.app_name) + " blocker");
         getSystemService(WindowManager.class).addView(panel, params);
         blocker = panel;
         ledger.blocks++;
         ledger.save();
-        Log.i("WTS", "BLOCK_SHOWN elapsed=" + SystemClock.elapsedRealtime());
+        Log.i("WTS_OVERLAY", "BLOCK_SHOWN elapsed=" + SystemClock.elapsedRealtime());
     }
 
     private void addText(LinearLayout panel, String message, int size) {
@@ -200,16 +264,11 @@ public final class ProtectionService extends AccessibilityService {
         finally { blocker = null; }
     }
 
-    @Override public void onInterrupt() {
-        healthy = false;
-        failure = "无障碍服务被中断，请检查系统授权";
-        hideBlocker();
-    }
-
     @Override public void onDestroy() {
+        monitoring = false;
         handler.removeCallbacksAndMessages(null);
         if (ledger != null) {
-            ledger.note = "无障碍服务已停止，请检查权限及系统省电设置。";
+            ledger.note = ledger.enabled ? "监测服务已停止，重新打开测试版可尝试恢复。" : "保护已停止。";
             ledger.save();
         }
         hideBlocker();

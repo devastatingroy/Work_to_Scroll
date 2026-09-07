@@ -1,5 +1,6 @@
-param([string]$Serial = '35c2f60f')
+param([string]$Serial = '35c2f60f', [switch]$FirstStageAccepted)
 $ErrorActionPreference = 'Stop'
+if (-not $FirstStageAccepted) { throw 'First accept the real permission dialog and zero-balance blocking, then pass -FirstStageAccepted.' }
 
 # On-device experiment: only launches the two apps and Home; no scrolling or content actions.
 # Start with exactly 300 seconds of credit and protection enabled, granted through the visible app.
@@ -11,7 +12,7 @@ function Invoke-Adb([string[]]$Command) {
     return $result
 }
 function Sample([string]$Label) {
-    [xml]$snapshot = (Invoke-Adb @('shell','run-as','com.roy.worktoscroll','cat','shared_prefs/ledger.xml')) -join "`n"
+    [xml]$snapshot = (Invoke-Adb @('shell','run-as','com.roy.worktoscroll.overlaytest','cat','shared_prefs/ledger.xml')) -join "`n"
     $fields = @{}
     foreach ($entry in $snapshot.map.ChildNodes) {
         $fields[$entry.name] = if ($entry.HasAttribute('value')) { $entry.value } else { $entry.InnerText }
@@ -42,6 +43,10 @@ function Assert-Fresh([long]$CursorMs) {
     }
 }
 Assert-Unlocked
+[xml]$original = (Invoke-Adb @('shell','run-as','com.roy.worktoscroll','cat','shared_prefs/ledger.xml')) -join "`n"
+if (($original.map.boolean | Where-Object { $_.name -eq 'enabled' }).value -ne 'false') {
+    throw 'Stop protection in the original WorkToEarn first; both blockers must not run during this experiment.'
+}
 $initial = Sample 'initial'
 if ($initial.balance_ms -ne 300000 -or $initial.enabled -ne 'true') {
     throw 'Expected 300000 ms of visible test credit with protection enabled.'
