@@ -6,14 +6,14 @@
 
 2026-09-07，Roy 已亲自完成使用情况访问和普通悬浮窗授权，此前读取两项 appops 均为 allow。Roy 再次对照明确反馈新版更好：原版两项授权都吓人，新版只有使用情况访问仍明显吓人，关键语句为“财产安全将会受到威胁”；第二项需在大量应用列表里找工具的操作不便已实现入口优化，等待新引导真机检查。零余额阻止页与返回测试版通过本机技术检查，回桌面复测有成功画面但首次采样不一致，暂不升级为稳定通过。上次测试结束已停止实验保护，余额为 0；本轮未重新读取手机状态或进入五分钟消费测试。
 
-当前采用方向已确定，授权信任风险与入口优化继续记录；五分钟消费及后续可靠性验证仍未执行，本轮只处理入口优化，不把选择路线作为测试通过。
+当前停点：Roy 回复“ok”，并要求同步支撑文件；单入口简化已完成并获确认，相关代码提交为 `ed0298d`。README、DESIGN 与 ARCHITECTURE 已与实现一致。本轮仅整理文档，不操作手机或开始后续测试；尚无修改后弹窗的独立真机画面，五分钟消费及后续可靠性验证继续保留待办。
 
 Roy 的选型依据：新版的授权警告体验相对更好，但共同依赖的使用情况访问仍有明显劝退风险。两张用户提供的原图保存在主项目 `tasks/hyperos-usage-access-warning.png` 与 `tasks/hyperos-accessibility-warning.png`；原图均显示“危险”、隐私/财产安全警告及自行承担后果确认。本轮仅更新入口代码与安装包，没有撤销或代授任何系统权限。
 
 ## 隔离与备份
 
 - 主目录：`D:/Software_Projects/Work_to_Scroll`，分支 `master`，采用新版代码；原版应用 `com.roy.worktoscroll` 仍在手机上独立保留。
-- 实验目录：`D:/Software_Projects/Work_to_Scroll-overlay`，分支 `experiment/no-accessibility`，应用 `com.roy.worktoscroll.overlaytest`，名称 `WorkToEarn 悬浮窗测试`。
+- 实验目录：`D:/Software_Projects/Work_to_Scroll-overlay`，分支 `experiment/no-accessibility`，保留早期实验与构建证据；后续修改以主目录 `master` 为准，不默认两处代码或安装包同步。当前新版应用 ID 为 `com.roy.worktoscroll.overlaytest`，名称 `WorkToEarn 悬浮窗测试`。
 - 起点提交：`8a98c84`，标签 `checkpoint/gate1-before-overlay-20260907`。包含原版代码及当时未提交的 README、TASK、恢复研究记录。合入前的原版记录完整保存在主项目 `tasks/gate1-accessibility-baseline.md`。
 - 独立源码备份：`D:/Software_Projects/Work_to_Scroll-backup-20260907/gate1-before-overlay.bundle`，已通过 git bundle verify。
 - 原版安装包备份：同目录 `WorkToEarn-0.1.2-gate1.apk`；SHA-256 `FFF088C3758EB6EA1E7DA766EA16C0479F954934FCDDFC9466865EFEB4A68004`，与原版记录一致。
@@ -31,11 +31,12 @@ Roy 的选型依据：新版的授权警告体验相对更好，但共同依赖�
 - [x] 既有分段测试脚本改读实验版账本，增加原版保护关闭检查与第一阶段接受开关。
 - [x] 更新 README、ARCHITECTURE、DESIGN 的实验范围；SPEC 未改。
 - [x] APK 构建、9 项单元测试、lint、签名、包 ID 和组件/权限检查。
+- [x] 采用新版路线并合入主分支；Xiaomi 悬浮窗引导简化为单设置入口，0.1.2 已安装，Roy 确认并要求同步支撑文件。
 
 ## 第一阶段：待真机与 Roy 验收
 
 - [x] Roy 确认后重试安装成功，冷启动 `Status: ok`，首页展示独立名称、零余额、未开启保护和两项权限入口；截图 `app/build/wte-overlay-start.png`。
-- [~] Roy 已亲自授权并再次对照，明确新版警告体验更好；使用情况访问的“财产安全将会受到威胁”仍明显劝退，悬浮窗列表入口难找，尚不算授权体验整体验收通过。
+- [~] Roy 已亲自授权并再次对照，选择新版；使用情况访问的“财产安全将会受到威胁”仍明显劝退。此前悬浮窗列表难找的问题已通过本应用设置入口优化，单入口简化已获确认；这不代表全部第一阶段检查通过。
 - [~] 零余额打开小红书已显示实验版阻止页，再次打开后 10 秒采样仍显示，前两次进入对应 blocks=2，未见反复新增浮层；截图 `app/build/wte-overlay-block.png`、`wte-overlay-stable.png`。这不是连续录像或完整触摸防穿透验收。
 - [~] 返回测试版成功，topResumedActivity 与 `wte-overlay-return.png` 一致。回桌面首次点击后的 Activity 采样仍为小红书，复测截图 `wte-overlay-home.png` 为桌面；首次未同时保存画面，不能确定原因，保留可靠性待核对。
 - [x] 点击停止保护后首页显示未开启，账本 enabled=false，服务列表为空，浮层消失；运行通知未获用户授权，本次不验证通知抽屉显示/停止按钮。截图 `app/build/wte-overlay-stopped.png`。
@@ -58,8 +59,8 @@ Roy 的选型依据：新版的授权警告体验相对更好，但共同依赖�
 - 当前 APK：`app/build/outputs/apk/debug/app-debug.apk`，`0.1.2-overlay-test`，versionCode `3`；本次文件位于主目录，已更新安装。
 - 当前 SHA-256：`7F948E18A26E577CFD2BD03245CCBDEA87B89F83F1BAEBA4C378E5E2164D7512`。
 - 0.1.2 的 assembleDebug 成功，lint 0 errors / 5 warnings（Gradle 更新提示、备份兼容提示及 3 项既有文本国际化提示）；只改权限入口与版本，不改计时/服务逻辑，没有为本次低风险引导改动新增或重跑余额单元测试。
-- `assembleDebug` 成功；`testDebugUnitTest` 9 项，0 失败/错误；`lintDebug` 0 errors / 4 warnings（既有备份兼容性提示与文本国际化提示）。
-- APK v2 签名验证通过；aapt 确认独立包名、5 项声明权限；合并 manifest 无无障碍组件、无 INTERNET 权限，服务不导出。
+- 初始 0.1.0 历史检查：`assembleDebug` 成功；`testDebugUnitTest` 9 项，0 失败/错误；`lintDebug` 0 errors / 4 warnings（既有备份兼容性提示与文本国际化提示）；不冒充本次 0.1.2 重跑结果。
+- 初始 0.1.0 历史检查：APK v2 签名验证通过；aapt 确认独立包名、5 项声明权限；合并 manifest 无无障碍组件、无 INTERNET 权限，服务不导出。
 - 测试脚本通过 PowerShell 语法解析；本轮未运行五分钟设备脚本。
 - 首次安装曾返回 `INSTALL_FAILED_USER_RESTRICTED`；Roy 确认继续后重试返回 `Success`。随后启动首页成功，初始使用情况访问为 default、普通悬浮窗为 ignore，首页也显示未授权；未授予任何系统权限，未开启保护或加入测试余额。
 
@@ -67,6 +68,7 @@ Roy 的选型依据：新版的授权警告体验相对更好，但共同依赖�
 
 ## 入口与来源
 
+- 本文早期 0.1.0 真机截图及手动系统导航截图的 `app/build/` 路径，均相对于 `D:/Software_Projects/Work_to_Scroll-overlay`；当前 0.1.2 安装包与构建报告位于主目录 `app/build/`。这些构建产物未纳入 Git，不作为独立备份。
 - [README](README.md)：安装、两阶段操作与恢复原版方法。
 - [ARCHITECTURE](ARCHITECTURE.md)：此分支实际代码、数据流与生命周期边界。
 - [DESIGN](docs/DESIGN.md)：用户已选择的当前方案，原 MVP 设计保留作背景。
