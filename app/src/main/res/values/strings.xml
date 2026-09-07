@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">WorkToEarn 悬浮窗测试</string>
     <string name="return_to_app">返回悬浮窗测试版</string>
+    <string name="overlay_permission_grant">2 · 开启悬浮窗权限</string>
+    <string name="overlay_permission_granted">2 · 悬浮窗已授权 · 查看设置</string>
+    <string name="overlay_grant_title">开启悬浮窗权限</string>
+    <string name="overlay_settings_title">查看悬浮窗权限</string>
+    <string name="overlay_xiaomi_steps">将直接打开本应用的设置，无需从软件列表中查找。\n\n依次点击：\n权限管理 → 其他权限 → 显示悬浮窗\n\n开启后返回本应用即可。若系统页面没有这些选项，可返回这里使用“应用列表入口”。</string>
+    <string name="overlay_open_app_settings">进入本应用设置</string>
+    <string name="overlay_open_list">应用列表入口</string>
+    <string name="overlay_settings_fallback">无法打开本应用设置，已改用应用列表入口</string>
     <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#236B55</item>

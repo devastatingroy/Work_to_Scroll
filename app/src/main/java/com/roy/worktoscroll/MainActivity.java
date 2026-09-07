@@ -29,6 +29,7 @@ public final class MainActivity extends Activity {
     private TextView permissions;
     private TextView diagnostics;
     private Button toggle;
+    private Button overlayPermission;
     private final Runnable update = new Runnable() {
         @Override public void run() { render(); handler.postDelayed(this, 500); }
     };
@@ -60,8 +61,7 @@ public final class MainActivity extends Activity {
         permissions = text("", 14, false);
         button("1 · 授权使用情况访问", () -> openSettings(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
             Uri.parse("package:" + getPackageName()))));
-        button("2 · 授权显示在其他应用上层", () -> openSettings(
-            new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
+        overlayPermission = button(getString(R.string.overlay_permission_grant), this::openOverlaySettings);
         button("显示保护通知（建议开启）", () -> {
             if (android.os.Build.VERSION.SDK_INT >= 33
                     && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -126,6 +126,7 @@ public final class MainActivity extends Activity {
     private void render() {
         boolean usage = Permissions.usage(this);
         boolean access = Permissions.overlay(this);
+        overlayPermission.setText(access ? R.string.overlay_permission_granted : R.string.overlay_permission_grant);
         ProtectionService service = ProtectionService.current();
         boolean running = service != null && SystemClock.elapsedRealtime() - service.heartbeatElapsed < 3_000;
         balance.setText(formatTime(ledger.engine.balanceMs));
@@ -153,6 +154,33 @@ public final class MainActivity extends Activity {
             ledger.save();
             Toast.makeText(this, ledger.note, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void openOverlaySettings() {
+        if (!"Xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER)) {
+            openOverlayList();
+            return;
+        }
+        new AlertDialog.Builder(this)
+            .setTitle(Permissions.overlay(this) ? R.string.overlay_settings_title : R.string.overlay_grant_title)
+            .setMessage(R.string.overlay_xiaomi_steps)
+            .setPositiveButton(R.string.overlay_open_app_settings, (dialog, which) -> {
+                try {
+                    startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + getPackageName())));
+                } catch (android.content.ActivityNotFoundException | SecurityException ex) {
+                    Toast.makeText(this, R.string.overlay_settings_fallback, Toast.LENGTH_LONG).show();
+                    openOverlayList();
+                }
+            })
+            .setNeutralButton(R.string.overlay_open_list, (dialog, which) -> openOverlayList())
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    private void openOverlayList() {
+        openSettings(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:" + getPackageName())));
     }
 
     private void openSettings(Intent intent) {

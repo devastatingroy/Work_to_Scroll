@@ -1,6 +1,6 @@
 # WorkToEarn 悬浮窗实验版实际结构
 
-本 worktree 属于 `experiment/no-accessibility`。原版的无障碍结构保存在提交 `8a98c84` 和原项目目录；完整产品要求见 docs/SPEC.md。本文件只描述本分支已实现机制，不宣称真机验收通过。
+当前采用的 Android 路线为普通悬浮窗，由 Roy 在对照两版后明确选择；原版的无障碍结构保存在提交 `8a98c84` 和标签 `checkpoint/gate1-before-overlay-20260907`。完整产品要求见 docs/SPEC.md。本文件描述已实现机制，不把路线选择当作全部真机验收通过。
 
 ## 模块与数据流
 
@@ -17,6 +17,8 @@
 UsageEvents → 应用前后台/锁屏事件 → BalanceEngine → 实验版本机账本 → 零余额且小红书在前台时显示普通悬浮窗。
 
 ## 运行与恢复边界
+
+- 悬浮窗授权入口：Xiaomi 设备先显示经本机核对的“权限管理 → 其他权限 → 显示悬浮窗”引导，通过 ACTION_APPLICATION_DETAILS_SETTINGS + package URI 打开本应用详情；保留标准 ACTION_MANAGE_OVERLAY_PERMISSION 列表入口。应用详情无法启动（不存在或无权访问）时回退到列表。其他厂商直接沿用标准入口；不依赖小米私有组件名，不代授权限。首页依据实际 canDrawOverlays 状态更新按钮标签。
 
 - 从用户可见的 MainActivity 调用 startForegroundService；Android 14+ 指定 specialUse 类型。通知使用低重要度频道与不可变 PendingIntent，服务不导出。
 - 服务只在保护开启且两项必要权限均有效时开始循环。通知权限不是启动服务的前置条件，首页显示通知是否允许。
