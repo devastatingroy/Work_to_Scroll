@@ -47,6 +47,9 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/�
 
 ## 摄像头与奖励边界
 
+- 0.4.2 降负载试用：预览与分析使用 ResolutionSelector 的 640×480（传感器坐标）目标，优先请求前置支持的 [15,15] FPS，PreviewView 使用 PERFORMANCE（设备允许时采用 SurfaceView）。不支持该帧率时不设置帧率；低负载组合绑定抛 IllegalArgumentException 时重新解绑，恢复原默认预览尺寸/FPS、分析 setTargetResolution 和 COMPATIBLE。推理 500ms 频率保持原值。配置请求不等于实际帧率或降温证明，预览圆角/镜像/缩放须真机验收。
+- camera-status.json 增加 capture_policy、preview_resolution、analysis_width/height、preview_mode；尺寸来自绑定后的 ResolutionInfo 和实际分析帧，mode 是请求模式而非已证实的 SurfaceView 类型。读取脚本兼容旧版缺少这些字段的快照。帧率结合只读 media.camera 的当前请求/输出状态核对，不能从约 2Hz 推理次数反推。
+- [断线测温脚本](scripts/camera-thermal-record.sh)在 ADB shell 中独立运行，适用于两版 APK：armed 模式等待拔线及新鲜监测后，以 BatteryService 同源读数记录第 0 秒至 600 秒、每 60 秒一份数值快照；本地 /data/local/tmp 保存温度（0.1°C）、电量、充电状态和原有相机数值诊断，无图像。启动等待最多 20 分钟；每分钟的新鲜度只能证明采样时状态，不能证明两次采样之间完全无中断。smoke 模式仅作 5 秒日志验证，不算温升测试。
 - 工作页由用户主动启动，使用 KEEP_SCREEN_ON；不修改系统自动锁屏设置。暂停、结束、离开前台时解绑相机并释放亮屏标记。重返、旋转重建或进程重启后必须点击继续，不自动开启摄像头。
 - 初始实验参数：640×480 目标分析尺寸，每 500 ms 最多一次推理，KEEP_ONLY_LATEST 丢弃积压；实际分辨率由 CameraX 与设备协商。监测期间相机持续采集，分析限频不等于硬件每秒只采两帧或间歇关闭相机；每帧处理后关闭 MPImage / ImageProxy 并回收 Bitmap，没有录像编码或图像落盘路径。仅一个可靠人体作为在场线索，连续约 1 秒确认后计时；零人体候选允许 3 秒宽限，超过后暂停；多个可靠人体或仅有低分候选视为不确定，立即暂停。无身份识别，不证明工作行为，不含手机移动/另一部手机检测。
 - 采集到结果超过 1.5 秒、相邻结果间隔超过 1.5 秒、锁屏、失去焦点或 Activity 暂停均不补计未知区间。仅接收当前采集代次的新结果，旧异步回调无法跨暂停或新会话发放时间；确认窗口不追补。页面定时器只刷新和检查失联，不生成有效时间。

@@ -16,6 +16,7 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Size;
+import android.util.Range;
 import android.view.View;
 import android.view.Gravity;
 import android.view.WindowManager;
@@ -30,6 +31,8 @@ import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.core.resolutionselector.ResolutionSelector;
+import androidx.camera.core.resolutionselector.ResolutionStrategy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
@@ -82,6 +85,8 @@ public final class WorkActivity extends ComponentActivity {
     private volatile boolean capturing;
     private volatile int generation;
     private long lastAnalysisElapsed;
+    private int analysisWidth, analysisHeight;
+    private String previewResolution = "unbound", capturePolicy = "unbound";
     private String message = "正在准备人体检测模型…";
     private final Runnable tick = new Runnable() {
         @Override public void run() {
@@ -129,7 +134,7 @@ public final class WorkActivity extends ComponentActivity {
         rewardFeedback.setMinHeight(dp(48));
         rewardFeedback.setVisibility(View.INVISIBLE);
         preview = new PreviewView(this);
-        preview.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
+        preview.setImplementationMode(PreviewView.ImplementationMode.PERFORMANCE);
         preview.setScaleType(PreviewView.ScaleType.FIT_CENTER);
         preview.setBackgroundColor(Color.BLACK);
         preview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -227,6 +232,8 @@ public final class WorkActivity extends ComponentActivity {
         preview.setVisibility(View.VISIBLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         int token = ++generation;
+        analysisWidth = analysisHeight = 0;
+        previewResolution = capturePolicy = "unbound";
         var future = ProcessCameraProvider.getInstance(this);
         future.addListener(() -> {
             if (!capturing || token != generation || !available()) return;
@@ -237,14 +244,14 @@ public final class WorkActivity extends ComponentActivity {
                     pauseCamera("前置摄像头不可用，请退出工作页后重试。");
                     return;
                 }
-                Preview cameraPreview = new Preview.Builder().build();
-                cameraPreview.setSurfaceProvider(preview.getSurfaceProvider());
-                ImageAnalysis analysis = new ImageAnalysis.Builder()
-                    .setTargetResolution(new Size(640, 480))
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
-                analysis.setAnalyzer(analyzer, frame -> analyze(frame, token));
                 provider.unbindAll();
-                provider.bindToLifecycle(this, selector, cameraPreview, analysis);
+                try {
+                    bindCamera(selector, token, true);
+                } catch (IllegalArgumentException unsupported) {
+                    // Restore the previous working stream combination if negotiation rejects this one.
+                    provider.unbindAll();
+                    bindCamera(selector, token, false);
+                }
                 message = "等待新画面，请调整机位。";
             } catch (Exception ex) {
                 pauseCamera("摄像头启动失败或被占用，请关闭其他相机应用后重试。");
@@ -252,6 +259,40 @@ public final class WorkActivity extends ComponentActivity {
             render();
         }, ContextCompat.getMainExecutor(this));
         render();
+    }
+
+    private void bindCamera(CameraSelector selector, int token, boolean lowLoad) {
+        Preview.Builder builder = new Preview.Builder();
+        capturePolicy = lowLoad ? "low_resolution_default_fps" : "baseline_fallback";
+        preview.setImplementationMode(lowLoad ? PreviewView.ImplementationMode.PERFORMANCE
+            : PreviewView.ImplementationMode.COMPATIBLE);
+        if (lowLoad) {
+            builder.setResolutionSelector(new ResolutionSelector.Builder()
+                .setResolutionStrategy(new ResolutionStrategy(new Size(640, 480),
+                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build());
+            Range<Integer> target = new Range<>(15, 15);
+            if (selector.filter(provider.getAvailableCameraInfos()).get(0).getSupportedFrameRateRanges().contains(target)) {
+                builder.setTargetFrameRate(target);
+                capturePolicy = "requested_15_fps";
+            }
+        }
+        Preview cameraPreview = builder.build();
+        cameraPreview.setSurfaceProvider(preview.getSurfaceProvider());
+        ImageAnalysis.Builder analysisBuilder = new ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST);
+        if (lowLoad) {
+            // ResolutionStrategy uses sensor coordinates; the old target-resolution path selected 2448x2448 here.
+            analysisBuilder.setResolutionSelector(new ResolutionSelector.Builder()
+                .setResolutionStrategy(new ResolutionStrategy(new Size(640, 480),
+                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build());
+        } else {
+            analysisBuilder.setTargetResolution(new Size(640, 480));
+        }
+        ImageAnalysis analysis = analysisBuilder.build();
+        analysis.setAnalyzer(analyzer, frame -> analyze(frame, token));
+        provider.bindToLifecycle(this, selector, cameraPreview, analysis);
+        var resolution = cameraPreview.getResolutionInfo();
+        previewResolution = resolution == null ? "unknown" : resolution.getResolution().toString();
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -262,6 +303,7 @@ public final class WorkActivity extends ComponentActivity {
             return;
         }
         lastAnalysisElapsed = capturedAt;
+        int width = frame.getWidth(), height = frame.getHeight();
         Bitmap original = null, oriented = null;
         MPImage input = null;
         try {
@@ -287,6 +329,7 @@ public final class WorkActivity extends ComponentActivity {
             handler.post(() -> {
                 if (!capturing || token != generation || !available()) return;
                 sampledAt = capturedAt; processingMs = completed - capturedAt; observation = observed; sequence++;
+                analysisWidth = width; analysisHeight = height;
                 if (SystemClock.elapsedRealtime() - capturedAt > WorkClock.FRESH_MS) {
                     clock.interrupt();
                     detectionCue.reset(); cuePlayer.stop();
@@ -470,6 +513,9 @@ public final class WorkActivity extends ComponentActivity {
                 .put("running", capturing).put("model_ready", modelReady)
                 .put("camera_permission", checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
                 .put("lens", "front")
+                .put("capture_policy", capturePolicy).put("preview_resolution", previewResolution)
+                .put("analysis_width", analysisWidth).put("analysis_height", analysisHeight)
+                .put("preview_mode", preview.getImplementationMode().name())
                 .put("scope", "whole_frame_person_trial").put("state", fresh ? clock.state().name() : "NO_FRESH_RESULT")
                 .put("person_candidates", fresh ? observation.candidates : -1)
                 .put("reliable_people", fresh ? observation.reliable : -1).put("max_score", fresh ? observation.score : 0)

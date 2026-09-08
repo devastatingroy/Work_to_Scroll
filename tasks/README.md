@@ -1,6 +1,6 @@
 # 任务索引
 
-这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主任务为[侧后方无脸在场检测探索](active/side-rear-presence-exploration.md)，Roy 已选择在日常主 App 使用前置人体检测和声音提示，边用边验证，Agent 可读取状态；原[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
+这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主任务为[摄像头监控发热对照测试](active/camera-thermal-test.md)，按 Roy 授权安装降负载版本并开展两版本各 10 分钟、相近起温的实际使用对照。[侧后方在场观察](active/side-rear-presence-exploration.md)及[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
 
 ## 目录与状态规则
 

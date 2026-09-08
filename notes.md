@@ -2,6 +2,8 @@
 
 ## 摄像头检测状态读取
 
+- 分辨率目标不等于实际输入：本机 0.4.2 首次配置试跑中，旧 ImageAnalysis.setTargetResolution(640,480) 与新低分辨率预览组合仍协商为 2448×2448；应读取 ImageProxy 实际宽高并与 media.camera 的流尺寸交叉核对。已改用传感器坐标下的 ResolutionSelector/ResolutionStrategy，实际结果见发热任务。不要仅凭源码写了“640×480”就认定图像转换负载很小，也不要把一次组合实测直接推广为所有旧版运行尺寸。
+- 断线对照可用 scripts/camera-thermal-record.sh：推送到 /data/local/tmp 后以 nohup 启动，输出必须为唯一的 /data/local/tmp/wts-thermal-*.txt，参数 armed 600；待“不充电且有新鲜监测”再开始，每分钟一份共 11 份端点/过程数值。完成后检查 COMPLETE、实际时长、每份 powered/fresh_at_sample 及版本；smoke 5 只验证记录器。后台 shell 能否在本次断线后存活必须由实际结果确认，不能用连线短测替代。
 适用范围：0.4.1 起主 App 的前置人体检测。使用[读取脚本](scripts/camera-health-check.ps1)查看最新数值状态，例如在项目根目录执行 `./scripts/camera-health-check.ps1 -Samples 6 -IntervalSeconds 1`。需要设备通过 ADB 连接并已授权；脚本只读，不会打开摄像头、切换页面或修改账本，也不读取预览图像。
 
 - 核对的是主 App `com.roy.worktoscroll.overlaytest` 的私有 `files/camera-status.json`，不要混用独立实验应用的 `status.json`。主 App 固定前置，读数应为 `lens=front`。

@@ -1,6 +1,6 @@
 # 摄像头监控发热对照测试
 
-状态：正在检查现有负载，降负载参数方案待用户回复，断线温升对照尚未开始。类别：修复与设计探索。创建日期：2026-09-08。
+状态：降负载版本已安装，三项调整经真机核对生效；新版 10 分钟记录器已布置，等待拔线。冷却后可恢复旧版再测 10 分钟。类别：修复与设计探索。创建日期：2026-09-08。
 
 Roy 原先要求保存本计划，并明确要求将手机连接电脑调试时的状态与断线监控状态分开。2026-09-08 进一步要求检查录像机制并尝试降低发热，现启动代码与真机只读检查；下方温升步骤仍为待执行计划。
 
@@ -56,7 +56,7 @@ Roy 原先要求保存本计划，并明确要求将手机连接电脑调试时�
 
 ## 2026-09-08 代码检查与降负载尝试
 
-授权：用户要求检查当前录像机制并尝试各种降温可能性。保留计时、奖励、隐私及检测可靠性边界；涉及预览体验和采集参数的第一轮方案已询问，等待回复。
+授权：用户已明确要求按提出方案制作并安装降温试用版，然后使用 10 分钟，之后可恢复旧版再监控 10 分钟；两轮记录初始/结束温度，尽量匹配起始温度。采集 15fps、640×480 预览及 PERFORMANCE 显示模式一起进入本轮，保留计时、奖励、隐私及检测可靠性边界。
 
 - [x] 工作区初始干净；主 App 源码为 0.4.1 / versionCode 18。
 - [x] WorkActivity 仅绑定 Preview 与 ImageAnalysis，无 VideoCapture、MediaRecorder、编码或图像保存路径；FileOutputStream 用于最新数值状态 JSON。
@@ -65,7 +65,7 @@ Roy 原先要求保存本计划，并明确要求将手机连接电脑调试时�
 - [x] 真机 35c2f60f 在线；读取时监测已暂停，状态快照过旧，最后 processing_ms=92 不能当作当前性能或统计值。USB powered=true、正在充电、电量 12%、BatteryService 温度 348（34.8°C）；这是连电脑且相机已停的状态，不是断线监控基线。
 - [x] Roy 补充：按自己的使用经验，34.8°C 是正常温度。该读数记录为用户认为正常的参考，不作为异常或降温目标；也不据此推断持续监控的温升情况。验收仍结合连续监控后的同源温升、触感和耗电，不人为要求降到更低温度。
 - [x] 从 media.camera 静态信息单独定位 device@1.1/vendor_qti/1，并核对 android.lens.facing=FRONT；其 AE 支持范围为 [10,10]、[15,15]、[10,20]、[20,20]、[24,24]、[10,30]、[25,30]、[30,30]。前置存在 15fps 档位，但当前摄像头关闭，尚未证明 CameraX 的 Preview + ImageAnalysis 组合实际运行于 15fps。
-- [ ] 用户确认第一轮：预览目标 640×480、请求设备支持的约 15fps，人体分析保留 2Hz；不支持时使用默认采集配置。
+- [x] 用户确认第一轮：预览目标 640×480、请求设备支持的约 15fps、PERFORMANCE 显示，人体分析保留 2Hz；不支持时使用默认采集配置。
 - [ ] 完成最小实现、构建及相关验证，再核对实际采集尺寸/FPS和识别新鲜度。
 - [ ] 断线、不充电的温升对照与相同机位检测体验验证。
 
@@ -88,4 +88,35 @@ Roy 原先要求保存本计划，并明确要求将手机连接电脑调试时�
 
 接口依据（2026-09-08 核查）：[Preview.Builder](https://developer.android.com/reference/androidx/camera/core/Preview.Builder)（默认预览尺寸与帧率仅为目标）、[CameraInfo](https://developer.android.com/reference/androidx/camera/core/CameraInfo)（支持帧率范围）、[PreviewView 模式](https://developer.android.com/reference/androidx/camera/view/PreviewView.ImplementationMode)（SurfaceView 功耗/延迟取舍）。这些资料不证明本机实际降温幅度。
 
-当前停点：检查与可执行方案已完成，第一轮参数方案等待用户回复；未修改应用源码、构建或安装新版本，未执行断线温升实验。已将任务移入 active 并同步原引用。下一步按用户回复实施第一轮，或继续仅报告检查结论。
+## 当前执行：两版本各 10 分钟
+
+本节按最新授权取代上方先 20 分钟及逐项改动顺序；旧计划保留为以后深入对照的候选。
+
+- [x] 更新前 Git 检查点 060ab80a90a33641a4d5dfb6126fbaf1529360ee，保存源码基线及前述检查记录。
+- [x] 已从手机拉取实际安装的 0.4.1/versionCode18，保存于 app/build/thermal-20260908/baseline-0.4.1-v18.apk；SHA-256 E0CB33397610FB199F56FE922675D7D30199C6A0BCBD615794E5871241E2B843。账本备份 ledger-before.xml 在同目录，不随 Git 发布。
+- [x] 开始实现 0.4.2-camera-low-load / versionCode19；诊断区分请求策略与实际尺寸，不能把 requested_15_fps 当实测值。
+- [x] 构建、65 项原测试及 lint 通过（0 错误/9 项既有警告）；最终 APK 签名验证通过，读取脚本语法检查通过。安装前再次备份账本并核对暂停状态。
+- [x] 0.4.2 / versionCode19 普通覆盖安装成功，冷启动成功；余额/累计奖励与消费逐项保留，不卸载、不清数据。恢复旧版优先对 debug APK 使用保留数据的降级安装；被系统拒绝时先解释，不能以卸载重装替代。
+- [ ] 手机端以相同 BatteryService 来源低频记录拔线后的起点和第 600 秒端点；同时记版本、充电状态及监测是否运行。原版可使用同一外部记录方式，不需修改旧 APK。
+- [ ] 新版 10 分钟实际使用，记录触感、误暂停/声音反馈；冷却至接近新版起点，再恢复旧版重复。初始温度差争取不超过 0.5°C，此为操作目标而非硬件准确度或医学阈值；未匹配时注明差值。
+
+| 版本 | 起始/结束时间 | 起始/结束电池温度 | 温升 | 起止电量 | 充电/监测中断 | Roy 触感与识别反馈 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.4.2 新版 | 待测 | 待测 | 待测 | 待测 | 待测 | 待反馈 |
+| 0.4.1 原版 | 待测 | 待测 | 待测 | 待测 | 待测 | 待反馈 |
+
+准备时手机为 USB 充电、13% 电量、33.5°C，监测关闭；此数值不是正式测试起点。34.8°C 按 Roy 本轮纠正作为正常温度标尺，用同源读数比较，不设为必须降到的目标。
+
+### 安装后真机核对
+
+- 第一份 0.4.2 已安装并由 Roy 回复“已开始，预览正常”；未开始正式温升测试。诊断显示 preview_resolution=640x480、requested_15_fps、PERFORMANCE，但 analysis_width/height=2448/2448。media.camera 当前流尺寸交叉确认 640×480 与 2448×2448，当前请求及最新结果中的 AE FPS 范围为 [15,15]。这证明原 setTargetResolution 路径在此次组合中没有达到低分辨率目标，不推断旧版所有会话的实际尺寸，也不把 AE 范围当作完整帧率统计。
+- 按已授权 640×480 分析目标将低负载 ImageAnalysis 改用 ResolutionSelector/ResolutionStrategy；回退仍保留原配置。退出工作页暂停后完成第二次构建与覆盖安装，版本仍为未正式测试的 0.4.2/v19。账本前后 balance_ms=209385、consumed_ms=2100615、work_total_ms=5019523、work_reward_ms=0、enabled=true 一致；工作总量相比最初备份增加来自 Roy 连线试用，本轮字段重置为现有暂停恢复规则，不由安装迁移造成。
+- 第二次安装前后账本分别为 app/build/thermal-20260908/ledger-pre-resolution-fix.xml、ledger-post-resolution-fix.xml；最终低负载 APK 另存 low-load-0.4.2-v19.apk。首份临时 APK 已被本次生成的修正版替换，旧版 baseline-0.4.1-v18.apk 保留。
+- 独立测温脚本已推送 /data/local/tmp/wts-camera-thermal-record.sh，Android shell 语法检查及 nohup 5 秒短测通过：两份同源温度 32.9°C、USB=true，输出 COMPLETE actual_duration_s=5；此为连线记录器验证，不是降温成绩。
+
+- Roy 对修正后的版本回复“已重新开始”；实际诊断 analysis_width=640、analysis_height=480、preview_resolution=640x480、PERFORMANCE、requested_15_fps；连续采样有 PRESENT / 1 人可靠结果，单次处理约 48–51ms（仅短样本，不是统计性能结论）。有一个快照因读取时年龄超过 1.5 秒被读取脚本判为非实时，不能据此宣称零过期或零中断。
+- media.camera 当前两个输出流均为 640×480，最新结果 AE 范围 [15,15]、sensor.frameDuration=66666666ns，符合约 15fps；SurfaceFlinger 存在本 WorkActivity 的 SurfaceView 图层。三项配置均有当前真机证据；不替代 10 分钟温升或长期检测体验。
+- 最终 APK SHA-256：29CD8C1E6A9871206A16316E26689EFCF312DB923B0695C25A199B71315AA8BF。
+- 已启动记录器 armed 600，输出 /data/local/tmp/wts-thermal-low-load-20260908-run1.txt，启动输出 /data/local/tmp/wts-thermal-low-load-20260908-run1-launch.txt；已读回版本19/0.4.2头部，尚无 SAMPLE，表示当时仍等待拔线及新鲜监测。布置时 USB=true、电量13%、33.7°C，仅作为连线准备读数，不写入正式起点。
+
+当前停点：通知 Roy 拔线并保持监测 10 分钟，结束后接回电脑读取记录；脚本会自行记录第 600 秒端点，不必为测温切出监控页。下一次先读取本次日志检查 COMPLETE 和充电/新鲜度/实际时长，再填上表与询问实际触感。之后冷却至接近本次起点，再以保留数据方式恢复原版进行第二轮；恢复前另备份当前账本，不能把旧账本倒灌而丢失本次真实奖励。34.8°C 仍为用户正常参考，实际新版起点待日志确认。

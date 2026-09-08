@@ -8,9 +8,9 @@ android {
         applicationId 'com.roy.worktoscroll.overlaytest'
         minSdk 29
         targetSdk 36
-        versionCode 18
-        versionName '0.4.1-front-person-audio'
-        resValue 'string', 'app_version', '0.4.1-front-person-audio'
+        versionCode 19
+        versionName '0.4.2-camera-low-load'
+        resValue 'string', 'app_version', '0.4.2-camera-low-load'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
