@@ -153,7 +153,7 @@ public final class MainActivity extends Activity {
     private void showGuide(boolean first) {
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("先工作，再安心刷一会儿")
-            .setMessage("① 开始工作\n固定手机，让前置摄像头看到你的脸；在工作页手动开启监测。\n\n② 攒娱乐时间\n每轮累计 10 分钟有效工作，获得 5 分钟娱乐；之后每分钟再得 30 秒。连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。已到账奖励和历史工作保留，主动结束后重新开始一轮。\n\n③ 去小红书\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
+            .setMessage("① 开始工作\n固定手机，让前置摄像头朝向你的肩部和躯干；可放在侧后方，无需露出人脸。在工作页手动开启监测，背影效果仍在试用验证。\n\n② 攒娱乐时间\n每轮累计 10 分钟有效工作，获得 5 分钟娱乐；之后每分钟再得 30 秒。连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。已到账奖励和历史工作保留，主动结束后重新开始一轮。\n\n③ 去小红书\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).create();
         if (first) dialog.setOnDismissListener(d -> uiPreferences().edit().putBoolean("cat_intro_seen_v2", true).apply());
         dialog.show();

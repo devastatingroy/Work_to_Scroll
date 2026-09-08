@@ -1,6 +1,6 @@
 # 任务索引
 
-这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主任务为[侧后方无脸在场检测探索](active/side-rear-presence-exploration.md)，按 Roy 要求逐环节引导并由 Agent 读取状态；原[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
+这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主任务为[侧后方无脸在场检测探索](active/side-rear-presence-exploration.md)，Roy 已选择在日常主 App 使用前置人体检测和声音提示，边用边验证，Agent 可读取状态；原[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
 
 ## 目录与状态规则
 
@@ -26,7 +26,7 @@
 
 | 任务 | 目标与依赖 |
 | --- | --- |
-| [侧后方无脸在场检测探索](active/side-rear-presence-exploration.md) | 独立实验版逐步验证人体识别，由 Agent 读取状态；关联摄像头及发热验收 |
+| [侧后方无脸在场检测探索](active/side-rear-presence-exploration.md) | 主 App 前置人体检测与声音已更新，侧后方效果待日常使用验证；关联摄像头及发热验收 |
 | [零余额阻止页音频处理](active/audio-blocking.md) | 处理阻止后继续出声，保留共享音频焦点的确认与真机验收边界 |
 | [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 验证在场、每轮奖励、中断恢复及真实消费闭环；消费部分关联后台保护 |
 | [猫总监工界面验收](active/cat-ui.md) | 核对引导、设置、权限入口、返回路径及工作反馈 |

@@ -4,7 +4,7 @@
 
 ## 模块与数据流
 
-单个原生 Java app 模块，摄像头阶段接入 AndroidX Activity 1.10.1、CameraX 1.4.2 与 ML Kit bundled face-detection 16.1.7。应用 ID `com.roy.worktoscroll.overlaytest`，Java namespace 保留 `com.roy.worktoscroll`；沿用新版私有余额，和旧无障碍原版沙箱隔离。
+单个原生 Java app 模块，摄像头阶段接入 AndroidX Activity 1.10.1、CameraX 1.4.2 与 MediaPipe Tasks Vision 1.0.0 / bundled EfficientDet-Lite0 int8，取代此前 ML Kit 人脸模型。应用 ID `com.roy.worktoscroll.overlaytest`，Java namespace 保留 `com.roy.worktoscroll`；沿用新版私有余额，和旧无障碍原版沙箱隔离。
 
 | 文件 | 职责 |
 |---|---|
@@ -15,7 +15,9 @@
 | BlockerActivity.java | 非导出的不透明全屏阻止页；独立任务、不进最近任务、离开不保留历史；真正让目标退后台，返回工具/桌面及系统返回不重新露出目标 |
 | BalanceEngine.java | 原版复用的纯余额算法，按使用区间扣减，仅显式奖励能增加余额 |
 | LedgerStore.java | 实验版同进程单例与 SharedPreferences 快照，原版私有数据不读取、不迁移 |
-| WorkActivity.java | 前置预览、离线检测、显式开始/暂停/继续/结束、在场状态与奖励展示；帧仅在内存存在 |
+| WorkActivity.java | 前置预览、离线人体检测、显式开始/暂停/继续/结束、声音开关、在场与奖励展示；帧仅在内存存在 |
+| PersonObservation.java | 无图像的人体候选/可靠数量及分数，转为 WorkClock 的单人/无人/不确定信号 |
+| DetectionCue.java / CuePlayer.java | 原始检测变化去重与随包语音播放；新声替换旧声，过期/暂停停止，不改变计时 |
 | WorkClock.java | 单调时钟和新鲜帧约束下的在场容错计时，不使用系统日期计算奖励 |
 | WorkProgress.java | 不可变的历史工作、本轮十分钟门槛/分钟奖励、中断期限与恢复计算 |
 | ProtectionPolicy.java | 默认开启/已保存停止的加载规则，按当前时区计算四小时及09:00—21:00提醒边界，可独立测试 |
@@ -23,7 +25,9 @@
 
 UsageEvents → 应用前后台/锁屏事件 → BalanceEngine → 实验版本机账本 → 零余额且小红书在前台时先显示普通悬浮窗，再启动BlockerActivity → 新页获得实际窗口焦点后移除浮层及释放音频焦点，目标进入后台。
 
-CameraX 前置图像 → ML Kit 人脸数量 → WorkClock 有效毫秒增量 → WorkProgress 奖励差额 → LedgerStore 同一次快照写入工作累计与娱乐余额 → 既有消费路径。
+CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/无人/不确定 → WorkClock 有效毫秒增量 → WorkProgress 奖励差额 → LedgerStore 同一次快照写入工作累计与娱乐余额 → 既有消费路径。声音沿原始观察另走 DetectionCue → CuePlayer，不绕过 WorkClock 的确认和宽限。
+
+人体模型在分析线程加载并串行推理，未就绪不允许开始；停止后的旧代次结果不进入账本。人物结果不保存框或图像，只每秒原子覆盖 app 私有 files/camera-status.json 的最新人数/分数/状态/音频指标；[摄像头读取脚本](scripts/camera-health-check.ps1)核对 PID、手机单调时钟和结果年龄后判定读数有效，离开工作页后旧快照不代表监测仍在运行。ui_preferences 保存 presence_sound_enabled（默认开启），不迁移账本；固定使用 DEFAULT_FRONT_CAMERA，不读取临时版本的镜头偏好。
 
 ## 独立人体检测实验
 
@@ -44,7 +48,7 @@ CameraX 前置图像 → ML Kit 人脸数量 → WorkClock 有效毫秒增量 �
 ## 摄像头与奖励边界
 
 - 工作页由用户主动启动，使用 KEEP_SCREEN_ON；不修改系统自动锁屏设置。暂停、结束、离开前台时解绑相机并释放亮屏标记。重返、旋转重建或进程重启后必须点击继续，不自动开启摄像头。
-- 初始实验参数：640×480 目标分析尺寸，每 400 ms 最多一次推理，KEEP_ONLY_LATEST 丢弃积压；实际分辨率由 CameraX 与设备协商。仅一个人脸作为在场线索，连续约 1 秒确认后计时；零人脸允许 3 秒宽限，超过后暂停；多人脸视为不确定，立即暂停。无身份识别，不证明工作行为，不含手机移动/另一部手机检测。
+- 初始实验参数：640×480 目标分析尺寸，每 500 ms 最多一次推理，KEEP_ONLY_LATEST 丢弃积压；实际分辨率由 CameraX 与设备协商。仅一个可靠人体作为在场线索，连续约 1 秒确认后计时；零人体候选允许 3 秒宽限，超过后暂停；多个可靠人体或仅有低分候选视为不确定，立即暂停。无身份识别，不证明工作行为，不含手机移动/另一部手机检测。
 - 采集到结果超过 1.5 秒、相邻结果间隔超过 1.5 秒、锁屏、失去焦点或 Activity 暂停均不补计未知区间。仅接收当前采集代次的新结果，旧异步回调无法跨暂停或新会话发放时间；确认窗口不追补。页面定时器只刷新和检查失联，不生成有效时间。
 - totalValidMs 保存历史有效工作；sessionValidMs 为当前轮有效进度，当前轮不足 600000 ms 时应得为零，达到后按 `floor(sessionValidMs / 60000) * 30000` 计算。每次观察仅加入本轮前后应得差额；sessionRewardMs 是本次显式开启期间累计成功奖励，只增不减，重置轮次时保留，用于同快照钱包差额计算。界面“本轮已获得”来自本轮应得值，不把以前轮次奖励算到当前轮。
 - 连续暂停 180000 ms 时仅重置 sessionValidMs（门槛及余量随之重置），保留 totalValidMs、sessionRewardMs 和余额。finish 后 begin 清除本次计数；inactive→active 不产生奖励差额。奖励与工作检查点、已有消费字段一次 commit，成功后再发布内存结果；负奖励差额拒绝，失败暂停相机。

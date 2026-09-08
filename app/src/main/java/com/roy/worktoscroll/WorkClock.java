@@ -28,18 +28,18 @@ public final class WorkClock {
         return -1;
     }
 
-    /** Exactly one face is a basic presence signal, not proof of work or identity. */
-    public long observe(long now, int faces) {
+    /** Exactly one reliably observed person is a presence signal, not proof of work or identity. */
+    public long observe(long now, int people) {
         if (last >= 0 && now <= last) return 0;
         if (last >= 0 && now - last > FRESH_MS) interrupt();
         long previous = last;
         last = now;
-        if (faces < 0 || faces > 1) {
+        if (people < 0 || people > 1) {
             presentSince = awaySince = -1;
             state = State.UNCERTAIN;
             return 0;
         }
-        if (faces == 1) {
+        if (people == 1) {
             if (state == State.GRACE && awaySince >= 0 && now >= awaySince + AWAY_GRACE_MS) {
                 long credit = previous < 0 ? 0 : Math.max(0, awaySince + AWAY_GRACE_MS - previous);
                 awaySince = -1;

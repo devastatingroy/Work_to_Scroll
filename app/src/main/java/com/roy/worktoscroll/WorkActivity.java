@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.util.AtomicFile;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -31,10 +33,19 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
-import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.face.FaceDetection;
-import com.google.mlkit.vision.face.FaceDetector;
-import com.google.mlkit.vision.face.FaceDetectorOptions;
+import com.google.mediapipe.framework.image.BitmapImageBuilder;
+import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.vision.core.RunningMode;
+import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector;
+import com.google.mediapipe.tasks.components.containers.Detection;
+import com.google.mediapipe.tasks.components.containers.Category;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.UUID;
+import org.json.JSONObject;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,7 +56,15 @@ public final class WorkActivity extends ComponentActivity {
     private final ExecutorService analyzer = Executors.newSingleThreadExecutor();
     private final WorkClock clock = new WorkClock();
     private LedgerStore ledger;
-    private FaceDetector detector;
+    private ObjectDetector detector;
+    private boolean modelReady, destroyed;
+    private final DetectionCue detectionCue = new DetectionCue();
+    private CuePlayer cuePlayer;
+    private boolean soundsEnabled;
+    private Button soundButton;
+    private long sampledAt = -1, processingMs, sequence, lastDiagnosticWrite;
+    private PersonObservation observation = new PersonObservation(-1, -1, 0);
+    private final String cameraSession = UUID.randomUUID().toString();
     private ProcessCameraProvider provider;
     private PreviewView preview;
     private TextView stateText;
@@ -60,15 +79,16 @@ public final class WorkActivity extends ComponentActivity {
     private Button start;
     private Button end;
     private boolean resumed;
-    private boolean capturing;
-    private int generation;
+    private volatile boolean capturing;
+    private volatile int generation;
     private long lastAnalysisElapsed;
-    private String message = "点击开始后授权摄像头，并调整机位。";
+    private String message = "正在准备人体检测模型…";
     private final Runnable tick = new Runnable() {
         @Override public void run() {
             if (capturing && !available()) pauseCamera("监测已暂停，回到工作页后点击继续。");
             long now = SystemClock.elapsedRealtime();
             long staleAt = clock.expire(now);
+            if (staleAt >= 0) { detectionCue.reset(); cuePlayer.stop(); }
             if (ledger.work.active()) {
                 WorkProgress base = staleAt >= 0 ? ledger.work.pause(staleAt, ledger.bootCount) : ledger.work;
                 WorkProgress next = capturing && (clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE)
@@ -78,6 +98,7 @@ public final class WorkActivity extends ComponentActivity {
                 }
             }
             render();
+            writeDiagnostic(false);
             handler.postDelayed(this, 250);
         }
     };
@@ -85,9 +106,9 @@ public final class WorkActivity extends ComponentActivity {
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
         ledger = LedgerStore.get(this);
-        detector = FaceDetection.getClient(new FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-            .setMinFaceSize(0.15f).build());
+        cuePlayer = new CuePlayer(this);
+        setVolumeControlStream(android.media.AudioManager.STREAM_MUSIC);
+        soundsEnabled = getSharedPreferences("ui_preferences", MODE_PRIVATE).getBoolean("presence_sound_enabled", true);
         LinearLayout column = CatUi.screen(this, true);
         CatUi.header(this, column, "猫总监工", "‹ 返回", () -> { pauseCamera("监测已暂停。"); finish(); }, "说明", this::showHelp, true);
         mascot = new ImageView(this);
@@ -130,12 +151,38 @@ public final class WorkActivity extends ComponentActivity {
         actions.addView(start, startParams);
         actions.addView(end, new LinearLayout.LayoutParams(0, -2, 1));
         CatUi.add(column, actions, -2, 20);
+        soundButton = CatUi.button(this, "", false, true, () -> {
+            soundsEnabled = !soundsEnabled;
+            getSharedPreferences("ui_preferences", MODE_PRIVATE).edit().putBoolean("presence_sound_enabled", soundsEnabled).apply();
+            detectionCue.reset(); cuePlayer.stop(); render(); writeDiagnostic(true);
+        });
+        CatUi.add(column, soundButton, -2, 8);
         label(column, "退出页面会暂停 · 已获时间保留", 12);
         if (ledger.work.active()) message = "上次工作已暂停，点击继续后重新确认在场。";
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() { pauseCamera("监测已暂停。"); finish(); }
         });
         render();
+        analyzer.execute(() -> {
+            try {
+                detector = ObjectDetector.createFromOptions(this, ObjectDetector.ObjectDetectorOptions.builder()
+                    .setBaseOptions(BaseOptions.builder().setModelAssetPath("efficientdet_lite0.tflite").build())
+                    .setRunningMode(RunningMode.IMAGE).setCategoryAllowlist(Collections.singletonList("person"))
+                    .setScoreThreshold(0.20f).setMaxResults(10).build());
+                handler.post(() -> {
+                    if (destroyed) return;
+                    modelReady = true;
+                    message = "人体检测已就绪，固定手机后点击开始/继续。";
+                    render(); writeDiagnostic(true);
+                });
+            } catch (Exception ex) {
+                handler.post(() -> {
+                    if (destroyed) return;
+                    message = "人体模型启动失败，请退出工作页后重试。";
+                    render(); writeDiagnostic(true);
+                });
+            }
+        });
     }
 
     private boolean available() {
@@ -163,7 +210,7 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private void startCamera() {
-        if (!available()) return;
+        if (!available() || !modelReady) return;
         if (!ledger.saveWork(ledger.work.begin(System.currentTimeMillis(), SystemClock.elapsedRealtime(), ledger.bootCount))) {
             message = "保存失败，尚未开始计时，请稍后重试。";
             render();
@@ -173,6 +220,8 @@ public final class WorkActivity extends ComponentActivity {
         if (service != null) service.prepareManualChange();
         else ledger.engine.resetObservation(System.currentTimeMillis());
         clock.interrupt();
+        detectionCue.reset(); cuePlayer.stop(); sampledAt = -1; sequence = 0;
+        observation = new PersonObservation(-1, -1, 0);
         capturing = true;
         message = "正在启动前置摄像头…";
         preview.setVisibility(View.VISIBLE);
@@ -183,8 +232,9 @@ public final class WorkActivity extends ComponentActivity {
             if (!capturing || token != generation || !available()) return;
             try {
                 provider = future.get();
-                if (!provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)) {
-                    pauseCamera("未找到可用前置摄像头，未累计时间。");
+                CameraSelector selector = CameraSelector.DEFAULT_FRONT_CAMERA;
+                if (!provider.hasCamera(selector)) {
+                    pauseCamera("前置摄像头不可用，请退出工作页后重试。");
                     return;
                 }
                 Preview cameraPreview = new Preview.Builder().build();
@@ -194,7 +244,7 @@ public final class WorkActivity extends ComponentActivity {
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
                 analysis.setAnalyzer(analyzer, frame -> analyze(frame, token));
                 provider.unbindAll();
-                provider.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, cameraPreview, analysis);
+                provider.bindToLifecycle(this, selector, cameraPreview, analysis);
                 message = "等待新画面，请调整机位。";
             } catch (Exception ex) {
                 pauseCamera("摄像头启动失败或被占用，请关闭其他相机应用后重试。");
@@ -207,27 +257,48 @@ public final class WorkActivity extends ComponentActivity {
     @SuppressLint("UnsafeOptInUsageError")
     private void analyze(ImageProxy frame, int token) {
         long capturedAt = SystemClock.elapsedRealtime();
-        if (capturedAt - lastAnalysisElapsed < 400 || frame.getImage() == null) {
+        if (!capturing || token != generation || capturedAt - lastAnalysisElapsed < 500 || frame.getImage() == null) {
             frame.close();
             return;
         }
         lastAnalysisElapsed = capturedAt;
+        Bitmap original = null, oriented = null;
+        MPImage input = null;
         try {
-            InputImage input = InputImage.fromMediaImage(frame.getImage(), frame.getImageInfo().getRotationDegrees());
-            detector.process(input).addOnCompleteListener(ContextCompat.getMainExecutor(this), task -> {
-                frame.close();
-                if (!capturing || token != generation || !available()) return;
-                if (!task.isSuccessful()) {
-                    pauseCamera("图像检测中断，点击继续重试。");
-                    return;
+            original = frame.toBitmap();
+            Matrix rotation = new Matrix();
+            rotation.postRotate(frame.getImageInfo().getRotationDegrees());
+            oriented = Bitmap.createBitmap(original, 0, 0, original.getWidth(), original.getHeight(), rotation, true);
+            input = new BitmapImageBuilder(oriented).build();
+            var result = detector.detect(input);
+            int candidates = 0, reliable = 0;
+            float score = 0;
+            for (Detection detection : result.detections()) {
+                for (Category category : detection.categories()) {
+                    if ("person".equals(category.categoryName())) {
+                        candidates++; score = Math.max(score, category.score());
+                        if (category.score() >= 0.50f) reliable++;
+                        break;
+                    }
                 }
+            }
+            PersonObservation observed = new PersonObservation(candidates, reliable, score);
+            long completed = SystemClock.elapsedRealtime();
+            handler.post(() -> {
+                if (!capturing || token != generation || !available()) return;
+                sampledAt = capturedAt; processingMs = completed - capturedAt; observation = observed; sequence++;
                 if (SystemClock.elapsedRealtime() - capturedAt > WorkClock.FRESH_MS) {
                     clock.interrupt();
+                    detectionCue.reset(); cuePlayer.stop();
+                    if (!ledger.saveWork(ledger.work.pause(capturedAt + WorkClock.FRESH_MS, ledger.bootCount))) {
+                        pauseCamera("保存失败，监测已暂停，请重试。");
+                        return;
+                    }
                     message = "画面处理延迟，已暂停计时。";
                     render();
                     return;
                 }
-                long delta = clock.observe(capturedAt, task.getResult().size());
+                long delta = clock.observe(capturedAt, observed.clockSignal());
                 WorkProgress before = ledger.work;
                 boolean counting = clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE;
                 WorkProgress next = before.observe(delta, counting, SystemClock.elapsedRealtime(), ledger.bootCount);
@@ -236,13 +307,19 @@ public final class WorkActivity extends ComponentActivity {
                     return;
                 }
                 showRewardFeedback(before, ledger.work);
+                if (soundsEnabled) cuePlayer.play(detectionCue.observe(capturedAt, SystemClock.elapsedRealtime(), observed.candidates, observed.reliable));
                 render();
+                writeDiagnostic(false);
             });
         } catch (RuntimeException ex) {
-            frame.close();
             handler.post(() -> {
                 if (capturing && token == generation) pauseCamera("图像检测异常，点击继续重试。");
             });
+        } finally {
+            if (input != null) input.close();
+            if (oriented != null && oriented != original) oriented.recycle();
+            if (original != null) original.recycle();
+            frame.close();
         }
     }
 
@@ -250,6 +327,7 @@ public final class WorkActivity extends ComponentActivity {
         capturing = false;
         generation++;
         clock.interrupt();
+        detectionCue.reset(); cuePlayer.stop(); sampledAt = -1;
         if (provider != null) provider.unbindAll();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         preview.setVisibility(View.INVISIBLE);
@@ -260,6 +338,7 @@ public final class WorkActivity extends ComponentActivity {
         message = next != ledger.work && !ledger.saveWork(next)
             ? "中断状态保存失败，监测已暂停，请重试。" : reason;
         render();
+        writeDiagnostic(true);
     }
 
     private void endWork() {
@@ -274,8 +353,8 @@ public final class WorkActivity extends ComponentActivity {
         if (capturing) {
             switch (clock.state()) {
                 case PRESENT: status = "观察到在场 · 正在累计"; break;
-                case GRACE: status = "暂未见人脸 · 短暂容错中"; break;
-                case AWAY: status = "持续未见人脸 · 计时暂停"; break;
+                case GRACE: status = "暂未见人物 · 短暂容错中"; break;
+                case AWAY: status = "持续未见人物 · 计时暂停"; break;
                 case CHECKING: status = "正在确认在场 · 尚未计时"; break;
                 case UNCERTAIN: status = "画面状态不确定 · 计时暂停"; break;
                 case PAUSED: status = "等待有效新画面 · 计时暂停"; break;
@@ -290,6 +369,8 @@ public final class WorkActivity extends ComponentActivity {
         setTextIfChanged(validTime, format(work.sessionValidMs()));
         setTextIfChanged(counters, "本轮已获得 " + MainActivity.duration(WorkProgress.earnedFor(work.sessionValidMs()), false) + " 娱乐");
         setTextIfChanged(start, capturing ? "暂停" : work.active() ? "继续监测" : "开始监测");
+        start.setEnabled(modelReady);
+        setTextIfChanged(soundButton, soundsEnabled ? "提示音：开" : "提示音：关");
         end.setEnabled(work.active());
         previewHint.setVisibility(capturing ? View.GONE : View.VISIBLE);
         int pose = capturing && clock.state() == WorkClock.State.AWAY ? R.drawable.cat_away
@@ -329,7 +410,7 @@ public final class WorkActivity extends ComponentActivity {
 
     private void showHelp() {
         new AlertDialog.Builder(this).setTitle("让猫总看到你")
-            .setMessage("固定手机，让前置摄像头看到你的脸，点击开始监测。\n\n只观察是否在场，不证明正在工作。低头、侧脸或暗光可能影响检测；持续未见人脸时暂停。\n\n工作时保持亮屏；切出、锁屏、打开说明或采集中断会暂停，返回后手动继续。\n\n每轮先累计 10 分钟得 5 分钟娱乐，之后每分钟得 30 秒。连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度，重新过 10 分钟门槛。已到账奖励和历史工作保留，主动结束后新一轮从零开始。\n\n画面仅在本机处理，不保存、不上传。")
+            .setMessage("使用前置摄像头朝向你的肩部和躯干，手机可放在侧后方。无需露出人脸，背影和椅背遮挡效果仍在试用验证。\n\n新结果未见人物时播“滴～暂时离开”，看到可靠人物时播“欢迎归来”；同状态不重复，声音反映检测变化，不等于计时立即暂停或恢复。声音随媒体音量，可在工作页关闭。多人或检测不确定时暂停计时。\n\n只观察是否在场，不证明正在工作，不识别身份或另一部手机。工作时保持亮屏；切出、锁屏、打开说明或采集中断会暂停，返回后手动继续。\n\n每轮先累计 10 分钟得 5 分钟娱乐，之后每分钟得 30 秒。连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度。已到账奖励和历史工作保留。\n\n画面仅在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).show();
     }
 
@@ -368,8 +449,35 @@ public final class WorkActivity extends ComponentActivity {
         super.onPause();
     }
     @Override protected void onDestroy() {
-        detector.close();
+        destroyed = true;
+        cuePlayer.stop();
+        analyzer.execute(() -> { if (detector != null) detector.close(); });
         analyzer.shutdown();
         super.onDestroy();
+    }
+
+    private void writeDiagnostic(boolean force) {
+        long now = SystemClock.elapsedRealtime();
+        if (!force && now - lastDiagnosticWrite < 1000) return;
+        lastDiagnosticWrite = now;
+        boolean fresh = capturing && sampledAt >= 0 && now - sampledAt <= WorkClock.FRESH_MS;
+        AtomicFile file = new AtomicFile(new File(getFilesDir(), "camera-status.json"));
+        FileOutputStream stream = null;
+        try {
+            JSONObject data = new JSONObject();
+            data.put("schema", 1).put("session", cameraSession).put("generation", generation)
+                .put("heartbeat_elapsed_ms", now).put("captured_elapsed_ms", sampledAt).put("sequence", sequence)
+                .put("running", capturing).put("model_ready", modelReady)
+                .put("camera_permission", checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+                .put("lens", "front")
+                .put("scope", "whole_frame_person_trial").put("state", fresh ? clock.state().name() : "NO_FRESH_RESULT")
+                .put("person_candidates", fresh ? observation.candidates : -1)
+                .put("reliable_people", fresh ? observation.reliable : -1).put("max_score", fresh ? observation.score : 0)
+                .put("processing_ms", processingMs).put("sounds_enabled", soundsEnabled)
+                .put("audio_last_cue", cuePlayer.lastCue()).put("audio_status", cuePlayer.status())
+                .put("audio_events", cuePlayer.events()).put("media_volume", cuePlayer.mediaVolume())
+                .put("detail", message);
+            stream = file.startWrite(); stream.write(data.toString().getBytes(StandardCharsets.UTF_8)); file.finishWrite(stream);
+        } catch (Exception ex) { if (stream != null) file.failWrite(stream); }
     }
 }
