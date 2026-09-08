@@ -12,6 +12,9 @@ import android.app.usage.UsageStatsManager;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.os.Handler;
 import android.os.Build;
 import android.os.IBinder;
@@ -40,6 +43,7 @@ public final class ProtectionService extends Service {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private LedgerStore ledger;
     private View blocker;
+    private AudioFocusRequest blockerAudioFocus;
     private long lastWall;
     private long lastElapsed;
     private long dismissUntilElapsed;
@@ -227,29 +231,12 @@ public final class ProtectionService extends Service {
 
     private void showBlocker() {
         if (blocker != null) return;
-        LinearLayout panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setGravity(Gravity.CENTER);
-        panel.setClickable(true);
-        int pad = Math.round(28 * getResources().getDisplayMetrics().density);
-        panel.setPadding(pad, pad * 2, pad, pad * 2);
-        panel.setBackgroundColor(Color.rgb(244, 246, 241));
-        addText(panel, getString(R.string.app_name), 18);
-        addText(panel, "娱乐时间已用完", 30);
-        addText(panel, "工作 10 分钟，可获得 5 分钟娱乐时间。\n\n当前为 Gate 1 测试版，请回到应用手动加入测试余额。", 17);
-        Button open = new Button(this);
-        open.setText(R.string.return_to_app);
-        open.setAllCaps(false);
-        open.setOnClickListener(v -> {
+        View panel = CatUi.blocker(this, () -> {
             // Start directly from the visible, user-clicked overlay. Sending HOME first races
             // the activity launch and may leave the user on the launcher instead of our app.
             startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
             // MainActivity.onResume removes the blocker only after the destination is visible.
-        });
-        panel.addView(open, new LinearLayout.LayoutParams(-1, -2));
-        Button home = new Button(this);
-        home.setText("回到桌面");
-        home.setOnClickListener(v -> {
+        }, () -> {
             try {
                 startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -258,7 +245,6 @@ public final class ProtectionService extends Service {
                 android.widget.Toast.makeText(this, "请使用系统主页手势返回桌面", android.widget.Toast.LENGTH_LONG).show();
             }
         });
-        panel.addView(home, new LinearLayout.LayoutParams(-1, -2));
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
             -1, -1, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             // Take touches inside the full overlay, but keep focus on the underlying activity
@@ -268,25 +254,84 @@ public final class ProtectionService extends Service {
         params.setTitle(getString(R.string.app_name) + " blocker");
         getSystemService(WindowManager.class).addView(panel, params);
         blocker = panel;
+        requestBlockerAudioFocus();
         ledger.blocks++;
         ledger.save();
         Log.i("WTS_OVERLAY", "BLOCK_SHOWN elapsed=" + SystemClock.elapsedRealtime());
+        // The visible overlay is immediate protection and a fallback if the OEM refuses
+        // the activity launch. Only the new page's actual window focus removes it.
+        panel.getViewTreeObserver().addOnDrawListener(new android.view.ViewTreeObserver.OnDrawListener() {
+            private boolean queued;
+            @Override public void onDraw() {
+                if (queued) return;
+                queued = true;
+                panel.post(() -> panel.getViewTreeObserver().removeOnDrawListener(this));
+                // addView/post alone races Surface visibility: HyperOS accepts the visible
+                // window route but rejects the SAW-only route. Allow the drawn frame to commit.
+                panel.postDelayed(() -> requestBlockerPage(panel), 250);
+            }
+        });
     }
 
-    private void addText(LinearLayout panel, String message, int size) {
-        TextView text = new TextView(this);
-        text.setText(message);
-        text.setTextSize(size);
-        text.setTextColor(Color.rgb(30, 58, 47));
-        text.setGravity(Gravity.CENTER);
-        text.setPadding(0, 12, 0, 28);
-        panel.addView(text, new LinearLayout.LayoutParams(-1, -2));
+    private void requestBlockerPage(View panel) {
+            if (blocker != panel || !ledger.enabled || ledger.engine.balanceMs != 0
+                    || !ledger.engine.targetActive) return;
+            try {
+                startActivity(new Intent(this, BlockerActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_NO_ANIMATION));
+                Log.i("WTS_BLOCK_PAGE", "PAGE_REQUESTED");
+                handler.postDelayed(() -> {
+                    if (blocker == panel) Log.w("WTS_BLOCK_PAGE", "PAGE_NOT_VISIBLE_OVERLAY_RETAINED");
+                }, 2_000);
+            } catch (RuntimeException ex) {
+                Log.w("WTS_BLOCK_PAGE", "PAGE_START_FAILED " + ex.getClass().getSimpleName());
+            }
     }
 
     private void hideBlocker() {
+        releaseBlockerAudioFocus();
         if (blocker == null) return;
         try { getSystemService(WindowManager.class).removeView(blocker); }
         finally { blocker = null; }
+    }
+
+    private void requestBlockerAudioFocus() {
+        // A non-focusable overlay leaves the underlying video running. GAIN signals a
+        // lasting media interruption (not ducking), with system fade-out on supported
+        // Android players. This is shared audio focus, not a package-specific pause API.
+        // Request once per visible blocker: never fight calls or other focus owners.
+        try {
+            AudioFocusRequest request = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+                .setAcceptsDelayedFocusGain(false)
+                .setOnAudioFocusChangeListener(change ->
+                    Log.i("WTS_AUDIO", "FOCUS_CHANGE value=" + change), handler)
+                .build();
+            blockerAudioFocus = request;
+            int result = getSystemService(AudioManager.class).requestAudioFocus(request);
+            Log.i("WTS_AUDIO", "BLOCK_FOCUS_REQUEST result=" + result);
+            if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) releaseBlockerAudioFocus();
+        } catch (RuntimeException ex) {
+            // Audio failure must not remove the visual blocker or interrupt accounting.
+            Log.w("WTS_AUDIO", "BLOCK_FOCUS_FAILED " + ex.getClass().getSimpleName());
+            releaseBlockerAudioFocus();
+        }
+    }
+
+    private void releaseBlockerAudioFocus() {
+        AudioFocusRequest request = blockerAudioFocus;
+        if (request == null) return;
+        blockerAudioFocus = null;
+        try {
+            int result = getSystemService(AudioManager.class).abandonAudioFocusRequest(request);
+            Log.i("WTS_AUDIO", "BLOCK_FOCUS_RELEASE result=" + result);
+        } catch (RuntimeException ex) {
+            Log.w("WTS_AUDIO", "BLOCK_FOCUS_RELEASE_FAILED " + ex.getClass().getSimpleName());
+        }
+        // Never send PLAY on release: earning credit/returning home is not a play action.
     }
 
     @Override public void onDestroy() {

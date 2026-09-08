@@ -3,9 +3,11 @@ package com.roy.worktoscroll;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.KeyguardManager;
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,11 +15,13 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Size;
 import android.view.View;
+import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
 import androidx.camera.core.CameraSelector;
@@ -48,6 +52,11 @@ public final class WorkActivity extends ComponentActivity {
     private TextView counters;
     private TextView validTime;
     private TextView rewardFeedback;
+    private TextView previewHint;
+    private ImageView mascot;
+    private final android.util.SparseArray<Bitmap> catImages = new android.util.SparseArray<>();
+    private int mascotResource;
+    private long rewardUntilElapsed;
     private Button start;
     private Button end;
     private boolean resumed;
@@ -58,7 +67,16 @@ public final class WorkActivity extends ComponentActivity {
     private final Runnable tick = new Runnable() {
         @Override public void run() {
             if (capturing && !available()) pauseCamera("监测已暂停，回到工作页后点击继续。");
-            clock.expire(SystemClock.elapsedRealtime());
+            long now = SystemClock.elapsedRealtime();
+            long staleAt = clock.expire(now);
+            if (ledger.work.active()) {
+                WorkProgress base = staleAt >= 0 ? ledger.work.pause(staleAt, ledger.bootCount) : ledger.work;
+                WorkProgress next = capturing && (clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE)
+                    ? base.refresh(now, ledger.bootCount) : base.pause(now, ledger.bootCount);
+                if (next != ledger.work && !ledger.saveWork(next)) {
+                    pauseCamera("进度保存失败，监测已暂停，请重试。");
+                }
+            }
             render();
             handler.postDelayed(this, 250);
         }
@@ -70,45 +88,49 @@ public final class WorkActivity extends ComponentActivity {
         detector = FaceDetection.getClient(new FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
             .setMinFaceSize(0.15f).build());
-        ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(Color.BLACK);
-        LinearLayout column = new LinearLayout(this);
-        column.setOrientation(LinearLayout.VERTICAL);
-        int pad = dp(20);
-        column.setPadding(pad, pad, pad, pad);
-        scroll.addView(column);
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(scroll, (view, insets) -> {
-            androidx.core.graphics.Insets bars = insets.getInsets(
-                androidx.core.view.WindowInsetsCompat.Type.systemBars()
-                    | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
-            column.setPadding(pad + bars.left, pad + bars.top, pad + bars.right, pad + bars.bottom);
-            return insets;
-        });
-        setContentView(scroll);
-        label(column, "摄像头工作计时", 26);
-        label(column, "首次累计 10 分钟得 5 分钟，此后每分钟得 30 秒", 16);
-        stateText = label(column, "", 21);
-        label(column, "本次有效时间", 16);
-        validTime = label(column, "", 36);
+        LinearLayout column = CatUi.screen(this, true);
+        CatUi.header(this, column, "猫总监工", "‹ 返回", () -> { pauseCamera("监测已暂停。"); finish(); }, "说明", this::showHelp, true);
+        mascot = new ImageView(this);
+        mascot.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        mascot.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        CatUi.add(column, mascot, 132, 8);
+        label(column, "本轮有效工作", 16);
+        validTime = CatUi.text(this, "00:00", 62, CatUi.LIGHT, true);
+        validTime.setMaxLines(1);
+        validTime.setAutoSizeTextTypeUniformWithConfiguration(30, 62, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
+        CatUi.add(column, validTime, 84, 0);
+        stateText = label(column, "", 15);
+        stateText.setMinHeight(dp(48));
+        stateText.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         counters = label(column, "", 17);
         rewardFeedback = label(column, "", 15);
-        rewardFeedback.setMinHeight(dp(54));
+        rewardFeedback.setTextColor(0xFFFFC1A6);
+        rewardFeedback.setMinHeight(dp(48));
         rewardFeedback.setVisibility(View.INVISIBLE);
         preview = new PreviewView(this);
         preview.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         preview.setScaleType(PreviewView.ScaleType.FIT_CENTER);
         preview.setBackgroundColor(Color.BLACK);
         preview.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        column.addView(preview, new LinearLayout.LayoutParams(-1, dp(240)));
-        start = button(column, "开始工作", this::requestStart);
-        end = button(column, "结束工作并保留奖励", this::endWork);
-        button(column, "返回首页", () -> { pauseCamera("监测已暂停。"); finish(); });
-        label(column, "把手机固定在桌面，让前置摄像头看到你的脸。\n"
-            + "仅做在场观察，不能证明正在工作，也不识别身份或另一部手机。"
-            + "低头、侧脸、暗光可能影响检测。\n"
-            + "短暂未见人脸有 3 秒容错；持续离开暂停，重新在场约 1 秒后继续。\n"
-            + "工作时自动保持亮屏；切出、锁屏或采集中断即暂停，返回后手动继续。\n"
-            + "画面只在手机内处理，不保存录像、照片或上传画面。", 14);
+        FrameLayout previewFrame = new FrameLayout(this);
+        previewFrame.setBackground(CatUi.shape(this, 0xFF151513, 14, Color.TRANSPARENT));
+        previewFrame.setClipToOutline(true);
+        previewFrame.addView(preview, new FrameLayout.LayoutParams(-1, -1));
+        previewHint = CatUi.text(this, "摄像头已关闭", 14, 0xFFB6B6AD, false);
+        previewFrame.addView(previewHint, new FrameLayout.LayoutParams(-1, -1));
+        LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(dp(210), dp(130));
+        previewParams.gravity = Gravity.CENTER_HORIZONTAL;
+        previewParams.topMargin = dp(4);
+        column.addView(previewFrame, previewParams);
+        LinearLayout actions = new LinearLayout(this);
+        start = CatUi.button(this, "开始监测", false, true, this::requestStart);
+        end = CatUi.button(this, "结束工作", false, true, this::endWork);
+        LinearLayout.LayoutParams startParams = new LinearLayout.LayoutParams(0, -2, 1);
+        startParams.rightMargin = dp(10);
+        actions.addView(start, startParams);
+        actions.addView(end, new LinearLayout.LayoutParams(0, -2, 1));
+        CatUi.add(column, actions, -2, 20);
+        label(column, "退出页面会暂停 · 已获时间保留", 12);
         if (ledger.work.active()) message = "上次工作已暂停，点击继续后重新确认在场。";
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() { pauseCamera("监测已暂停。"); finish(); }
@@ -142,7 +164,7 @@ public final class WorkActivity extends ComponentActivity {
 
     private void startCamera() {
         if (!available()) return;
-        if (!ledger.saveWork(ledger.work.begin(System.currentTimeMillis()))) {
+        if (!ledger.saveWork(ledger.work.begin(System.currentTimeMillis(), SystemClock.elapsedRealtime(), ledger.bootCount))) {
             message = "保存失败，尚未开始计时，请稍后重试。";
             render();
             return;
@@ -206,14 +228,14 @@ public final class WorkActivity extends ComponentActivity {
                     return;
                 }
                 long delta = clock.observe(capturedAt, task.getResult().size());
-                if (delta > 0) {
-                    WorkProgress before = ledger.work;
-                    if (!ledger.saveWork(before.advance(delta))) {
-                        pauseCamera("保存失败，已暂停；未确认的时间不会发放奖励。");
-                        return;
-                    }
-                    showRewardFeedback(before, ledger.work);
+                WorkProgress before = ledger.work;
+                boolean counting = clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE;
+                WorkProgress next = before.observe(delta, counting, SystemClock.elapsedRealtime(), ledger.bootCount);
+                if (next != before && !ledger.saveWork(next)) {
+                    pauseCamera("保存失败，已暂停；未确认的时间不会发放奖励。");
+                    return;
                 }
+                showRewardFeedback(before, ledger.work);
                 render();
             });
         } catch (RuntimeException ex) {
@@ -233,12 +255,15 @@ public final class WorkActivity extends ComponentActivity {
         preview.setVisibility(View.INVISIBLE);
         rewardFeedback.animate().cancel();
         rewardFeedback.setVisibility(View.INVISIBLE);
-        message = reason;
+        rewardUntilElapsed = 0;
+        WorkProgress next = ledger.work.pause(SystemClock.elapsedRealtime(), ledger.bootCount);
+        message = next != ledger.work && !ledger.saveWork(next)
+            ? "中断状态保存失败，监测已暂停，请重试。" : reason;
         render();
     }
 
     private void endWork() {
-        pauseCamera("本次工作已结束，奖励和不足下次兑换的余量已保留。");
+        pauseCamera("本次工作已结束，已到账奖励保留；下次重新累计 10 分钟。");
         if (!ledger.saveWork(ledger.work.finish())) message = "结束状态保存失败，计时已暂停，请重试结束。";
         render();
     }
@@ -256,31 +281,56 @@ public final class WorkActivity extends ComponentActivity {
                 case PAUSED: status = "等待有效新画面 · 计时暂停"; break;
             }
         }
-        setTextIfChanged(stateText, status);
         WorkProgress work = ledger.work;
+        long remaining = work.resetRemainingMs(SystemClock.elapsedRealtime());
+        if (remaining == 0) status += "\n中断已满 3 分钟，本轮重置；已到账奖励保留";
+        else if (remaining > 0 && work.sessionValidMs() > 0)
+            status += "\n还有 " + format(remaining + 999) + "，本轮进度将重置";
+        setTextIfChanged(stateText, status);
         setTextIfChanged(validTime, format(work.sessionValidMs()));
-        setTextIfChanged(counters, "本次获得娱乐时间  " + format(work.sessionRewardMs())
-            + "\n距下次奖励还需有效工作  " + ((work.nextRewardInMs() + 59_999) / 60_000) + " 分钟以内"
-            + "\n可用娱乐余额  " + format(ledger.engine.balanceMs)
-            + (ledger.workUpgradeCreditMs > 0 ? "\n升级补齐  " + format(ledger.workUpgradeCreditMs) + "（已计入余额）" : ""));
-        setTextIfChanged(start, capturing ? "暂停监测" : work.active() ? "继续监测" : "开始工作");
+        setTextIfChanged(counters, "本轮已获得 " + MainActivity.duration(WorkProgress.earnedFor(work.sessionValidMs()), false) + " 娱乐");
+        setTextIfChanged(start, capturing ? "暂停" : work.active() ? "继续监测" : "开始监测");
         end.setEnabled(work.active());
+        previewHint.setVisibility(capturing ? View.GONE : View.VISIBLE);
+        int pose = capturing && clock.state() == WorkClock.State.AWAY ? R.drawable.cat_away
+            : capturing && SystemClock.elapsedRealtime() < rewardUntilElapsed ? R.drawable.cat_reward : R.drawable.cat_work;
+        setMascot(pose);
     }
 
     private void showRewardFeedback(WorkProgress before, WorkProgress after) {
         long reward = after.sessionRewardMs() - before.sessionRewardMs();
         if (reward <= 0) return;
         String feedback = reward == WorkProgress.REWARD_NODE_MS ? "+5 分钟娱乐时间" : "+30 秒娱乐时间";
-        if (after.totalValidMs() / WorkProgress.WORK_NODE_MS > before.totalValidMs() / WorkProgress.WORK_NODE_MS) {
-            feedback = "累计有效工作 " + after.totalValidMs() / WorkProgress.MINUTE_MS
-                + " 分钟 · 已挣得 " + format(WorkProgress.earnedFor(after.totalValidMs())) + " 娱乐时间";
+        if (after.sessionValidMs() / WorkProgress.WORK_NODE_MS > before.sessionValidMs() / WorkProgress.WORK_NODE_MS) {
+            feedback = "本轮有效工作 " + after.sessionValidMs() / WorkProgress.MINUTE_MS
+                + " 分钟 · 本轮已挣得 " + format(WorkProgress.earnedFor(after.sessionValidMs())) + " 娱乐时间";
         }
         rewardFeedback.animate().cancel();
-        rewardFeedback.setText(feedback);
+        rewardFeedback.setText("准玩 · " + feedback);
+        rewardUntilElapsed = SystemClock.elapsedRealtime() + 2800;
         rewardFeedback.setAlpha(1f);
         rewardFeedback.setVisibility(View.VISIBLE);
         rewardFeedback.animate().alpha(0f).setStartDelay(2200).setDuration(600)
             .withEndAction(() -> rewardFeedback.setVisibility(View.INVISIBLE)).start();
+    }
+
+    private void setMascot(int resource) {
+        if (mascotResource == resource) return;
+        Bitmap bitmap = catImages.get(resource);
+        if (bitmap == null) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 4;
+            bitmap = BitmapFactory.decodeResource(getResources(), resource, options);
+            catImages.put(resource, bitmap);
+        }
+        mascot.setImageBitmap(bitmap);
+        mascotResource = resource;
+    }
+
+    private void showHelp() {
+        new AlertDialog.Builder(this).setTitle("让猫总看到你")
+            .setMessage("固定手机，让前置摄像头看到你的脸，点击开始监测。\n\n只观察是否在场，不证明正在工作。低头、侧脸或暗光可能影响检测；持续未见人脸时暂停。\n\n工作时保持亮屏；切出、锁屏、打开说明或采集中断会暂停，返回后手动继续。\n\n每轮先累计 10 分钟得 5 分钟娱乐，之后每分钟得 30 秒。连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度，重新过 10 分钟门槛。已到账奖励和历史工作保留，主动结束后新一轮从零开始。\n\n画面仅在本机处理，不保存、不上传。")
+            .setPositiveButton("知道了", null).show();
     }
 
     private static void setTextIfChanged(TextView view, String text) {
@@ -296,20 +346,9 @@ public final class WorkActivity extends ComponentActivity {
         TextView view = new TextView(this);
         view.setText(text);
         view.setTextSize(size);
+        view.setGravity(Gravity.CENTER);
         view.setTextColor(size >= 19 ? Color.rgb(214, 221, 216) : Color.rgb(173, 184, 176));
         view.setPadding(0, dp(6), 0, dp(8));
-        parent.addView(view, new LinearLayout.LayoutParams(-1, -2));
-        return view;
-    }
-    private Button button(LinearLayout parent, String text, Runnable action) {
-        Button view = new Button(this);
-        view.setText(text);
-        view.setAllCaps(false);
-        view.setBackgroundTintList(ColorStateList.valueOf(Color.rgb(29, 35, 31)));
-        view.setTextColor(new ColorStateList(
-            new int[][] {new int[] {-android.R.attr.state_enabled}, new int[] {}},
-            new int[] {Color.rgb(110, 120, 113), Color.rgb(214, 221, 216)}));
-        view.setOnClickListener(v -> action.run());
         parent.addView(view, new LinearLayout.LayoutParams(-1, -2));
         return view;
     }

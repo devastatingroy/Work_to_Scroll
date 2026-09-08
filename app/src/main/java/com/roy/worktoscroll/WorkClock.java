@@ -18,8 +18,14 @@ public final class WorkClock {
         state = State.PAUSED;
     }
 
-    public void expire(long now) {
-        if (last >= 0 && now - last > FRESH_MS) interrupt();
+    /** Returns when freshness expired, so a delayed UI tick cannot restart the pause deadline. */
+    public long expire(long now) {
+        if (last >= 0 && now - last > FRESH_MS) {
+            long expiredAt = last + FRESH_MS;
+            interrupt();
+            return expiredAt;
+        }
+        return -1;
     }
 
     /** Exactly one face is a basic presence signal, not proof of work or identity. */

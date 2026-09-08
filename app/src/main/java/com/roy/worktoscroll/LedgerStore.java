@@ -42,13 +42,15 @@ final class LedgerStore {
         workUpgradeCreditMs = prefs.getLong("work_upgrade_credit_ms", 0);
         work = new WorkProgress(prefs.getLong("work_total_ms", 0),
             prefs.getLong("work_session_ms", 0), prefs.getLong("work_reward_ms", 0),
-            prefs.getLong("work_started_wall_ms", 0), prefs.getBoolean("work_active", false));
+            prefs.getLong("work_started_wall_ms", 0), prefs.getBoolean("work_active", false),
+            prefs.getLong("work_interrupted_elapsed_ms", -1), prefs.getLong("work_checkpoint_elapsed_ms", -1),
+            prefs.getInt("work_checkpoint_boot_count", -1));
         if (prefs.getInt("boot_count", bootCount) != bootCount
                 || now < engine.cursorMs || now - engine.cursorMs > 6 * 60 * 60_000L) {
             engine.resetObservation(now);
             note = "设备重启或监测长时间中断：余额已保留，中断期间的用量未核实。";
         }
-        ensureRewardRules();
+        if (ensureRewardRules()) saveWork(work.recover(android.os.SystemClock.elapsedRealtime(), bootCount));
     }
 
     boolean setProtectionEnabled(boolean value) {
@@ -64,21 +66,19 @@ final class LedgerStore {
     }
 
     private boolean ensureRewardRules() {
-        if (rewardRuleVersion >= 2) return true;
-        long credit = WorkProgress.legacyUpgradeCreditFor(work.totalValidMs());
-        long balance = Math.addExact(engine.balanceMs, credit);
-        if (!writeSnapshot(work, balance, 2, credit)) return false;
-        engine.balanceMs = balance;
-        workUpgradeCreditMs = credit;
-        rewardRuleVersion = 2;
+        if (rewardRuleVersion >= 3) return true;
+        WorkProgress migrated = work.migrateRoundRules(android.os.SystemClock.elapsedRealtime(), bootCount);
+        if (!writeSnapshot(migrated, engine.balanceMs, 3, workUpgradeCreditMs)) return false;
+        work = migrated;
+        rewardRuleVersion = 3;
         return true;
     }
 
     /** All callers are on the main thread, as is the protection service. */
     boolean saveWork(WorkProgress next) {
-        if (!ensureRewardRules()) return false;
-        long reward = next.active() && work.active()
-            ? next.sessionRewardMs() - work.sessionRewardMs() : 0;
+        WorkProgress beforeRules = work;
+        if (!ensureRewardRules() || beforeRules != work) return false;
+        long reward = next.rewardSince(work);
         long newBalance = Math.addExact(engine.balanceMs, reward);
         if (!writeSnapshot(next, newBalance)) return false;
         // Publish only after the balance and work checkpoint have committed together.
@@ -105,7 +105,10 @@ final class LedgerStore {
             .putLong("work_session_ms", progress.sessionValidMs())
             .putLong("work_reward_ms", progress.sessionRewardMs())
             .putLong("work_started_wall_ms", progress.startedWallMs())
-            .putBoolean("work_active", progress.active()).commit();
+            .putBoolean("work_active", progress.active())
+            .putLong("work_interrupted_elapsed_ms", progress.interruptedAtElapsedMs())
+            .putLong("work_checkpoint_elapsed_ms", progress.checkpointElapsedMs())
+            .putInt("work_checkpoint_boot_count", progress.checkpointBootCount()).commit();
         return storageHealthy;
     }
 }

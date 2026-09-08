@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WorkToScroll · 图标设计探索</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#f7f5ee;color:#252525;font:16px/1.7 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1160px;margin:auto;padding:48px 30px}small,.muted{color:#686760}h1{font-size:36px;line-height:1.25}h2{margin-top:42px;font-size:24px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.card{background:white;border:1px solid #e4e1d7;border-radius:20px;padding:22px}.card img{display:block;width:100%;height:150px;object-fit:contain;margin-bottom:18px}.card h3{margin:0}.card p{font-size:14px}.card a{font-size:13px;color:#6854b7}.board{width:100%;display:block;border-radius:22px}.options{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}.pill{display:inline-block;background:#ffe2d8;padding:3px 12px;border-radius:30px}.current{display:flex;align-items:center;gap:20px;background:#eeece4;padding:22px;border-radius:18px}.current svg{flex:none}a{color:#5d46a4}footer{margin-top:36px;color:#686760;font-size:13px}@media(max-width:760px){main{padding:24px 18px}.grid,.options{grid-template-columns:1fr 1fr}h1{font-size:28px}.options .card:last-child{grid-column:1/-1}}@media(max-width:440px){.grid,.options{grid-template-columns:1fr}}
+</style><main>
+<small>APP ICON ARCHIVE · 2026.09.08 · 标准沙漏已采用，其余为备选</small>
+<h1>当前采用：C 标准沙漏修正版。</h1>
+<p>Roy 已确认先使用这版。紫底与暖白票券保留，沙漏改为两端对应、收腰清楚的标准形状；已进入 0.3.3-hourglass-icon 并覆盖安装。下方其他方案归档为备选，不自动切换。</p>
+<img class="board" style="max-width:440px;margin:24px auto" src="app-icon-c-hourglass-v2.png" alt="原 C 修正版：标准沙漏与暖白票券">
+<p class="muted">内置 imagegen 编辑稿，已目视检查大图；尚未经过真实手机启动器验收。</p>
+<h2>备选归档：C2 / C3</h2>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin:28px 0">
+<article><img class="board" src="app-icon-c2-time-play.png" alt="C2 时间环包住播放键"><h3>C2 · 时间环＋播放键</h3><p>时间与娱乐的组合更直接，轮廓简洁；风险是接近普通计时或播放器图标。</p><div style="display:flex;align-items:center;gap:20px"><img src="app-icon-c2-time-play.png" width="64" height="64" style="border-radius:14px" alt="C2 64 CSS像素"><img src="app-icon-c2-time-play.png" width="48" height="48" style="border-radius:11px" alt="C2 48 CSS像素"></div></article>
+<article><img class="board" src="app-icon-c3-earned-ticket.png" alt="C3 对勾播放箭头融入娱乐票券"><h3>C3 · 完成后获得娱乐票券</h3><p>更延续原 C 的票券身份，对勾与播放箭头合为一个图形；工作换娱乐的含义仍需首次理解测试。</p><div style="display:flex;align-items:center;gap:20px"><img src="app-icon-c3-earned-ticket.png" width="64" height="64" style="border-radius:14px" alt="C3 64 CSS像素"><img src="app-icon-c3-earned-ticket.png" width="48" height="48" style="border-radius:11px" alt="C3 48 CSS像素"></div></article>
+</div>
+<p class="muted">新增两图由内置 imagegen 分别生成，小图为浏览器 64/48 CSS 像素显示，尚未经实际手机启动器验收。</p>
+<div class="current"><svg width="64" height="64" viewBox="0 0 48 48"><path fill="#236B55" d="M0 0h48v48H0z"/><path fill="none" stroke="white" stroke-width="3" d="M24 9a15 15 0 1 0 0 30a15 15 0 1 0 0-30M24 14v11l7 4"/></svg><div><b>旧图标参考：深绿色底＋白色时钟</b><br>按旧 Android 资源复现；桌面图标已替换，原资源继续供通知使用。这里不是手机启动器截图。</div></div>
+<h2>同类图标：四种可借鉴的方法</h2>
+<p class="muted">图像来自官方品牌页或 App Store 的公开图像样本，需联网加载；商店、版本与系统主题可能不同。以下不是市场占比或效果排名。</p>
+<div class="grid">
+<div class="card"><img src="https://brandkit.opal.so/App_Icon.png" alt="Opal 官方黑底白色几何环"><h3>Opal</h3><p><b>抽象品牌符号</b><br>黑底、白色不规则环。可以借鉴强反差与单一轮廓；用途主要由名称和后续体验建立。</p><a href="https://brandkit.opal.so/" target="_blank" rel="noopener">官方品牌资料 ↗</a></div>
+<div class="card"><img src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/62/6c/14/626c1436-8c88-c72b-a51f-2c364cebebd5/AppIcon-0-0-1x_U007emarketing-0-11-0-sRGB-85-220.png/1200x630wa.png" alt="ScreenZen 叠石版本参考"><h3>ScreenZen</h3><p><b>平静与平衡意象</b><br>深底配蓝紫色叠石。也能检索到圆环旧样本，不能混称同一版本；可借鉴少量大形状。</p><a href="https://apps.apple.com/us/app/screenzen-screen-time-control/id1541027222" target="_blank" rel="noopener">商店来源 ↗</a></div>
+<div class="card"><img src="https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/01/e7/db/01e7dbee-dbc6-494a-e15a-cf66923e1be2/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/1200x630wa.png" alt="Forest 幼苗图标参考"><h3>Forest</h3><p><b>成长与成果意象</b><br>绿色幼苗＋土壤。图标呼应种树的产品体验，可以借鉴“让主机制留下一个画面”。</p><a href="https://apps.apple.com/us/app/forest-focus-for-productivity/id866450515" target="_blank" rel="noopener">商店来源 ↗</a></div>
+<div class="card"><img src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/1f/42/11/1f42114c-e808-ecef-402e-095df16865f4/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/1200x630wa.png" alt="Focus Friend 豆子角色与沙漏图标参考"><h3>Focus Friend</h3><p><b>角色＋功能提示</b><br>豆子角色搭配沙漏。最接近猫总路线：先记住角色，再在使用中理解它的作用。</p><a href="https://apps.apple.com/us/app/focus-friend-by-hank-green/id6742278016" target="_blank" rel="noopener">商店来源 ↗</a></div>
+</div>
+<h2>备选归档：首轮 A / B / 原 C</h2>
+<p class="muted">由内置 imagegen 基于现有猫总素材制作。下排为生成的小图示意，并非精确缩放测试。字母只标识候选，不进入应用图标。</p>
+<img class="board" src="app-icon-candidates-v1.png" alt="A 珊瑚橙立体猫总，B 黄色扁平猫总，C 紫色时间兑换券">
+<div class="options">
+<div class="card"><span class="pill">首轮参考</span><h3>A · 立体猫总</h3><p>适合继续以猫总作为主要体验。与首页同一角色，橙底、黑白脸和金色眼睛形成反差。</p><p>若恢复此方向：减少毛发细节，强化眼镜和眼神。风险是缩小后细节糊成一团，或像宠物应用。</p></div>
+<div class="card"><h3>B · 扁平猫总</h3><p>适合希望图标更简练、便于延展到小尺寸的方向。黄色底与黑白大轮廓醒目。</p><p>下一步：放松眉眼，保留严肃与冷幽默。这一稿偏凶，也与首页写实风格有距离。</p></div>
+<div class="card"><h3>C · 时间兑换券</h3><p>适合希望品牌不依赖猫总、以后容纳其他监督角色的方向。票券、沙漏与播放符号尝试表达“赚取娱乐时间”。</p><p>下一步：测试能否看出兑换含义。现在仍可能被看成普通计时或票务工具。</p></div>
+</div>
+<h2>选定后怎样判断是否有效</h2>
+<p>放到实际手机桌面，与常用应用并排，检查浅色/深色壁纸、启动器裁切，以及 48px、64px 的眼神与轮廓。让第一次见的人看几秒，观察是否能记住并重新找到。若只记住“一只普通猫”、需要放大才能辨认，或圆形裁切损坏主体，就继续简化。</p>
+<footer>已采用 C 标准沙漏修正版并安装 0.3.3，其他方案保留原文件作为备选。手机锁屏，桌面裁切与辨识待后续目视确认；用途理解与传播效果未测试。<br>交付记录：<a href="../../tasks/completed/app-icon-design.md">图标采用与备选归档</a> · <a href="../../tasks/active/cat-ui.md">接续界面验收</a></footer>
+</main></html>

@@ -47,6 +47,10 @@ for ($sampleIndex = 0; $sampleIndex -lt $Samples; $sampleIndex++) {
         $blockerBody = $blockerMatch.Groups['body'].Value
         $blockerVisible = $blockerBody -match 'isVisible=true' -and $blockerBody -match 'Surface: shown=true'
     }
+    $blockerPageFocused = $displays -match 'mCurrentFocus=[^\r\n]*com\.roy\.worktoscroll\.overlaytest/com\.roy\.worktoscroll\.BlockerActivity'
+    $pageMatch = [regex]::Match($windows, '(?ms)^\s*Window #\d+ Window\{[^\r\n]*com\.roy\.worktoscroll\.overlaytest/com\.roy\.worktoscroll\.BlockerActivity[^\r\n]*\r?\n(?<body>.*?)(?=^\s*Window #\d+ |\z)')
+    $blockerPageVisible = $pageMatch.Success -and $pageMatch.Groups['body'].Value -match 'isVisible=true' -and
+        $pageMatch.Groups['body'].Value -match 'Surface: shown=true'
     $ageMs = $deviceMs - [long]$fields.cursor_ms
     [ordered]@{
         time = [DateTimeOffset]::Now.ToString('o')
@@ -62,6 +66,8 @@ for ($sampleIndex = 0; $sampleIndex -lt $Samples; $sampleIndex++) {
         recorded_target_active = $fields.target_active -eq 'true'
         blocker_window_listed = $blockerListed
         blocker_window_visible = $blockerVisible
+        blocker_page_focused = $blockerPageFocused
+        blocker_page_visible = $blockerPageVisible
         zero_balance_target_without_window = $fields.enabled -eq 'true' -and
             [long]$fields.balance_ms -eq 0 -and $targetForeground -and -not $blockerVisible
         observation_gaps = [long]$fields.observation_gaps

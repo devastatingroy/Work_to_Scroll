@@ -10,10 +10,10 @@
     <string name="overlay_settings_fallback">无法打开本应用设置，已改用应用列表入口</string>
     <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#236B55</item>
+        <item name="android:colorAccent">#BB2D1C</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:windowBackground">#F4F6F1</item>
+        <item name="android:windowBackground">#FCF7E9</item>
     </style>
     <style name="WorkTheme" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
