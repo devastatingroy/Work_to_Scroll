@@ -6,6 +6,8 @@ import android.content.res.ColorStateList;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.view.Gravity;
@@ -104,9 +106,12 @@ final class CatUi {
     }
     static ImageView image(Context c, int resource) {
         ImageView v = new ImageView(c); v.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        BitmapFactory.Options options = new BitmapFactory.Options(); options.inSampleSize = 2;
-        v.setImageBitmap(BitmapFactory.decodeResource(c.getResources(), resource, options));
+        v.setImageDrawable(imageDrawable(c, resource));
         v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO); return v;
+    }
+    static Drawable imageDrawable(Context c, int resource) {
+        BitmapFactory.Options options = new BitmapFactory.Options(); options.inSampleSize = 2;
+        return new BitmapDrawable(c.getResources(), BitmapFactory.decodeResource(c.getResources(), resource, options));
     }
     /** Same presentation for the immediate overlay and the opaque blocker activity. */
     static ScrollView blocker(Context c, Runnable openApp, Runnable goHome) {

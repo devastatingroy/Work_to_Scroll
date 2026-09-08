@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,6 +14,7 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +26,8 @@ public final class MainActivity extends Activity {
     private LinearLayout content;
     private TextView balance, status, permissions, diagnostics, worked, speech, seal;
     private Button workButton, toggle, overlayPermission, entertainment;
+    private ImageView homeCat;
+    private Drawable waitingCat, approvedCat;
     private String page;
     private final Runnable update = new Runnable() {
         @Override public void run() { render(); handler.postDelayed(this, 500); }
@@ -54,10 +58,13 @@ public final class MainActivity extends Activity {
         status.setPadding(CatUi.dp(this, 10), CatUi.dp(this, 8), CatUi.dp(this, 10), CatUi.dp(this, 8));
         status.setOnClickListener(v -> openPage("settings"));
         CatUi.add(content, status, -2, 2);
-        speech = CatUi.text(this, "先工作，攒点时间。", 18, CatUi.INK, true);
+        speech = CatUi.text(this, "假条呢？", 18, CatUi.INK, true);
         CatUi.add(content, speech, -2, 12);
         int imageHeight = Math.max(130, Math.min(240, getResources().getConfiguration().screenHeightDp - 620));
-        CatUi.add(content, CatUi.image(this, R.drawable.cat_home), imageHeight, 4);
+        homeCat = CatUi.image(this, R.drawable.cat_home_waiting);
+        waitingCat = homeCat.getDrawable();
+        approvedCat = CatUi.imageDrawable(this, R.drawable.cat_home_approved);
+        CatUi.add(content, homeCat, imageHeight, 4);
         LinearLayout ticket = new LinearLayout(this);
         ticket.setOrientation(LinearLayout.VERTICAL);
         ticket.setGravity(Gravity.CENTER);
@@ -219,7 +226,9 @@ public final class MainActivity extends Activity {
             CatUi.setText(balance, duration(ledger.engine.balanceMs, true));
             CatUi.setText(worked, "已工作 " + ledger.work.totalValidMs() / 60_000 + " 分钟");
             boolean hasTime = ledger.engine.balanceMs > 0;
-            CatUi.setText(speech, hasTime ? "准了，去玩吧。" : "先工作，攒点时间。");
+            Drawable cat = hasTime ? approvedCat : waitingCat;
+            if (homeCat.getDrawable() != cat) homeCat.setImageDrawable(cat);
+            CatUi.setText(speech, hasTime ? "准了，去玩吧！" : "假条呢？");
             CatUi.setText(seal, hasTime ? "猫总 · 准玩" : "猫总等你开工");
             CatUi.setText(workButton, ledger.work.active() ? "▶  继续工作" : "▶  开始工作");
             entertainment.setEnabled(hasTime);

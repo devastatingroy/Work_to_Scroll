@@ -4,7 +4,7 @@
 
 - 2026-09-08 Roy 已授权降负载试用：CameraX 预览与分析以 ResolutionSelector 请求 640×480，设备支持时请求 15fps，PERFORMANCE 预览；识别仍约 2Hz，计时/奖励规则不改。理由是减少持续采集、图像转换及显示负载；实测收益未确定。两版各 10 分钟、相近起温及同源测温的对照见[发热任务](../tasks/active/camera-thermal-test.md)，技术实现及回退边界见 [ARCHITECTURE](../ARCHITECTURE.md)。
 - [应用图标与备选归档](design/app-icon-exploration.html)：2026-09-08 Roy 确认先采用 C 标准沙漏修正版，紫底、暖白票券与清晰沙漏；原 C、A/B、C2/C3 保留为备选，不自动切换。图标决定不改变首页猫总或产品规则。
-- [界面与角色设计](design/interface-and-roles.md)：当前采用 C「猫总监工」，A「电脑＋笔记簿 / 小红书」保留为设计参考；图稿、页面分层、素材及交互边界在该文件维护，本文保留总入口与技术路线。
+- [界面与角色设计](design/interface-and-roles.md)：当前采用 C「猫总监工」，A「电脑＋笔记簿 / 小红书」保留为设计参考；猫总首页双状态已选定本轮 A「猫总批假」，其余三组与完整对比图[保留存档](design/interface-and-roles.md#cat-home-states)，带“工作优先／准了”的修正版已安装；旧无字素材有余额首页已有目视证据，修正版手机显示与双向切换待核验。本轮字母与旧主题编号分开理解；图稿、页面分层、素材及交互边界在该文件维护，本文保留总入口与技术路线。
 - [待探索：用户选择监督角色](design/interface-and-roles.md#role-exploration)：角色候选与待验证问题；仅记录创意，不属于当前实现范围。
 - 产品行为与验收要求以 [SPEC](SPEC.md) 为准；实际结构见 [ARCHITECTURE](../ARCHITECTURE.md)，当前执行停点见 [任务索引](../tasks/README.md)。
 
