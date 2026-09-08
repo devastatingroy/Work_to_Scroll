@@ -44,6 +44,7 @@ public final class ProtectionService extends Service {
     private long lastElapsed;
     private long dismissUntilElapsed;
     private boolean monitoring;
+    private boolean reconcileObservation = true;
     long heartbeatElapsed;
     boolean healthy;
     String failure = "";
@@ -91,8 +92,8 @@ public final class ProtectionService extends Service {
             monitoring = true;
             handler.post(loop);
         }
-        // Recovery is deliberately tested by reopening the app, not assumed after process death.
-        return START_NOT_STICKY;
+        // Request system restart; the persisted user opt-out is checked on every start.
+        return START_STICKY;
     }
 
     private Notification notification() {
@@ -103,7 +104,7 @@ public final class ProtectionService extends Service {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         return new Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("WorkToEarn 悬浮窗测试监测服务")
+            .setContentTitle(getString(R.string.app_name) + " 保护服务")
             .setContentText("点击查看保护状态 · 可随时停止")
             .setContentIntent(open).setOngoing(true).setOnlyAlertOnce(true)
             .addAction(new Notification.Action.Builder(null, "停止保护", stop).build())
@@ -112,7 +113,11 @@ public final class ProtectionService extends Service {
 
     void stopProtection() {
         refresh();
-        ledger.enabled = false;
+        if (!ledger.setProtectionEnabled(false)) {
+            healthy = false;
+            failure = "停止状态保存失败，请返回应用重试";
+            return;
+        }
         ledger.engine.resetObservation(System.currentTimeMillis());
         ledger.save();
         monitoring = false;
@@ -121,11 +126,20 @@ public final class ProtectionService extends Service {
         hideBlocker();
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
+        ProtectionRecovery.stopped(this);
     }
 
     void refresh() {
         if (ledger == null) return;
+        long previousHeartbeat = heartbeatElapsed;
         heartbeatElapsed = SystemClock.elapsedRealtime();
+        if (ProtectionPolicy.observationInterrupted(previousHeartbeat, heartbeatElapsed)) {
+            reconcileObservation = true;
+            ledger.observationGaps++;
+            ledger.lastObservationGapMs = Math.max(0, heartbeatElapsed - previousHeartbeat);
+            ledger.note = "检测到监测中断，已重新核对前台；中断期间不补扣。请检查后台运行设置。";
+            Log.w("WTS", "OBSERVATION_GAP ms=" + ledger.lastObservationGapMs);
+        }
         long now = System.currentTimeMillis();
         long drift = Math.abs((now - lastWall) - (heartbeatElapsed - lastElapsed));
         lastWall = now;
@@ -134,16 +148,22 @@ public final class ProtectionService extends Service {
             if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this)) {
                 healthy = false;
                 failure = ledger.enabled ? "系统授权未开启，保护已失效" : "保护未开启";
+                reconcileObservation = true;
                 ledger.engine.resetObservation(now);
                 ledger.save();
                 hideBlocker();
                 return;
             }
             if (drift > 2_000 || now < ledger.engine.cursorMs) {
-                ledger.engine.resetObservation(now);
+                reconcileObservation = true;
                 ledger.note = "系统时间发生变化：余额保留，已重建监测时间基准。";
             }
-            settleUntil(now - EVENT_LAG_MS);
+            long end = now - EVENT_LAG_MS;
+            if (reconcileObservation) {
+                // Recent events establish current state only. Never charge pre-start/frozen time.
+                ledger.engine.recoverObservation(queryTransitions(Math.max(0, end - 86_400_000L), end), end, now);
+                reconcileObservation = false;
+            } else settleUntil(end);
             healthy = ledger.save();
             failure = healthy ? "" : "余额保存失败，保护状态异常";
             boolean visible = getSystemService(PowerManager.class).isInteractive()
@@ -155,6 +175,7 @@ public final class ProtectionService extends Service {
             healthy = false;
             failure = "监测中断，请返回应用检查权限并重新开启保护";
             ledger.note = failure;
+            reconcileObservation = true;
             ledger.engine.resetObservation(now);
             ledger.save();
             hideBlocker();
@@ -165,7 +186,11 @@ public final class ProtectionService extends Service {
     private void settleUntil(long end) {
         BalanceEngine e = ledger.engine;
         if (end <= e.cursorMs) return;
-        UsageEvents events = getSystemService(UsageStatsManager.class).queryEvents(e.cursorMs, end);
+        e.settle(queryTransitions(e.cursorMs, end), end);
+    }
+
+    private ArrayList<BalanceEngine.Transition> queryTransitions(long begin, long end) {
+        UsageEvents events = getSystemService(UsageStatsManager.class).queryEvents(begin, end);
         if (events == null) throw new IllegalStateException("Usage events unavailable");
         var transitions = new ArrayList<BalanceEngine.Transition>();
         var event = new UsageEvents.Event();
@@ -183,7 +208,7 @@ public final class ProtectionService extends Service {
             }
             // Discard other apps' metadata immediately; never read window contents or store history.
         }
-        e.settle(transitions, end);
+        return transitions;
     }
 
     /** Used only from our visible test controls: settle old credit before applying a new grant. */

@@ -1,10 +1,10 @@
-# WorkToEarn 悬浮窗实验版实际结构
+# WorkToScroll 实际结构
 
 当前采用的 Android 路线为普通悬浮窗，由 Roy 在对照两版后明确选择；原版的无障碍结构保存在提交 `8a98c84` 和标签 `checkpoint/gate1-before-overlay-20260907`。完整产品要求见 docs/SPEC.md。本文件描述已实现机制，不把路线选择当作全部真机验收通过。
 
 ## 模块与数据流
 
-单个原生 Java app 模块，无第三方运行时依赖。应用 ID `com.roy.worktoscroll.overlaytest`，Java namespace 保留 `com.roy.worktoscroll`；独立应用沙箱隔离余额与权限。
+单个原生 Java app 模块，摄像头阶段接入 AndroidX Activity 1.10.1、CameraX 1.4.2 与 ML Kit bundled face-detection 16.1.7。应用 ID `com.roy.worktoscroll.overlaytest`，Java namespace 保留 `com.roy.worktoscroll`；沿用新版私有余额，和旧无障碍原版沙箱隔离。
 
 | 文件 | 职责 |
 |---|---|
@@ -13,8 +13,25 @@
 | ProtectionService.java | 普通 Service，使用 specialUse 前台服务运行监测；通知提供回首页和停止操作；显示 TYPE_APPLICATION_OVERLAY |
 | BalanceEngine.java | 原版复用的纯余额算法，按使用区间扣减，仅显式奖励能增加余额 |
 | LedgerStore.java | 实验版同进程单例与 SharedPreferences 快照，原版私有数据不读取、不迁移 |
+| WorkActivity.java | 前置预览、离线检测、显式开始/暂停/继续/结束、在场状态与奖励展示；帧仅在内存存在 |
+| WorkClock.java | 单调时钟和新鲜帧约束下的在场容错计时，不使用系统日期计算奖励 |
+| WorkProgress.java | 不可变的有效工作累计、首次十分钟门槛、其后分钟奖励及跨会话余量计算 |
+| ProtectionPolicy.java | 默认开启/已保存停止的加载规则，按当前时区计算四小时及09:00—21:00提醒边界，可独立测试 |
+| ProtectionRecovery.java | 开机/本包更新后的保护恢复请求、时间/时区变化后的提醒重排、单次非精确提醒及取消；不启动摄像头 |
 
 UsageEvents → 应用前后台/锁屏事件 → BalanceEngine → 实验版本机账本 → 零余额且小红书在前台时显示普通悬浮窗。
+
+CameraX 前置图像 → ML Kit 人脸数量 → WorkClock 有效毫秒增量 → WorkProgress 奖励差额 → LedgerStore 同一次快照写入工作累计与娱乐余额 → 既有消费路径。
+
+## 摄像头与奖励边界
+
+- 工作页由用户主动启动，使用 KEEP_SCREEN_ON；不修改系统自动锁屏设置。暂停、结束、离开前台时解绑相机并释放亮屏标记。重返、旋转重建或进程重启后必须点击继续，不自动开启摄像头。
+- 初始实验参数：640×480 目标分析尺寸，每 400 ms 最多一次推理，KEEP_ONLY_LATEST 丢弃积压；实际分辨率由 CameraX 与设备协商。仅一个人脸作为在场线索，连续约 1 秒确认后计时；零人脸允许 3 秒宽限，超过后暂停；多人脸视为不确定，立即暂停。无身份识别，不证明工作行为，不含手机移动/另一部手机检测。
+- 采集到结果超过 1.5 秒、相邻结果间隔超过 1.5 秒、锁屏、失去焦点或 Activity 暂停均不补计未知区间。仅接收当前采集代次的新结果，旧异步回调无法跨暂停或新会话发放时间；确认窗口不追补。页面定时器只刷新和检查失联，不生成有效时间。
+- 有效工作总量持久化；总量不足 600000 ms 时累计奖励为零，达到后按 `floor(totalValidMs / 60000) * 30000` 计算累计应得值。每次只增加前后应得值的差额，因此首门槛发 300000 ms、其后每分钟发 30000 ms。会话与不足兑换的余量跨会话保留；已结束会话不能继续累计。奖励与工作检查点、已有消费字段同一次 SharedPreferences commit 保存，成功后才更新内存工作检查点和余额；失败暂停摄像头，没有可重复回放的奖励任务。
+- 升级到奖励规则 v2 时，以历史总有效时间的新旧应得差额补齐余额，保留消费与原会话奖励；补齐金额单列显示。`work_reward_rule_version=2`、`work_upgrade_credit_ms` 与余额同次提交，失败不发布内存结果，保存/工作前重试迁移，正常重启不重复补发。规则版本缺省为 v1，仅同一实验版沙箱迁移。
+- 工作页有效时间 36sp，奖励信息为辅；每分钟提交成功后轻提示一次，跨累计十分钟边界时用累计里程碑替代。约 2.2 秒后 0.6 秒淡出，暂停取消、重开不重播；不增加声音、震动或弹窗。不变的文字不重复设置，页面刷新不等于发奖。
+- 该方案避免正常重启/重复回调重复发奖；不是数据库交易日志或对磁盘故障、文件篡改的全面保证。消费、工作页面和保存都在主线程串行运行；摄像头分析在独立执行器进行，结果回主线程。
 
 ## 运行与恢复边界
 
@@ -23,15 +40,22 @@ UsageEvents → 应用前后台/锁屏事件 → BalanceEngine → 实验版本�
 - 从用户可见的 MainActivity 调用 startForegroundService；Android 14+ 指定 specialUse 类型。通知使用低重要度频道与不可变 PendingIntent，服务不导出。
 - 服务只在保护开启且两项必要权限均有效时开始循环。通知权限不是启动服务的前置条件，首页显示通知是否允许。
 - 500 ms 轮询、750 ms 事件结算缓冲沿用原版；没有无障碍快速窗口回调，参数不构成实测延迟上界。
+- 服务启动、权限恢复、异常或单调时钟心跳相隔超过5秒时，先用最近24小时使用事件重建前台状态，仅保留目标是否在前台，不保存应用历史。恢复段不扣费；750ms事件缓冲内继续接收切换事件，但恢复时刻以前不收费。没有可用历史时不沿用过期的target_active，仍需后续事件确认目标；24小时窗口不能保证识别更早且无后续事件的前台状态。
+- 账本保存 observation_gaps 与 last_observation_gap_ms，首页展示中断次数和最近时长；包括休眠等停顿，不能直接解释成冻结次数。首页查询系统 isBackgroundRestricted 并提供本应用设置入口；小米额外提示省电策略。系统未报告受限或当前心跳正常均不代表厂商不会冻结后台。
 - 普通全屏浮层使用 FLAG_NOT_FOCUSABLE，并接收浮层范围内触摸；意图是避免浮层夺取焦点生成目标 Activity 暂停事件，导致拦截反复显隐。焦点/触摸行为仍待真机验证。
 - 返回测试版/桌面使用普通 Intent，不调用无障碍全局动作。导航短暂抑制过期事件的重拦截；仍需真实手势、按钮和后台启动兼容性验证。
-- START_NOT_STICKY；没有开机自动启动。服务终止时保留 enabled，回到可见首页且权限仍有效时尝试恢复。首次开始监测重建观察起点，中断期间不补扣。停止保护则保存 enabled=false，移除浮层与通知并停止服务。
+- `protection_policy_version=1` 首次迁移时默认 enabled=true（Roy 已明确要求启用新默认），后续 enabled 为持久化的用户意愿；手动停止保存 false，重新进入或升级不得重置。首页展示实际服务心跳、权限及健康度，不以 enabled 代替运行证据。首页移除有效工作余量数字，仅保留可用娱乐余额；内部余量算法不变。
+- 有权限且意愿开启时，前台服务返回 START_STICKY 请求系统恢复；新增 RECEIVE_BOOT_COMPLETED，未手动停止时通过开机/本包更新广播尝试恢复。首次进入也会尝试启动。未首次打开新策略的安装不在后台自行激活。恢复受系统限制，捕获启动异常并展示未保护；强停后通常需用户重新打开，不宣称持续可靠。所有重启观察区间均不追扣未知历史。
+- 手动停止成功后停止服务、移除浮层并存提醒起点；用 AlarmManager.setAndAllowWhileIdle 的单次非精确 RTC_WAKEUP（不申请精确闹钟权限）排四小时后的白天时段。接收时再次检查 enabled、当前时段和间隔，先提交新起点再通知以抑制重复广播；夜间延迟到次日09:00。开启保护取消待发提醒与现有未保护通知。关闭通知时跳过发送、不循环补发；时间倒退重建起点，时区变更按当地白天重排。提醒独立 prefs，不写入或改动工作/消费金额。
 - 运行中权限失效暂停结算并移除浮层，推进观察起点；服务仍在时恢复权限后可继续。整体进程冻结或终止不能由自身通知证明仍在保护。
+- 小米本机已出现前台服务仍存在、ActivityManager isFrozen=false、实际cgroup.freeze=1和do_freezer_trap同时成立的情况；greezer有tobg、screen off及LM FZ记录。冻结时本进程的定时器和恢复代码都不能执行，必须先解除相应后台限制；START_STICKY不能解冻尚未死亡的进程。只读诊断使用 scripts/protection-health-check.ps1，对照心跳新鲜度、实际cgroup、目标焦点和阻止窗口，避免打开主应用解冻后丢失故障现场。阻止窗口存在仍不能替代实际触摸/可见性验收。
 - 快照、计时改时处理和未知区间保护沿用原版；未增加交易日志或通用存储故障兜底。
 
 ## 隐私与平台约束
 
-声明 PACKAGE_USAGE_STATS、SYSTEM_ALERT_WINDOW、FOREGROUND_SERVICE、FOREGROUND_SERVICE_SPECIAL_USE、POST_NOTIFICATIONS。不声明无障碍服务、联网、摄像头、麦克风或存储权限，关闭应用备份。只声明可查询小红书，使用事件中其他包名仅用于判断目标离开，不保留完整应用历史或读取页面内容。
+默认保护阶段新增 RECEIVE_BOOT_COMPLETED 用于系统重启后按已保存意愿恢复；不增加网络、精确闹钟、麦克风或摄像头后台采集权限。
+
+在已有 PACKAGE_USAGE_STATS、SYSTEM_ALERT_WINDOW、FOREGROUND_SERVICE、FOREGROUND_SERVICE_SPECIAL_USE、POST_NOTIFICATIONS 上增加 CAMERA；无无障碍服务、麦克风和存储权限，关闭应用备份。显式移除第三方依赖可能合入的 INTERNET 与 ACCESS_NETWORK_STATE 权限，离线模型随 APK 打包。只声明可查询小红书，使用事件中其他包名仅用于判断目标离开，不保留完整应用历史或读取页面内容。合并 manifest 及 APK 权限必须在构建后检查。
 
 普通浮层在系统关键窗口之下；目标应用可拒绝覆盖，系统可调整可见性。浮层添加成功、账本记录计数不等于用户看到有效阻止页。省电、系统回收、锁屏恢复、延迟、音频及不同设备的行为必须分别验证。Google Play 对 specialUse 的审核不由构建通过替代。
 

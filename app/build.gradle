@@ -8,8 +8,8 @@ android {
         applicationId 'com.roy.worktoscroll.overlaytest'
         minSdk 29
         targetSdk 36
-        versionCode 3
-        versionName '0.1.2-overlay-test'
+        versionCode 9
+        versionName '0.2.5-protection-fix'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -17,4 +17,11 @@ android {
     }
 }
 
-dependencies { testImplementation 'junit:junit:4.13.2' }
+dependencies {
+    implementation 'androidx.activity:activity:1.10.1'
+    implementation 'androidx.camera:camera-camera2:1.4.2'
+    implementation 'androidx.camera:camera-lifecycle:1.4.2'
+    implementation 'androidx.camera:camera-view:1.4.2'
+    implementation 'com.google.mlkit:face-detection:16.1.7'
+    testImplementation 'junit:junit:4.13.2'
+}

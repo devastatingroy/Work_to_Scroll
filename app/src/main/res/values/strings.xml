@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">WorkToEarn 悬浮窗测试</string>
-    <string name="return_to_app">返回悬浮窗测试版</string>
+    <string name="app_name">WorkToScroll</string>
+    <string name="return_to_app">返回 WorkToScroll</string>
     <string name="overlay_permission_grant">2 · 开启悬浮窗权限</string>
     <string name="overlay_permission_granted">2 · 悬浮窗已授权 · 查看设置</string>
     <string name="overlay_grant_title">开启悬浮窗权限</string>
@@ -14,5 +14,17 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowBackground">#F4F6F1</item>
+    </style>
+    <style name="WorkTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#8BB9A0</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:colorBackground">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:textColorPrimary">#D6DDD8</item>
+        <item name="android:textColorSecondary">#ADB8B0</item>
     </style>
 </resources>

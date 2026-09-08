@@ -9,12 +9,14 @@ public final class BalanceEngine {
     public long consumedMs;
     public long cursorMs;
     public boolean targetActive;
+    private long chargeFromMs;
 
     public BalanceEngine(long balanceMs, long consumedMs, long cursorMs, boolean targetActive) {
         this.balanceMs = Math.max(0, balanceMs);
         this.consumedMs = Math.max(0, consumedMs);
         this.cursorMs = cursorMs;
         this.targetActive = targetActive;
+        this.chargeFromMs = cursorMs;
     }
 
     /** Events must be chronological. The committed interval is [cursor, until). */
@@ -30,7 +32,7 @@ public final class BalanceEngine {
 
     private void chargeTo(long timeMs) {
         if (targetActive) {
-            long charged = Math.min(balanceMs, Math.max(0, timeMs - cursorMs));
+            long charged = Math.min(balanceMs, Math.max(0, timeMs - Math.max(cursorMs, chargeFromMs)));
             balanceMs -= charged;
             consumedMs += charged;
         }
@@ -45,6 +47,16 @@ public final class BalanceEngine {
     /** Unknown intervals must never silently erase or mint balance. */
     public void resetObservation(long now) {
         cursorMs = now;
+        chargeFromMs = now;
         targetActive = false;
+    }
+
+    /** Rebuild foreground state after an unobserved interval, without charging that interval. */
+    public void recoverObservation(List<Transition> history, long checkpoint, long observedFrom) {
+        resetObservation(checkpoint);
+        chargeFromMs = Math.max(checkpoint, observedFrom);
+        for (Transition event : history) {
+            if (event.timeMs < checkpoint) targetActive = event.targetActive;
+        }
     }
 }

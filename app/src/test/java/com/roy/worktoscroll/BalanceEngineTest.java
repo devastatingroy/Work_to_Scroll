@@ -61,4 +61,42 @@ public class BalanceEngineTest {
         e.settle(List.of(), 20_000);
         assertEquals(300_000, e.balanceMs);
     }
+    @Test public void recoveryDetectsAlreadyOpenTargetAtZeroWithoutNewResumeEvent() {
+        var e = new BalanceEngine(0, 300_000, 10_000, false);
+        e.recoverObservation(List.of(new Transition(20_000, true)), 100_000, 100_750);
+        assertTrue(e.targetActive);
+        assertEquals(0, e.balanceMs);
+        assertEquals(300_000, e.consumedMs);
+    }
+    @Test public void recoveryNeverChargesFrozenIntervalOrDeliveryLagTail() {
+        var e = new BalanceEngine(250_000, 50_000, 10_000, true);
+        e.recoverObservation(List.of(new Transition(1_000, true)), 100_000, 100_750);
+        e.settle(List.of(), 100_500);
+        assertEquals(250_000, e.balanceMs);
+        e.settle(List.of(), 101_750);
+        assertEquals(249_000, e.balanceMs);
+        assertEquals(51_000, e.consumedMs);
+    }
+    @Test public void delayedDepartureDuringRecoveryTailPreventsFalseConsumption() {
+        var e = new BalanceEngine(250_000, 50_000, 10_000, true);
+        e.recoverObservation(List.of(new Transition(1_000, true)), 100_000, 100_750);
+        e.settle(List.of(new Transition(100_200, false)), 102_000);
+        assertFalse(e.targetActive);
+        assertEquals(250_000, e.balanceMs);
+    }
+    @Test public void recoveryRespectsDepartureAndIgnoresEventsAtNextBoundary() {
+        var e = new BalanceEngine(250_000, 50_000, 10_000, true);
+        e.recoverObservation(List.of(new Transition(20_000, true), new Transition(30_000, false),
+            new Transition(100_000, true)), 100_000, 100_750);
+        assertFalse(e.targetActive);
+        e.settle(List.of(new Transition(100_000, true)), 101_750);
+        assertTrue(e.targetActive);
+        assertEquals(249_000, e.balanceMs);
+    }
+    @Test public void emptyRecoveryDoesNotRetainStaleTargetState() {
+        var e = new BalanceEngine(250_000, 50_000, 10_000, true);
+        e.recoverObservation(List.of(), 100_000, 100_750);
+        assertFalse(e.targetActive);
+        assertEquals(250_000, e.balanceMs);
+    }
 }

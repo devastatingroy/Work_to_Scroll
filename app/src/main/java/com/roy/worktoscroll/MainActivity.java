@@ -28,6 +28,7 @@ public final class MainActivity extends Activity {
     private TextView status;
     private TextView permissions;
     private TextView diagnostics;
+    private Button workButton;
     private Button toggle;
     private Button overlayPermission;
     private final Runnable update = new Runnable() {
@@ -58,6 +59,7 @@ public final class MainActivity extends Activity {
         text("可用娱乐时间", 17, false);
         balance = text("00:00", 52, true);
         status = text("正在检查状态…", 18, true);
+        workButton = button("开始摄像头工作", () -> startActivity(new Intent(this, WorkActivity.class)));
         permissions = text("", 14, false);
         button("1 · 授权使用情况访问", () -> openSettings(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
             Uri.parse("package:" + getPackageName()))));
@@ -70,6 +72,8 @@ public final class MainActivity extends Activity {
             } else openSettings(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()));
         });
+        button("检查后台运行设置", () -> openSettings(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.parse("package:" + getPackageName()))));
         toggle = button("开启保护", () -> {
             if (!ledger.enabled && (!Permissions.usage(this) || !Permissions.overlay(this))) {
                 Toast.makeText(this, "请先完成上面两项系统授权", Toast.LENGTH_LONG).show();
@@ -78,17 +82,22 @@ public final class MainActivity extends Activity {
             if (ledger.enabled) {
                 if (ProtectionService.current() != null) ProtectionService.current().stopProtection();
                 else {
-                    ledger.enabled = false;
+                    if (!ledger.setProtectionEnabled(false)) {
+                        Toast.makeText(this, "停止状态保存失败，请重试", Toast.LENGTH_LONG).show();
+                        return;
+                    }
                     ledger.engine.resetObservation(System.currentTimeMillis());
                     ledger.save();
                     stopService(new Intent(this, ProtectionService.class));
+                    ProtectionRecovery.stopped(this);
                 }
             } else {
                 prepareChange();
-                ledger.enabled = true;
-                if (ledger.save()) startProtection();
+                if (ledger.setProtectionEnabled(true)) {
+                    ProtectionRecovery.sync(this, false);
+                    startProtection();
+                }
                 else {
-                    ledger.enabled = false;
                     Toast.makeText(this, "设置保存失败，未开启保护", Toast.LENGTH_LONG).show();
                 }
             }
@@ -113,9 +122,9 @@ public final class MainActivity extends Activity {
                 prepareChange(); ledger.engine.balanceMs = 0; ledger.save(); render();
             }).show());
         text("测试方法", 18, true);
-        text("① 先体验授权提醒，再开启保护，零余额打开小红书。\n② 确认阻止页稳定且能正常退出后，再测试 5 分钟消费。\n③ 此实验不保证服务自动重启；中断后重新打开测试版检查状态。", 14, false);
+        text("① 必要授权完成后默认开启保护，首页确认实际运行状态。\n② 开启保护时按小红书实际用量扣减；测试工具保留供验收。\n③ 手动停止后保持停止，白天每 4 小时最多静默提醒一次，系统可能延迟；需允许通知。\n④ 系统中断会尝试恢复，强行停止或省电限制仍可能使保护失效。", 14, false);
         diagnostics = text("", 13, false);
-        text("本机处理 · 无网络权限\n使用情况访问用于判断应用切换和计算用时；悬浮窗用于在小红书上显示阻止页。这两项仍是敏感授权。\n不读取页面正文、输入内容或截图，余额与状态保存在本机。\n\n这是可关闭、可绕过的实验版，摄像头尚未接入。", 13, false);
+        text("本机处理 · 无网络权限\n使用情况访问用于判断应用切换和计算用时；悬浮窗用于在小红书上显示阻止页。这两项仍是敏感授权。\n不读取页面正文、输入内容或截图，余额与状态保存在本机。\n摄像头仅在工作页手动开始后运行，画面不保存、不上传。基础在场观察不证明正在工作。\n\n这是可关闭、可绕过的实验版。", 13, false);
     }
 
     private void prepareChange() {
@@ -129,19 +138,28 @@ public final class MainActivity extends Activity {
         overlayPermission.setText(access ? R.string.overlay_permission_granted : R.string.overlay_permission_grant);
         ProtectionService service = ProtectionService.current();
         boolean running = service != null && SystemClock.elapsedRealtime() - service.heartbeatElapsed < 3_000;
+        boolean backgroundRestricted = getSystemService(android.app.ActivityManager.class).isBackgroundRestricted();
         balance.setText(formatTime(ledger.engine.balanceMs));
+        workButton.setText(ledger.work.active() ? "继续摄像头工作（当前已暂停）" : "开始摄像头工作");
         permissions.setText("使用情况访问：" + (usage ? "已授权" : "未授权")
             + "\n显示在其他应用上层：" + (access ? "已授权" : "未授权")
             + "\n运行通知：" + (getSystemService(android.app.NotificationManager.class).areNotificationsEnabled() ? "已允许" : "未允许")
-            + "\n监测服务：" + (running ? "运行中" : "未连接"));
-        if (!ledger.enabled) status.setText("保护未开启");
-        else if (!usage || !access) status.setText("保护失效 · 请恢复系统授权");
+            + "\n监测服务：" + (running ? "运行中" : "未连接")
+            + (backgroundRestricted ? "\n系统已限制后台运行，请检查后台设置" : "")
+            + ("Xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER)
+                ? "\n小米后台设置：省电策略应选无限制；当前心跳正常不代表后台不会被冻结。" : ""));
+        if (!ledger.enabled) status.setText("未保护 · 小红书用时不扣减，建议开启");
+        else if (!usage || !access) status.setText("尚未保护 · 请完成系统授权，返回后自动开启");
         else if (!running) status.setText("保护失效 · 服务未连接");
         else if (!service.healthy) status.setText(service.failure);
+        else if (backgroundRestricted) status.setText("后台运行受限 · 保护可能中断");
         else status.setText(ledger.engine.balanceMs == 0 ? "保护运行中 · 零余额将拦截" : "保护运行中 · 按小红书用量扣减");
         toggle.setText(ledger.enabled ? "停止保护" : "开启保护");
         diagnostics.setText("累计扣减：" + formatTime(ledger.engine.consumedMs)
             + "　阻止界面次数：" + ledger.blocks
+            + (ledger.workUpgradeCreditMs > 0 ? "\n历史规则升级补齐：" + formatTime(ledger.workUpgradeCreditMs) + "（已计入余额）" : "")
+            + (ledger.observationGaps > 0 ? "\n监测中断记录：" + ledger.observationGaps
+                + " 次 · 最近 " + formatTime(ledger.lastObservationGapMs) + "（含系统休眠等停顿）" : "")
             + "\n" + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL
             + " · Android " + android.os.Build.VERSION.RELEASE
             + (ledger.note.isEmpty() ? "" : "\n" + ledger.note));
@@ -214,8 +232,8 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onResume() {
         super.onResume();
-        if (ledger.enabled && Permissions.usage(this) && Permissions.overlay(this)
-                && ProtectionService.current() == null) startProtection();
+        // Persist default-on migration before starting anything, including permission setup visits.
+        if (ledger.save()) ProtectionRecovery.sync(this, true);
         if (ProtectionService.current() != null) ProtectionService.current().dismissForNavigation();
         handler.post(update);
     }
