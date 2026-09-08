@@ -27,6 +27,7 @@
 | 任务 | 目标与依赖 |
 | --- | --- |
 | [侧后方无脸在场检测探索](active/side-rear-presence-exploration.md) | 接续主 App 前置人体检测与声音的日常使用观察，核对误报、漏报及耐久；关联摄像头及发热验收 |
+| [摄像头监控发热对照测试](active/camera-thermal-test.md) | 检查采集、推理与预览负载并尝试降温；连电脑诊断与断线温升证据分开 |
 | [零余额阻止页音频处理](active/audio-blocking.md) | 处理阻止后继续出声，保留共享音频焦点的确认与真机验收边界 |
 | [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 验证在场、每轮奖励、中断恢复及真实消费闭环；消费部分关联后台保护 |
 | [猫总监工界面验收](active/cat-ui.md) | 核对引导、设置、权限入口、返回路径及工作反馈 |
@@ -37,7 +38,6 @@
 
 | 任务 | 目标与依赖 |
 | --- | --- |
-| [摄像头监控发热对照测试](todo/camera-thermal-test.md) | 分开连电脑与断线状态；先落实断线测温方式 |
 | [iPhone 核心原型开发准备](todo/ios-prototype.md) | 暂缓方向；恢复时核实 Mac、Xcode、设备、账号与签名 |
 
 ## completed

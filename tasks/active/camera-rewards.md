@@ -15,7 +15,7 @@
 - [ ] 电话全屏/悬浮接听、听筒熄屏；微信文字/快捷回复、语音全屏/浮窗及视频抢占相机，分别记录焦点、相机、有效时间与恢复。需 Roy 配合，不自行拨号或发消息。
 - [ ] 联合[后台保护验收](background-protection.md)验证真实奖励 → 连续/分段消费 → 耗尽再拦截。
 
-[发热测试](../todo/camera-thermal-test.md)单列待执行；[猫总 UI](cat-ui.md)负责引导、设置与反馈画面；[早期摄像头证据](../completed/android-camera-history.md)只作历史来源。
+[发热测试](../active/camera-thermal-test.md)单列待执行；[猫总 UI](cat-ui.md)负责引导、设置与反馈画面；[早期摄像头证据](../completed/android-camera-history.md)只作历史来源。
 
 ## 已有记录与证据
 

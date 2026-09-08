@@ -6,7 +6,7 @@
 
 下一步核对四小时真实提醒送达、通知显示与停止入口，以及开机/系统回收后的恢复。首次进入、手动停止、重新打开、提醒取消和余额保留分别记录，不以提醒已排期替代送达。
 
-本文件只接续保护默认行为、旧版停用及提醒。奖励与电话/微信验证见[摄像头任务](camera-rewards.md)，完整消费和后台冻结见[保护任务](background-protection.md)，发热见[待执行测试](../todo/camera-thermal-test.md)。
+本文件只接续保护默认行为、旧版停用及提醒。奖励与电话/微信验证见[摄像头任务](camera-rewards.md)，完整消费和后台冻结见[保护任务](background-protection.md)，发热见[待执行测试](../active/camera-thermal-test.md)。
 
 ## 已有记录与证据
 
