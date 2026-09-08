@@ -1,5 +1,17 @@
 # 调试经验与运行注意事项
 
+## 摄像头检测状态读取
+
+适用范围：0.4.1 起主 App 的前置人体检测。使用[读取脚本](scripts/camera-health-check.ps1)查看最新数值状态，例如在项目根目录执行 `./scripts/camera-health-check.ps1 -Samples 6 -IntervalSeconds 1`。需要设备通过 ADB 连接并已授权；脚本只读，不会打开摄像头、切换页面或修改账本，也不读取预览图像。
+
+- 核对的是主 App `com.roy.worktoscroll.overlaytest` 的私有 `files/camera-status.json`，不要混用独立实验应用的 `status.json`。主 App 固定前置，读数应为 `lens=front`。
+- 先看 `live`：进程存在、监测开启、心跳年龄不超过 2.5 秒且采集结果年龄不超过 1.5 秒时才输出有效检测结论。`live=false`、文件不存在或读取失败只说明无法确认当前检测，不等于没人；暂停后磁盘上的旧快照不能当作实时状态。
+- `people` 是人体候选数，`reliable` 是可靠人体数。多人或只有弱候选时计时可能暂停；“欢迎归来”只表示出现可靠人体，不证明身份、工作行为或计时已经恢复。
+- `audio_status` 是播放器报告，不能替代实际听觉确认。提示音反映首次明确结果和检测变化，计时另有 1 秒确认与 3 秒离开宽限，核对异常时需分别记录。
+- 结合用户描述的实际动作、姿势、机位和光照解释数值；不为诊断保存相机截图或录像。每秒两次分析是软件限频，相机仍持续采集，不能据此推定发热或耗电已达标。
+
+版本、试用反馈及待验项目统一见[侧后方任务](tasks/active/side-rear-presence-exploration.md)，本节只保留读取方法与判断边界。
+
 ## 小米后台冻结导致零余额拦截失效
 
 适用范围：Xiaomi 14 Pro 上的 WorkToScroll，应用 ID `com.roy.worktoscroll.overlaytest`。证据来自2026-09-08、0.2.5-protection-fix及其前一版本的真机排查，不代表所有机型或后续版本已经验证。

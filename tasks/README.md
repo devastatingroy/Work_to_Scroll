@@ -26,7 +26,7 @@
 
 | 任务 | 目标与依赖 |
 | --- | --- |
-| [侧后方无脸在场检测探索](active/side-rear-presence-exploration.md) | 主 App 前置人体检测与声音已更新，侧后方效果待日常使用验证；关联摄像头及发热验收 |
+| [侧后方无脸在场检测探索](active/side-rear-presence-exploration.md) | 接续主 App 前置人体检测与声音的日常使用观察，核对误报、漏报及耐久；关联摄像头及发热验收 |
 | [零余额阻止页音频处理](active/audio-blocking.md) | 处理阻止后继续出声，保留共享音频焦点的确认与真机验收边界 |
 | [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 验证在场、每轮奖励、中断恢复及真实消费闭环；消费部分关联后台保护 |
 | [猫总监工界面验收](active/cat-ui.md) | 核对引导、设置、权限入口、返回路径及工作反馈 |

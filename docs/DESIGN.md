@@ -7,7 +7,7 @@
 - [待探索：用户选择监督角色](design/interface-and-roles.md#role-exploration)：角色候选与待验证问题；仅记录创意，不属于当前实现范围。
 - 产品行为与验收要求以 [SPEC](SPEC.md) 为准；实际结构见 [ARCHITECTURE](../ARCHITECTURE.md)，当前执行停点见 [任务索引](../tasks/README.md)。
 
-> **当前 Android 摄像头阶段（2026-09-08，用户已确认）**：Roy 要求人体观察与两种检测声音直接进入日常主 App，在实际使用中验证手机侧后方机位。采用 CameraX 1.4.2 + MediaPipe Tasks Vision 1.0.0 / 随包 EfficientDet-Lite0 int8，全画面识别 person；按 Roy 纠正保持前置镜头，手机摆在侧后方，固定机位、亮屏前台。可靠人体仅一人时接入现有 WorkClock，弱分或多人不确定即暂停；保留 1 秒确认、3 秒离开宽限及全部每轮奖励/3 分钟重置规则。检测原始变化由两段随包 WAV 提示，首次明确结果和切换时播一次，不等待计时宽限、同状态不复读，声音可关闭。没有网络权限，不保存图像；侧后方实际识别、发热与误判待验，不声称证明正在工作或识别身份。另一部手机、区域校准、复杂行为、PC 和云同步暂不进入本轮。实际验证见[侧后方任务](../tasks/active/side-rear-presence-exploration.md)，实验与主 App 的证据分开记录。iPhone 暂缓。
+> **当前 Android 摄像头阶段（2026-09-08，用户已确认）**：Roy 要求人体观察与两种检测声音直接进入日常主 App，在实际使用中验证手机侧后方机位。采用 CameraX 1.4.2 + MediaPipe Tasks Vision 1.0.0 / 随包 EfficientDet-Lite0 int8，全画面识别 person；按 Roy 纠正保持前置镜头，手机摆在侧后方，固定机位、亮屏前台。可靠人体仅一人时接入现有 WorkClock，弱分或多人不确定即暂停；保留 1 秒确认、3 秒离开宽限及全部每轮奖励/3 分钟重置规则。检测原始变化由两段随包 WAV 提示，首次明确结果和切换时播一次，不等待计时宽限、同状态不复读，声音可关闭。没有网络权限，不保存图像；侧后方长期识别稳定性、发热与误判仍待验证，不声称证明正在工作或识别身份。另一部手机、区域校准、复杂行为、PC 和云同步暂不进入本轮。实际验证见[侧后方任务](../tasks/active/side-rear-presence-exploration.md)，实验与主 App 的证据分开记录。iPhone 暂缓。
 
 > **暂停的 iPhone 范围（2026-09-07 确认，2026-09-08 暂缓）**：先在 Roy 自己的 iPhone 上验证“授权 → 选择小红书 → 零余额限制 → 加入测试额度 → 按实际使用扣减 → 耗尽重锁”，核心路径通过后再加入摄像头和电脑联动。TestFlight 不作为首期安装前提。保留 [iPhone 草案](design/ios-design-draft.md) 供以后恢复，不代表当前开发优先级。
 
