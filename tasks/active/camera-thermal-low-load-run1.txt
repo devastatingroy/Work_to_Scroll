@@ -1,0 +1,137 @@
+mode=armed duration_s=600 source=BatteryService temperature_unit=0.1C
+    versionCode=19 minSdk=29 targetSdk=36
+    versionName=0.4.2-camera-low-load
+
+SAMPLE epoch_s=1788868459 elapsed_s=0 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 13
+  scale: 100
+  temperature: 342
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":3,"heartbeat_elapsed_ms":95075710,"captured_elapsed_ms":95075590,"sequence":3,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.7890625,"processing_ms":33,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"playing","audio_events":10,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788868519 elapsed_s=60 powered=false fresh_at_sample=false
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 12
+  scale: 100
+  temperature: 344
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":4,"heartbeat_elapsed_ms":95136094,"captured_elapsed_ms":-1,"sequence":44,"running":false,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"NO_FRESH_RESULT","person_candidates":-1,"reliable_people":-1,"max_score":0,"processing_ms":49,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"stopped","audio_events":10,"media_volume":100,"detail":"工作页已离开前台，点击继续后重新确认在场。"}
+
+SAMPLE epoch_s=1788868580 elapsed_s=120 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 12
+  scale: 100
+  temperature: 344
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95195899,"captured_elapsed_ms":95195461,"sequence":21,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.84375,"processing_ms":47,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788868640 elapsed_s=180 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 12
+  scale: 100
+  temperature: 344
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95256269,"captured_elapsed_ms":95255707,"sequence":134,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.87890625,"processing_ms":50,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788868699 elapsed_s=240 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 12
+  scale: 100
+  temperature: 344
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95315632,"captured_elapsed_ms":95315430,"sequence":246,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.89453125,"processing_ms":50,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788868759 elapsed_s=300 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 12
+  scale: 100
+  temperature: 344
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95376003,"captured_elapsed_ms":95375693,"sequence":359,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.88671875,"processing_ms":56,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788868819 elapsed_s=360 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 11
+  scale: 100
+  temperature: 343
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95436387,"captured_elapsed_ms":95435934,"sequence":472,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.88671875,"processing_ms":109,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788868879 elapsed_s=420 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 11
+  scale: 100
+  temperature: 343
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95495714,"captured_elapsed_ms":95495646,"sequence":584,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.93359375,"processing_ms":60,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788868940 elapsed_s=480 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 11
+  scale: 100
+  temperature: 343
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95556072,"captured_elapsed_ms":95555837,"sequence":697,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.91796875,"processing_ms":61,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788869000 elapsed_s=540 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 11
+  scale: 100
+  temperature: 343
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95616440,"captured_elapsed_ms":95616086,"sequence":810,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.87890625,"processing_ms":51,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1788869059 elapsed_s=600 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  status: 3
+  level: 10
+  scale: 100
+  temperature: 345
+  Capacity level: -1
+camera_status={"schema":1,"session":"52664bcf-2880-43a0-9c15-60b027676fd9","generation":7,"heartbeat_elapsed_ms":95675865,"captured_elapsed_ms":95675271,"sequence":921,"running":true,"model_ready":true,"camera_permission":true,"lens":"front","capture_policy":"requested_15_fps","preview_resolution":"640x480","analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.91015625,"processing_ms":68,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":12,"media_volume":100,"detail":"等待新画面，请调整机位。"}
+
+COMPLETE actual_duration_s=600
