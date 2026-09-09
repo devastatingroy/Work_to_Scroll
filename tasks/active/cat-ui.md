@@ -2,6 +2,19 @@
 
 状态：实现；等待用户体验验收。迁移日期：2026-09-08。
 
+## 阻止页独立形象：A 到期假条（2026-09-09，0.5.2 已安装）
+
+- Roy 反馈小红书消费耗尽后仍出现旧盖章猫，要求独立评估；核对 `CatUi.blocker` 固定使用 `cat_home`，首页已按余额使用双状态图。建议语义与零余额统一，复用等待猫或探索专用到期形象；未获得替换授权。
+- Roy 要求尝试“收回假条／到点了”，生成两图比较。已用内置 image_gen 参考首页双状态素材生成：[A 到期假条](../../docs/design/cat-blocker-expired-pass-20260909.png)／[B 到点了](../../docs/design/cat-blocker-times-up-20260909.png)；[完整提示词](../../docs/design/cat-blocker-options-20260909-prompts.txt)。原始输出保留，项目副本为候选。
+- 已目视检查：A 的“到期”与 B 的“到点了”文字正确、主体完整；A 更像展示到期假条，收回动作不明显；B 用举爪和时钟表达停止更直接。此为图稿判断，未进行阻止页实机缩放验收。
+- Roy 随后明确“选 A”，采用到期假条形象。接入范围仅为共用阻止页插画，保留首页两状态、阻止页标题/操作和账本/保护流程；B 保留备选。
+- [x] A 原图复制为 `cat_blocker_expired.png`，与选稿 SHA-256 一致（F7B84CC9E0F1AA3087F4B11BB4253FD8A7B46D6DED49A3C993D24FE04640456F）；`CatUi.blocker` 单一资源引用由 Activity 和 Service 共用，既有 FIT_CENTER 保持完整图像。页面代码只改该资源引用，版本更新为 0.5.2-cat-blocker-expired / 24。
+- [x] assembleDebug / lintDebug 成功，签名验证通过，git diff --check 无空白错误。lint 0 错误、10 警告，其中新增一项为旧 `cat_home` 已无运行引用；保留原图，未为消除提示删除历史素材。本轮纯插画替换未新增或重跑单元测试。
+- [x] 小米 35c2f60f 普通覆盖安装 Success，版本读回 24 / 0.5.2-cat-blocker-expired；APK SHA-256：FBFF91C583AD0CC15B57B6F7FEFB97C2DD229D2C70417A25DEAD9C62C8FEB264。升级前 APK 备份 `app/build/baseline-before-cat-blocker-expired-0.5.1.apk`，账本前后快照 `app/build/ledger-before-cat-blocker-expired.xml` / `ledger-after-cat-blocker-expired.xml`。
+- [x] 安装前后余额 0、消费 3360000ms、累计工作 8098705ms、本轮 549ms、奖励 0、历史补齐 180000ms、enabled=true、每日清零开启保持一致；启动首页 Status: ok，ProtectionService 已恢复为前台服务。工作区原有设置及娱乐规则修改保留，未将其作为本轮新增改动。
+- 当前停点：已安装，手机仍为锁屏 NotificationShade；未采集真实内容或摄像头截图，未人为加减余额。等待解锁后的阻止页 A 图、到期文字与裁切检查，以及自然耗尽路径体验；共用资源的源码核验不等于浮层和全屏页实机验收。B 仍留在设计目录备选。
+- 提交边界：Roy 要求 commit，本次仅提交到期假条资源引用、版本、两张候选/提示词及相关文档记录；设置页和娱乐规则的既有未提交改动留在工作区。上述 APK 构建与安装证据属于包含这些既有改动的完整工作区，并非仅本次提交树的独立构建。
+
 ## 首页双状态：A 猫总批假已安装（2026-09-08）
 
 ### 视觉还原修正（0.4.4 已安装，当前停点）

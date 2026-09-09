@@ -41,7 +41,7 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/�
 - 首页只展示实际娱乐余额、累计有效工作和两个主要操作；有余额时“准玩”，零余额禁用本应用内小红书入口，外部应用拦截仍由原服务处理。首页保留真实保护状态，点击进入设置；权限和测试按钮从首页移入二级页面，保护动作沿用既有逻辑。
 - MainActivity 通过显式 Intent 的 page 值打开 home/settings/tools 页面实例；每页在 onPause 移除刷新，在 onResume 沿用原有恢复调用。原生返回逐级退出，账本、应用 ID、签名与权限不变。
 - ui_preferences/cat_intro_seen_v2 仅记录当前每轮规则说明已展示，升级后说明一次；不写 ledger，不迁移或清零余额。设置可重新打开使用及隐私说明。
-- drawable-nodpi 中首页使用 cat_home_waiting / cat_home_approved 两张 A 方案图片：MainActivity 创建首页时通过 CatUi 以 inSampleSize=2 各解码一次，页面持有两个 Drawable，500ms 刷新只在 balanceMs > 0 状态变化时切换引用，与文案、娱乐按钮使用同一条件。旧 cat_home 继续供阻止页使用；工作页的盯场、持续离开、到账三图以 inSampleSize=4 按资源缓存，250ms 的状态刷新不重新解码图片。
+- drawable-nodpi 中首页使用 cat_home_waiting / cat_home_approved 两张 A 方案图片：MainActivity 创建首页时通过 CatUi 以 inSampleSize=2 各解码一次，页面持有两个 Drawable，500ms 刷新只在 balanceMs > 0 状态变化时切换引用，与文案、娱乐按钮使用同一条件。阻止页共用 CatUi.blocker 与 cat_blocker_expired 到期假条图，以 inSampleSize=2 解码并 FIT_CENTER 完整显示；旧 cat_home 保留为历史素材。工作页的盯场、持续离开、到账三图以 inSampleSize=4 按资源缓存，250ms 的状态刷新不重新解码图片。
 - WorkActivity 仅在 capturing 且 WorkClock.AWAY 时显示“人呢？”；其他暂停/不确定状态说明真实原因。奖励提交后 2.8 秒内切换盖章图，AWAY 显示优先；pauseCamera 清除奖励表现。猫图与奖励反馈自身不触发声音或推理；人体检测声音由前述 DetectionCue / CuePlayer 独立处理，无网络调用。
 - 页面用原生 ScrollView/LinearLayout 并限制内容最大宽度 480dp，处理系统栏和刘海边距；小屏、大字体及横屏允许滚动。工作页预览为 210×130dp，关闭时显示占位文字。打开说明因焦点变化暂停相机，关闭后仍需手动继续。
 

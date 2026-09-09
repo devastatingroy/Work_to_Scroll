@@ -127,7 +127,7 @@ final class CatUi {
         scroll.addView(column);
         add(column, text(c, c.getString(R.string.app_name), 16, MUTED, true), -2, 0);
         int imageHeight = Math.max(120, Math.min(250, c.getResources().getConfiguration().screenHeightDp - 480));
-        add(column, image(c, R.drawable.cat_home), imageHeight, 22);
+        add(column, image(c, R.drawable.cat_blocker_expired), imageHeight, 22);
         add(column, text(c, "娱乐时间已用完", 28, INK, true), -2, 20);
         add(column, text(c, "先工作，攒点时间。", 18, RED, true), -2, 12);
         TextView rule = text(c, "工作 10 分钟，可获得 5 分钟娱乐时间。", 15, MUTED, false);

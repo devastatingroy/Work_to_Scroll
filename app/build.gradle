@@ -8,9 +8,9 @@ android {
         applicationId 'com.roy.worktoscroll.overlaytest'
         minSdk 29
         targetSdk 36
-        versionCode 21
-        versionName '0.4.4-cat-home-details'
-        resValue 'string', 'app_version', '0.4.4-cat-home-details'
+        versionCode 24
+        versionName '0.5.2-cat-blocker-expired'
+        resValue 'string', 'app_version', '0.5.2-cat-blocker-expired'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

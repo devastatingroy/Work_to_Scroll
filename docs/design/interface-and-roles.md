@@ -85,7 +85,7 @@
 - 图片、文案与娱乐入口共同遵循真实可用余额：零余额等待开工，有余额允许娱乐；不得新增人工批假、手动领奖或额外奖励条件。
 - 真实余额继续使用原生文字，不把图稿作为整张首页背景，不把固定时间画进假条。Roy 明确要求保留零余额桌牌“工作优先”和有余额假条上的红章“准了”，这两处文字属于已采用画面的道具细节；不新增单独控件或交互。
 - 四方案只存档，不新增主题切换、角色菜单或循环动画。工作页现有盯场、离开和到账形象不随本次选择更改。
-- 阻止页也复用旧盖章图，已发现同类语义问题；同步换为等待形象是关联建议，本次首页选择不自动扩大该页面的文案与交互范围。
+- 阻止页另用到期假条形象（2026-09-09 Roy 选定下方 A），与零余额状态含义一致，通过到期假条区分刚刚耗尽的情境；不再沿用旧盖章动作。
 
 资源与来源：[四方案原始对比图](cat-home-state-options-20260908.png)由内置 imagegen 生成，使用旧 `cat_home.png` 作为角色与材质参考；四行两列完整保存，左零余额、右有余额。原始生成文件保留，本目录副本未经裁切或重绘。当前[抱爪等待素材](../../app/src/main/res/drawable-nodpi/cat_home_waiting.png)与[举章放行素材](../../app/src/main/res/drawable-nodpi/cat_home_approved.png)为内置 imagegen 生成的带字修正版，分别保留“工作优先”和“准了”。Roy 在得知重绘神态与原稿仍有差别后明确选择这两张修正版，而非原图裁切；应用资源与[等待审核原图](cat-home-waiting-details-review.png)／[批准审核原图](cat-home-approved-details-review.png)内容一致。首页状态文案与真实余额独立绘制；接入与真机验收见[猫总 UI 任务](../../tasks/active/cat-ui.md)。
 
@@ -104,7 +104,7 @@
 
 ### 本轮页面与素材落地
 
-- 阻止页同样属于猫总系列（2026-09-08，Roy指出遗漏后统一）：复用首页猫总、暖纸色和红色圆角按钮；保留“娱乐时间已用完”，配首页已有“先工作，攒点时间。”及十分钟得五分钟说明。返回工具/桌面动作保持原样，不自动开始工作。临时浮层与全屏页共用布局，不保留“Gate 1 / 手动加入测试余额”的旧提示；不将举牌“人呢？”用于余额耗尽，避免混淆离开状态。
+- 阻止页同样属于猫总系列：采用 2026-09-09 Roy 选定的 A 到期假条形象、暖纸色和红色圆角按钮；保留“娱乐时间已用完”，配首页已有“先工作，攒点时间。”及十分钟得五分钟说明。返回工具/桌面动作保持原样，不自动开始工作。临时浮层与全屏页共用布局，不保留“Gate 1 / 手动加入测试余额”的旧提示；不将举牌“人呢？”用于余额耗尽，避免混淆离开状态。
 
 - 首页、设置、开发工具沿用同一 MainActivity 的独立页面实例；系统返回可逐级回到首页。设置中的授权、保护与测试动作保留原有处理路径。
 - 当前规则版本首次说明包含每轮门槛、中断重置、兑换规则、固定机位、手动相机与隐私边界；关闭后在独立的 UI 偏好中记住已展示，可从“设置 → 如何使用”重新查看。不写账本或重置授权。
@@ -117,7 +117,8 @@
 | --- | --- | --- |
 | [cat_home_waiting.png](../../app/src/main/res/drawable-nodpi/cat_home_waiting.png) | A 首页零余额：抱爪等开工 | Roy 选定带“工作优先”桌牌的独立修正版 |
 | [cat_home_approved.png](../../app/src/main/res/drawable-nodpi/cat_home_approved.png) | A 首页有余额：举大章放行 | Roy 选定假条印有“准了”红章的独立修正版 |
-| [cat_home.png](../../app/src/main/res/drawable-nodpi/cat_home.png) | 旧首页猫总和红印章，当前阻止页仍复用 | 原 C 素材保留，首页已由上述双状态接续 |
+| [cat_blocker_expired.png](../../app/src/main/res/drawable-nodpi/cat_blocker_expired.png) | 阻止页到期假条猫，临时浮层与全屏共用 | 2026-09-09 Roy 选定 [A 到期假条](cat-blocker-expired-pass-20260909.png)；[B 到点了](cat-blocker-times-up-20260909.png)保留备选；[生成提示词](cat-blocker-options-20260909-prompts.txt) |
+| [cat_home.png](../../app/src/main/res/drawable-nodpi/cat_home.png) | 旧首页猫总和红印章 | 原 C 素材保留，首页与阻止页均已由专用图片接续 |
 | [cat_work.png](../../app/src/main/res/drawable-nodpi/cat_work.png) | 工作/等待时的小猫盯场 | 同角色＋电脑，纯黑背景，无时间与状态文字 |
 | [cat_away.png](../../app/src/main/res/drawable-nodpi/cat_away.png) | 持续离开时举牌 | 同角色举“人呢？”牌；只绑定已有 AWAY 状态 |
 | [cat_reward.png](../../app/src/main/res/drawable-nodpi/cat_reward.png) | 奖励成功到账时盖章 | 同角色压下红章，黑背景，到账金额单独绘制 |
