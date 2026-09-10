@@ -6,11 +6,12 @@ android {
     buildToolsVersion '36.1.0'
     defaultConfig {
         applicationId 'com.roy.worktoscroll.overlaytest'
+        testInstrumentationRunner 'com.roy.worktoscroll.FeedbackInstrumentation'
         minSdk 29
         targetSdk 36
-        versionCode 24
-        versionName '0.5.2-cat-blocker-expired'
-        resValue 'string', 'app_version', '0.5.2-cat-blocker-expired'
+        versionCode 27
+        versionName '0.5.5-camera-return'
+        resValue 'string', 'app_version', '0.5.5-camera-return'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

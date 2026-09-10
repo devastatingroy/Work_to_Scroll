@@ -113,39 +113,9 @@ final class CatUi {
         BitmapFactory.Options options = new BitmapFactory.Options(); options.inSampleSize = 2;
         return new BitmapDrawable(c.getResources(), BitmapFactory.decodeResource(c.getResources(), resource, options));
     }
-    /** Same presentation for the immediate overlay and the opaque blocker activity. */
-    static ScrollView blocker(Context c, Runnable openApp, Runnable goHome) {
-        ScrollView scroll = new ScrollView(c);
-        scroll.setFillViewport(true);
-        scroll.setClickable(true);
-        scroll.setBackgroundColor(PAPER);
-        LinearLayout column = new LinearLayout(c);
-        column.setOrientation(LinearLayout.VERTICAL);
-        column.setGravity(Gravity.CENTER);
-        column.setClickable(true);
-        column.setPadding(dp(c, 24), dp(c, 28), dp(c, 24), dp(c, 28));
-        scroll.addView(column);
-        add(column, text(c, c.getString(R.string.app_name), 16, MUTED, true), -2, 0);
-        int imageHeight = Math.max(120, Math.min(250, c.getResources().getConfiguration().screenHeightDp - 480));
-        add(column, image(c, R.drawable.cat_blocker_expired), imageHeight, 22);
-        add(column, text(c, "娱乐时间已用完", 28, INK, true), -2, 20);
-        add(column, text(c, "先工作，攒点时间。", 18, RED, true), -2, 12);
-        TextView rule = text(c, "工作 10 分钟，可获得 5 分钟娱乐时间。", 15, MUTED, false);
-        rule.setLineSpacing(dp(c, 3), 1);
-        add(column, rule, -2, 12);
-        add(column, button(c, c.getString(R.string.return_to_app), true, false, openApp), -2, 28);
-        add(column, button(c, "回到桌面", false, false, goHome), -2, 12);
-        scroll.setOnApplyWindowInsetsListener((v, insets) -> {
-            android.graphics.Insets bars = insets.getSystemWindowInsets();
-            if (android.os.Build.VERSION.SDK_INT >= 30)
-                bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-            scroll.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            int available = c.getResources().getDisplayMetrics().widthPixels - bars.left - bars.right;
-            int side = Math.max(dp(c, 24), (available - dp(c, 432)) / 2);
-            column.setPadding(side, dp(c, 28), side, dp(c, 28));
-            return insets;
-        });
-        return scroll;
+    /** Shared static fallback; only the focused activity may start the one-shot motion. */
+    static BlockerView blocker(Context c, Runnable openApp, Runnable goHome, boolean exhausted) {
+        return new BlockerView(c, openApp, goHome, exhausted);
     }
     static void setText(TextView view, CharSequence value) {
         if (!value.toString().contentEquals(view.getText())) view.setText(value);

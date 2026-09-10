@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -13,6 +15,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -24,8 +27,14 @@ public final class MainActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private LedgerStore ledger;
     private LinearLayout content;
-    private TextView balance, status, permissions, diagnostics, worked, speech, seal;
-    private Button workButton, toggle, overlayPermission, entertainment;
+    private TextView balance, status, diagnostics, worked, speech, seal;
+    private Button workButton, toggle, usagePermission, overlayPermission, entertainment, repair;
+    private TextView expiry, ratio, ratioDetail, protectionDetail, permissionSummary, backgroundSummary;
+    private TextView usageState, overlayState, notificationState, backgroundState, dailyDetail;
+    private static final int SETTINGS_SURFACE = 0xFFFFFDF8, SETTINGS_BORDER = 0xFFE8E0D1;
+    private static final int GOOD = 0xFF456447, WARNING = 0xFF946119;
+    private android.widget.Switch dailySwitch;
+    private boolean updatingDailySwitch;
     private ImageView homeCat;
     private Drawable waitingCat, approvedCat;
     private String page;
@@ -39,11 +48,12 @@ public final class MainActivity extends Activity {
         page = getIntent().getStringExtra("page");
         content = CatUi.screen(this, false);
         if ("settings".equals(page)) buildSettings();
+        else if ("permissions".equals(page)) buildPermissions();
         else if ("tools".equals(page)) buildTools();
         else {
             page = "home";
             buildHome();
-            if (!uiPreferences().getBoolean("cat_intro_seen_v2", false)) {
+            if (!uiPreferences().getBoolean("cat_intro_seen_v3", false)) {
                 content.post(() -> { if (!isFinishing() && !isDestroyed()) showGuide(true); });
             }
         }
@@ -77,6 +87,8 @@ public final class MainActivity extends Activity {
         CatUi.add(ticket, balance, 58, 4);
         seal = CatUi.text(this, "先攒时间", 14, CatUi.RED, true);
         CatUi.add(ticket, seal, -2, 0);
+        expiry = CatUi.text(this, "", 12, CatUi.MUTED, false);
+        CatUi.add(ticket, expiry, -2, 6);
         CatUi.add(content, ticket, -2, 0);
         worked = CatUi.text(this, "", 17, CatUi.INK, false);
         worked.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_work_laptop, 0, 0, 0);
@@ -98,23 +110,204 @@ public final class MainActivity extends Activity {
     }
 
     private void buildSettings() {
-        CatUi.header(this, content, "设置", "‹ 返回", this::finish, null, null, false);
-        section("应用保护");
-        status = paragraph("");
-        toggle = row("开启保护", this::toggleProtection);
-        section("权限与后台运行");
-        permissions = paragraph("");
-        row("使用情况访问  ›", () -> openSettings(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
+        settingsHeader("设置");
+        LinearLayout protection = settingsCard(14);
+        settingsText(protection, "小红书保护", 12, CatUi.MUTED, 0);
+        status = settingsText(protection, "正在检查保护…", 24, GOOD, 10);
+        protectionDetail = settingsText(protection, "", 14, CatUi.MUTED, 10);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        repair = settingsAction("恢复保护", this::repairProtection, true);
+        actions.addView(repair, new LinearLayout.LayoutParams(0, -2, 1));
+        toggle = settingsAction("停止保护", this::requestProtectionChange, false);
+        LinearLayout.LayoutParams toggleParams = new LinearLayout.LayoutParams(-2, -2);
+        toggleParams.leftMargin = CatUi.dp(this, 10);
+        actions.addView(toggle, toggleParams);
+        CatUi.add(protection, actions, -2, 16);
+        section("保护所需设置");
+        LinearLayout access = settingsCard(10);
+        settingsNavigation(access, "权限与后台保障", () -> openPage("permissions"));
+        permissionSummary = settingsText(access, "", 13, GOOD, 5);
+        backgroundSummary = settingsText(access, "", 13, WARNING, 5);
+        access.setOnClickListener(v -> openPage("permissions"));
+        section("娱乐规则");
+        LinearLayout rules = settingsCard(10);
+        ratio = settingsNavigation(rules, "兑换比例", this::chooseRatio);
+        ratioDetail = settingsText(rules, "", 13, CatUi.MUTED, 5);
+        settingsDivider(rules);
+        dailySwitch = new android.widget.Switch(this);
+        dailySwitch.setText("每天清零可用娱乐");
+        dailySwitch.setTextColor(CatUi.INK);
+        dailySwitch.setTextSize(16);
+        dailySwitch.setMinHeight(CatUi.dp(this, 48));
+        CatUi.add(rules, dailySwitch, -2, 4);
+        dailyDetail = settingsText(rules, "", 13, CatUi.MUTED, 0);
+        dailySwitch.setOnCheckedChangeListener((button, checked) -> {
+            if (updatingDailySwitch) return;
+            if (!ledger.setDailyEnabled(checked)) Toast.makeText(this, "设置保存失败，请重试", Toast.LENGTH_LONG).show();
+            render();
+        });
+        section("帮助与说明");
+        LinearLayout help = settingsCard(10);
+        settingsNavigation(help, "如何使用", () -> showGuide(false));
+        settingsDivider(help);
+        settingsNavigation(help, "隐私说明", this::showPrivacy);
+        settingsDivider(help);
+        settingsNavigation(help, "开发工具", () -> openPage("tools"));
+        TextView footer = paragraph("WorkToScroll · 自用测试版");
+        footer.setGravity(Gravity.CENTER); footer.setTextSize(12);
+    }
+
+    private void buildPermissions() {
+        settingsHeader("权限与后台保障");
+        paragraph("先完成必需授权，再核对后台设置，让保护在离开应用后也能持续。");
+        permissionHeading("必需", "缺少任意一项，无法正常保护", CatUi.RED);
+        LinearLayout required = settingsCard(10);
+        usageState = permissionItem(required, "使用情况访问", "识别何时使用小红书，按实际用时扣减余额。");
+        usagePermission = permissionLink(required, "查看系统设置  ›", () -> openSettings(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
             Uri.parse("package:" + getPackageName()))));
-        overlayPermission = row("悬浮窗权限  ›", this::openOverlaySettings);
-        row("通知提醒  ›", this::requestNotifications);
-        row("后台运行设置  ›", () -> openSettings(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.parse("package:" + getPackageName()))));
-        section("使用帮助");
-        row("如何使用  ›", () -> showGuide(false));
-        row("隐私说明  ›", this::showPrivacy);
-        row("开发工具  ›", () -> openPage("tools"));
-        paragraph("WorkToScroll · 自用测试版");
+        settingsDivider(required);
+        overlayState = permissionItem(required, "悬浮窗", "娱乐时间用完时，显示阻止界面。");
+        overlayPermission = permissionLink(required, "查看系统设置  ›", this::openOverlaySettings);
+        permissionHeading("重要", "后台运行保障", WARNING);
+        LinearLayout background = settingsCard(10);
+        backgroundState = permissionItem(background, "允许持续后台运行", "避免系统休眠应用，导致用时扣减或阻止失效。");
+        permissionLink(background, isXiaomi() ? "核对小米后台设置  ›" : "核对后台设置  ›", this::openBackgroundSettings);
+        TextView note = paragraph(isXiaomi()
+            ? "小米省电策略请选「无限制」。应用无法自动确认此项，当前运行中也不代表已配置。"
+            : "请核对系统的后台运行与省电设置。当前运行中不代表后台能够持续运行。");
+        note.setTextSize(13);
+        permissionHeading("可选", "通知提醒", CatUi.MUTED);
+        LinearLayout notification = settingsCard(10);
+        notificationState = permissionItem(notification, "允许通知", "显示保护状态，以及停止保护后的开启提醒。关闭通知不影响开启保护。");
+        permissionLink(notification, "查看通知设置  ›", this::requestNotifications);
+    }
+
+    private boolean isXiaomi() { return "Xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER); }
+
+    private void settingsHeader(String title) {
+        CatUi.header(this, content, title, "‹ 返回", this::finish, null, null, false);
+        LinearLayout header = (LinearLayout) content.getChildAt(content.getChildCount() - 1);
+        header.addView(new android.widget.Space(this), new LinearLayout.LayoutParams(CatUi.dp(this, 76), 1));
+    }
+
+    private void openBackgroundSettings() {
+        new AlertDialog.Builder(this).setTitle("核对后台运行设置")
+            .setMessage(isXiaomi() ? "进入本应用设置，找到省电策略并选择「无限制」。返回后仍需以系统实际设置为准，不能仅凭保护当前运行判断后台配置成功。"
+                : "进入本应用设置，检查后台运行与省电限制。系统未报告受限不代表能够持续运行。")
+            .setNegativeButton("取消", null)
+            .setPositiveButton("进入本应用设置", (d, w) -> openSettings(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getPackageName())))).show();
+    }
+
+    private LinearLayout settingsCard(int top) {
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(CatUi.dp(this, 16), CatUi.dp(this, 14), CatUi.dp(this, 16), CatUi.dp(this, 14));
+        box.setBackground(CatUi.shape(this, SETTINGS_SURFACE, 18, SETTINGS_BORDER));
+        CatUi.add(content, box, -2, top); return box;
+    }
+
+    private TextView settingsText(LinearLayout parent, String text, int size, int color, int top) {
+        TextView view = CatUi.text(this, text, size, color, false);
+        view.setGravity(Gravity.START); view.setLineSpacing(CatUi.dp(this, 3), 1);
+        CatUi.add(parent, view, -2, top); return view;
+    }
+
+    private void settingsDivider(LinearLayout parent) {
+        View divider = new View(this); divider.setBackgroundColor(SETTINGS_BORDER);
+        CatUi.add(parent, divider, 1, 8);
+    }
+
+    private TextView settingsNavigation(LinearLayout parent, String title, Runnable action) {
+        LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(CatUi.dp(this, 44)); row.setFocusable(true);
+        row.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x227D5848),
+            CatUi.shape(this, SETTINGS_SURFACE, 8, Color.TRANSPARENT), null));
+        TextView label = CatUi.text(this, title, 16, CatUi.INK, false); label.setGravity(Gravity.START);
+        row.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView value = CatUi.text(this, "", 13, CatUi.MUTED, false); value.setGravity(Gravity.END);
+        LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(-2, -2);
+        valueParams.leftMargin = CatUi.dp(this, 8); row.addView(value, valueParams);
+        TextView arrow = CatUi.text(this, "›", 22, CatUi.MUTED, false);
+        row.addView(arrow, new LinearLayout.LayoutParams(CatUi.dp(this, 20), -2));
+        row.setOnClickListener(v -> action.run()); CatUi.add(parent, row, -2, 0);
+        return value;
+    }
+
+    private void permissionHeading(String importance, String title, int color) {
+        LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView badge = CatUi.text(this, importance, 12, color, true);
+        badge.setPadding(CatUi.dp(this, 6), CatUi.dp(this, 3), CatUi.dp(this, 6), CatUi.dp(this, 3));
+        badge.setBackground(CatUi.shape(this, color == CatUi.RED ? 0xFFF9E7DF : color == WARNING ? 0xFFF8EBD4 : 0xFFEDE9E1, 5, Color.TRANSPARENT));
+        row.addView(badge, new LinearLayout.LayoutParams(-2, -2));
+        TextView heading = CatUi.text(this, title, 14, CatUi.MUTED, false); heading.setGravity(Gravity.START);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, -2, 1); labelParams.leftMargin = CatUi.dp(this, 8);
+        row.addView(heading, labelParams); CatUi.add(content, row, -2, 24);
+    }
+
+    private TextView permissionItem(LinearLayout parent, String title, String reason) {
+        LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView name = CatUi.text(this, title, 16, CatUi.INK, false); name.setGravity(Gravity.START);
+        row.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView state = CatUi.text(this, "", 13, CatUi.MUTED, false);
+        LinearLayout.LayoutParams stateParams = new LinearLayout.LayoutParams(-2, -2);
+        stateParams.leftMargin = CatUi.dp(this, 8); row.addView(state, stateParams);
+        CatUi.add(parent, row, -2, parent.getChildCount() == 0 ? 0 : 16);
+        settingsText(parent, reason, 14, CatUi.MUTED, 9); return state;
+    }
+
+    private Button permissionLink(LinearLayout parent, String title, Runnable action) {
+        Button link = settingsAction(title, action, false);
+        link.setBackgroundColor(Color.TRANSPARENT); link.setTextColor(CatUi.RED);
+        link.setGravity(Gravity.START | Gravity.CENTER_VERTICAL); link.setPadding(0, 0, 0, 0);
+        CatUi.add(parent, link, -2, 4); return link;
+    }
+
+    private Button settingsAction(String title, Runnable action, boolean primary) {
+        Button button = CatUi.button(this, title, primary, false, action);
+        button.setTextSize(14); button.setMinHeight(CatUi.dp(this, 48)); button.setMinimumHeight(CatUi.dp(this, 48));
+        button.setMinWidth(0); button.setMinimumWidth(0);
+        styleSettingsAction(button, primary); return button;
+    }
+
+    private void styleSettingsAction(Button button, boolean primary) {
+        if (Boolean.valueOf(primary).equals(button.getTag())) return;
+        button.setTag(primary); button.setTextColor(primary ? Color.WHITE : CatUi.INK);
+        button.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x227D5848),
+            CatUi.shape(this, primary ? CatUi.RED : SETTINGS_SURFACE, 11, primary ? CatUi.RED : SETTINGS_BORDER), null));
+    }
+
+    private void requestProtectionChange() {
+        if (!ledger.enabled) { toggleProtection(); return; }
+        new AlertDialog.Builder(this).setTitle("停止小红书保护？")
+            .setMessage("停止后，不再扣减娱乐时间，也不再阻止小红书。已有余额保留。").setNegativeButton("取消", null)
+            .setPositiveButton("停止保护", (d, w) -> { if (ledger.enabled) toggleProtection(); }).show();
+    }
+
+    private void repairProtection() {
+        if (!ledger.enabled) { render(); return; }
+        if (!Permissions.usage(this) || !Permissions.overlay(this)) { openPage("permissions"); return; }
+        if (getSystemService(android.app.ActivityManager.class).isBackgroundRestricted()) { openPage("permissions"); return; }
+        if (!ledger.save()) { Toast.makeText(this, "保存失败，请重试", Toast.LENGTH_LONG).show(); return; }
+        startProtection(); render();
+    }
+
+    private void chooseRatio() {
+        int[] values = {10, 15, 20};
+        String[] labels = {"10 分钟换 5 分钟", "15 分钟换 5 分钟", "20 分钟换 5 分钟"};
+        int checked = ledger.work.selectedMinutes() == 15 ? 1 : ledger.work.selectedMinutes() == 20 ? 2 : 0;
+        TextView rule = CatUi.text(this, "当前选择：" + WorkProgress.ruleText(ledger.work.selectedMinutes()) + "修改从下一轮生效。", 14, CatUi.MUTED, false);
+        rule.setGravity(Gravity.START); rule.setPadding(CatUi.dp(this, 24), CatUi.dp(this, 12), CatUi.dp(this, 24), CatUi.dp(this, 12));
+        new AlertDialog.Builder(this).setTitle("兑换比例")
+            .setView(rule)
+            .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                if (ledger.selectMinutes(values[which])) {
+                    Toast.makeText(this, ledger.work.active() && ledger.work.roundMinutes() != values[which]
+                        ? "已保存，下轮工作生效" : "兑换比例已保存", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                } else Toast.makeText(this, "设置保存失败，请重试", Toast.LENGTH_LONG).show();
+                render();
+            }).setNegativeButton("取消", null).show();
     }
 
     private void buildTools() {
@@ -160,9 +353,9 @@ public final class MainActivity extends Activity {
     private void showGuide(boolean first) {
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("先工作，再安心刷一会儿")
-            .setMessage("① 开始工作\n固定手机，让前置摄像头朝向你的肩部和躯干；可放在侧后方，无需露出人脸。在工作页手动开启监测，背影效果仍在试用验证。\n\n② 攒娱乐时间\n每轮累计 10 分钟有效工作，获得 5 分钟娱乐；之后每分钟再得 30 秒。连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。已到账奖励和历史工作保留，主动结束后重新开始一轮。\n\n③ 去小红书\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
+            .setMessage("① 开始工作\n固定手机，让前置摄像头朝向你的肩部和躯干；可放在侧后方，无需露出人脸。在工作页手动开启监测，背影效果仍在试用验证。\n\n② 攒娱乐时间\n" + WorkProgress.ruleText(ledger.work.selectedMinutes()) + "连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。本轮重置不倒扣奖励，历史工作保留；主动结束后重新开始一轮。" + ledger.expiryDescription() + "修改比例从下一轮生效。\n\n③ 去小红书\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).create();
-        if (first) dialog.setOnDismissListener(d -> uiPreferences().edit().putBoolean("cat_intro_seen_v2", true).apply());
+        if (first) dialog.setOnDismissListener(d -> uiPreferences().edit().putBoolean("cat_intro_seen_v3", true).apply());
         dialog.show();
     }
     private void showPrivacy() {
@@ -171,6 +364,9 @@ public final class MainActivity extends Activity {
             .setPositiveButton("知道了", null).show();
     }
     private void openXiaohongshu() {
+        if (!ledger.refreshDailyReset()) {
+            Toast.makeText(this, "余额保存失败，请稍后重试", Toast.LENGTH_LONG).show(); return;
+        }
         if (ledger.engine.balanceMs <= 0) {
             Toast.makeText(this, "还没有可用娱乐时间，先开始工作吧", Toast.LENGTH_SHORT).show(); return;
         }
@@ -179,12 +375,13 @@ public final class MainActivity extends Activity {
         else Toast.makeText(this, "未找到小红书，请确认已安装标准版", Toast.LENGTH_LONG).show();
     }
     private void prepareChange() {
+        ledger.refreshDailyReset();
         if (ProtectionService.current() != null) ProtectionService.current().prepareManualChange();
         else ledger.engine.resetObservation(System.currentTimeMillis());
     }
     private void toggleProtection() {
         if (!ledger.enabled && (!Permissions.usage(this) || !Permissions.overlay(this))) {
-            Toast.makeText(this, "请先完成使用情况访问与悬浮窗授权", Toast.LENGTH_LONG).show(); return;
+            openPage("permissions"); return;
         }
         if (ledger.enabled) {
             if (ProtectionService.current() != null) ProtectionService.current().stopProtection();
@@ -204,6 +401,35 @@ public final class MainActivity extends Activity {
     }
 
     private void render() {
+        if (!ledger.refreshDailyReset()) {
+            if (status != null) { CatUi.setText(status, "余额保存失败，请稍后重试"); status.setTextColor(CatUi.RED); }
+            if (protectionDetail != null) CatUi.setText(protectionDetail, "无法确认当前保护状态，请稍后重试。");
+            if (entertainment != null) entertainment.setEnabled(false);
+            return;
+        }
+        if (ratio != null) {
+            CatUi.setText(ratio, ledger.work.selectedMinutes() + " 分钟换 5 分钟");
+            boolean pendingRatio = ledger.work.active() && ledger.work.roundMinutes() != ledger.work.selectedMinutes();
+            ratioDetail.setVisibility(pendingRatio ? View.VISIBLE : View.GONE);
+            CatUi.setText(ratioDetail, pendingRatio ? "本轮仍为 " + ledger.work.roundMinutes() + " 分钟换 5 分钟，新比例下轮生效。" : "");
+            updatingDailySwitch = true;
+            dailySwitch.setChecked(ledger.daily.enabled());
+            updatingDailySwitch = false;
+            CatUi.setText(dailyDetail, ledger.daily.enabled() ? "每天早晨 06:00 清空剩余时间；重新开启从下一个 06:00 生效，不立即清空。"
+                : "已关闭，剩余娱乐时间不每日清零；关闭不会恢复已到期余额。");
+        }
+        if (expiry != null) {
+            expiry.setVisibility(ledger.daily.enabled() ? android.view.View.VISIBLE : android.view.View.GONE);
+            if (ledger.daily.enabled()) {
+                var now = java.time.LocalDate.now();
+                var due = java.time.Instant.ofEpochMilli(ledger.daily.nextMs()).atZone(java.time.ZoneId.systemDefault());
+                String day = due.toLocalDate().equals(now) ? "今天" : due.toLocalDate().equals(now.plusDays(1))
+                    ? "明早" : due.toLocalDate().toString() + " ";
+                CatUi.setText(expiry, "下次清零：" + day + " 06:00");
+            }
+            if (hasWindowFocus() && ledger.acknowledgeReset())
+                Toast.makeText(this, "已按设置清零剩余娱乐时间", Toast.LENGTH_LONG).show();
+        }
         boolean usage = Permissions.usage(this), overlay = Permissions.overlay(this);
         ProtectionService service = ProtectionService.current();
         boolean running = service != null && SystemClock.elapsedRealtime() - service.heartbeatElapsed < 3_000;
@@ -215,7 +441,7 @@ public final class MainActivity extends Activity {
         else if (!service.healthy) state = service.failure;
         else if (restricted) state = "后台运行受限 · 点此检查";
         else { state = "● 小红书保护运行中"; healthy = true; }
-        if (status != null) {
+        if (status != null && "home".equals(page)) {
             CatUi.setText(status, state); status.setTextColor(healthy ? 0xFF456447 : CatUi.RED);
             if ("home".equals(page)) {
                 status.setContentDescription(state + "，点击进入设置");
@@ -233,19 +459,27 @@ public final class MainActivity extends Activity {
             CatUi.setText(workButton, ledger.work.active() ? "▶  继续工作" : "▶  开始工作");
             entertainment.setEnabled(hasTime);
         }
-        if (permissions != null) {
-            CatUi.setText(permissions, "使用情况访问：" + (usage ? "已授权" : "未授权")
-                + "\n悬浮窗：" + (overlay ? "已授权" : "未授权")
-                + "\n通知：" + (getSystemService(android.app.NotificationManager.class).areNotificationsEnabled() ? "已允许" : "未允许")
-                + "\n监测服务：" + (running ? "运行中" : "未连接")
-                + (restricted ? "\n系统已限制后台运行，请检查后台设置。" : "")
-                + ("Xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER)
-                    ? "\n小米省电策略应选无限制；当前心跳正常不代表后台不会被冻结。" : ""));
-            CatUi.setText(overlayPermission, overlay ? "悬浮窗已授权 · 查看设置  ›" : "开启悬浮窗权限  ›");
-            CatUi.setText(toggle, ledger.enabled ? "停止保护" : "开启保护");
+        if (toggle != null) {
+            renderProtectionCard(ProtectionUiState.from(ledger.enabled, usage, overlay, running,
+                service != null && service.healthy, restricted), usage, overlay, service);
+            int missing = (usage ? 0 : 1) + (overlay ? 0 : 1);
+            CatUi.setText(permissionSummary, missing == 0 ? "✓ 两项必需权限已授权" : "! 缺少 " + missing + " 项必需授权");
+            permissionSummary.setTextColor(missing == 0 ? GOOD : CatUi.RED);
+            CatUi.setText(backgroundSummary, restricted ? "! 系统已限制后台运行" : "! 后台运行设置待核对");
+        }
+        if (usageState != null) {
+            renderPermissionState(usageState, usage, "已授权", "未授权");
+            renderPermissionState(overlayState, overlay, "已授权", "未授权");
+            renderPermissionState(notificationState, getSystemService(android.app.NotificationManager.class).areNotificationsEnabled(), "已允许", "未允许");
+            notificationState.setTextColor(getSystemService(android.app.NotificationManager.class).areNotificationsEnabled() ? GOOD : CatUi.MUTED);
+            CatUi.setText(backgroundState, restricted ? "已受限" : "待核对"); backgroundState.setTextColor(WARNING);
+            CatUi.setText(usagePermission, usage ? "查看系统设置  ›" : "去授权  ›");
+            CatUi.setText(overlayPermission, overlay ? "查看系统设置  ›" : "去授权  ›");
         }
         if (diagnostics != null) CatUi.setText(diagnostics,
-            "可用余额：" + duration(ledger.engine.balanceMs, true)
+            "监测服务：" + (running ? "运行中" : "未连接")
+            + (service != null && !service.healthy ? "\n运行异常：" + service.failure : "")
+            + "\n可用余额：" + duration(ledger.engine.balanceMs, true)
             + "\n累计扣减：" + duration(ledger.engine.consumedMs, false)
             + "\n阻止界面次数：" + ledger.blocks
             + (ledger.workUpgradeCreditMs > 0 ? "\n历史规则补齐：" + duration(ledger.workUpgradeCreditMs, false) + "（已计入余额）" : "")
@@ -253,6 +487,36 @@ public final class MainActivity extends Activity {
             + "\n最近中断：" + duration(ledger.lastObservationGapMs, false) + "（含系统休眠等停顿）"
             + "\n" + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + " · Android " + android.os.Build.VERSION.RELEASE
             + "\n" + getString(R.string.app_version) + (ledger.note.isEmpty() ? "" : "\n" + ledger.note));
+    }
+
+    private void renderPermissionState(TextView view, boolean allowed, String yes, String no) {
+        CatUi.setText(view, allowed ? "✓ " + yes : no); view.setTextColor(allowed ? GOOD : CatUi.RED);
+    }
+
+    private void renderProtectionCard(ProtectionUiState state, boolean usage, boolean overlay, ProtectionService service) {
+        String title, detail, action = ""; int color = CatUi.RED;
+        switch (state) {
+            case STOPPED:
+                title = "保护已停止"; color = CatUi.MUTED;
+                detail = "当前不扣减娱乐时间，也不阻止小红书。已有余额保留。"; break;
+            case MISSING_PERMISSION:
+                title = "保护未生效"; action = "补齐必要授权";
+                detail = !usage && !overlay ? "缺少使用情况访问和悬浮窗授权，无法正常保护。"
+                    : !usage ? "缺少使用情况访问授权，无法正常识别用时并扣减余额。" : "缺少悬浮窗授权，无法正常显示阻止界面。"; break;
+            case INTERRUPTED:
+                title = "保护已中断"; detail = "未检测到保护运行，请尝试恢复。"; action = "恢复保护"; break;
+            case FAILED:
+                title = "保护运行异常"; detail = service == null || service.failure.isEmpty() ? "保护未能正常运行，请尝试恢复。" : service.failure;
+                action = "恢复保护"; break;
+            case BACKGROUND_RESTRICTED:
+                title = "后台运行受限"; detail = "系统已限制后台运行，持续保护可能中断。";
+                action = "检查后台设置"; color = WARNING; break;
+            default:
+                title = "● 保护运行中"; detail = "使用小红书时扣减娱乐时间，余额用完后阻止继续使用。"; color = GOOD;
+        }
+        CatUi.setText(status, title); status.setTextColor(color); CatUi.setText(protectionDetail, detail);
+        repair.setVisibility(action.isEmpty() ? View.GONE : View.VISIBLE); CatUi.setText(repair, action);
+        CatUi.setText(toggle, ledger.enabled ? "停止保护" : "开启保护"); styleSettingsAction(toggle, !ledger.enabled);
     }
     static String duration(long millis, boolean roundUp) {
         long seconds = Math.max(0, millis) / 1000;
@@ -298,7 +562,23 @@ public final class MainActivity extends Activity {
         super.onResume();
         if (ledger.save()) ProtectionRecovery.sync(this, true);
         if (ProtectionService.current() != null) ProtectionService.current().dismissForNavigation();
+        resumeShortExternalReturn();
         handler.post(update);
+    }
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        resumeShortExternalReturn();
+    }
+    private void resumeShortExternalReturn() {
+        Intent intent = getIntent();
+        boolean launcherHome = "home".equals(page) && Intent.ACTION_MAIN.equals(intent.getAction())
+            && intent.hasCategory(Intent.CATEGORY_LAUNCHER);
+        if (!launcherHome || !ledger.work.active()) return;
+        boolean resume = MonitoringReturnTicket.consume(ledger.work.startedWallMs(), SystemClock.elapsedRealtime());
+        if (!resume || checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return;
+        startActivity(new Intent(this, WorkActivity.class)
+            .putExtra(WorkActivity.EXTRA_RESUME_SHORT_EXTERNAL_RETURN, true));
     }
     @Override protected void onPause() { handler.removeCallbacks(update); super.onPause(); }
 }

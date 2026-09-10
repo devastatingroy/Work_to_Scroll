@@ -12,7 +12,10 @@ import android.widget.Toast;
 /** Opaque, separate task: the target really leaves the foreground while this page stays. */
 public final class BlockerActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
+    static final String EXTRA_EXHAUSTION = "exhaustion_event";
     private LedgerStore ledger;
+    private BlockerView panel;
+    private String pendingExhaustion;
     private final Runnable check = new Runnable() {
         @Override public void run() {
             // No accounting here. Credit and the persisted opt-out remain authoritative.
@@ -25,12 +28,22 @@ public final class BlockerActivity extends Activity {
         super.onCreate(state);
         ledger = LedgerStore.get(this);
         if (!shouldRemain()) { finishAndRemoveTask(); return; }
-        setContentView(CatUi.blocker(this,
+        ProtectionService service = ProtectionService.current();
+        pendingExhaustion = state == null ? getIntent().getStringExtra(EXTRA_EXHAUSTION) : null;
+        panel = CatUi.blocker(this,
             () -> navigate(new Intent(this, MainActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)),
-            this::goHome));
+            this::goHome, service != null && service.hasExhaustedBalance());
+        setContentView(panel);
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
             android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goHome);
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        pendingExhaustion = intent.getStringExtra(EXTRA_EXHAUSTION);
+        if (hasWindowFocus()) revealFeedback();
     }
 
     private boolean shouldRemain() {
@@ -48,19 +61,34 @@ public final class BlockerActivity extends Activity {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus && !isFinishing() && shouldRemain()) {
             // Keep the immediate overlay until the real destination has window focus.
-            ProtectionService service = ProtectionService.current();
-            if (service != null) service.dismissForNavigation();
+            revealFeedback();
             Log.i("WTS_BLOCK_PAGE", "PAGE_VISIBLE");
         }
     }
 
+    private void revealFeedback() {
+        if (isFinishing() || !shouldRemain()) return;
+        ProtectionService service = ProtectionService.current();
+        // Claim before dismissing the overlay; dismissal also cancels unshown pending events.
+        boolean play = service != null && service.consumeExhaustion(pendingExhaustion);
+        pendingExhaustion = null;
+        if (service != null) service.dismissForNavigation();
+        if (play && panel != null) {
+            panel.playExhaustion();
+            Log.i("WTS_BLOCK_PAGE", "EXHAUSTION_FEEDBACK");
+        }
+    }
+
     @Override protected void onPause() {
+        pendingExhaustion = null;
+        if (panel != null) panel.stopAnimation();
         handler.removeCallbacks(check);
         super.onPause();
     }
 
     @Override protected void onDestroy() {
         handler.removeCallbacksAndMessages(null);
+        if (panel != null) panel.stopAnimation();
         super.onDestroy();
     }
 

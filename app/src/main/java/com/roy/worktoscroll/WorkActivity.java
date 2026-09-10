@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.CameraState;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
@@ -36,6 +37,8 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
@@ -55,6 +58,13 @@ import java.util.concurrent.Executors;
 
 /** Explicit foreground camera session. Preview pixels never leave the in-memory pipeline. */
 public final class WorkActivity extends ComponentActivity {
+    static final String EXTRA_RESUME_SHORT_EXTERNAL_RETURN = "resume_short_external_return";
+    public static final class RecoveryModel extends ViewModel {
+        final CameraRecovery recovery = new CameraRecovery();
+    }
+    private CameraRecovery recovery;
+    private final long createdAtElapsed = SystemClock.elapsedRealtime();
+    private androidx.camera.core.Camera boundCamera;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService analyzer = Executors.newSingleThreadExecutor();
     private final WorkClock clock = new WorkClock();
@@ -72,6 +82,7 @@ public final class WorkActivity extends ComponentActivity {
     private PreviewView preview;
     private TextView stateText;
     private TextView counters;
+    private TextView rewardRule;
     private TextView validTime;
     private TextView rewardFeedback;
     private TextView previewHint;
@@ -90,8 +101,10 @@ public final class WorkActivity extends ComponentActivity {
     private String message = "正在准备人体检测模型…";
     private final Runnable tick = new Runnable() {
         @Override public void run() {
-            if (capturing && !available()) pauseCamera("监测已暂停，回到工作页后点击继续。");
+            if (capturing && !available()) suspendCamera();
             long now = SystemClock.elapsedRealtime();
+            if (recovery.wanted() && !modelReady && now - createdAtElapsed >= 15_000)
+                failCamera("人体模型准备超时，请退出工作页后重试。");
             long staleAt = clock.expire(now);
             if (staleAt >= 0) { detectionCue.reset(); cuePlayer.stop(); }
             if (ledger.work.active()) {
@@ -99,9 +112,12 @@ public final class WorkActivity extends ComponentActivity {
                 WorkProgress next = capturing && (clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE)
                     ? base.refresh(now, ledger.bootCount) : base.pause(now, ledger.bootCount);
                 if (next != ledger.work && !ledger.saveWork(next)) {
-                    pauseCamera("进度保存失败，监测已暂停，请重试。");
+                    failCamera("进度保存失败，监测已暂停，请重试。");
                 }
             }
+            if (available() && recovery.timedOut(now)) retryCamera("持续未收到有效画面，请检查相机后重试。");
+            maybeResumeCamera();
+            if (available() && recovery.failed() && recovery.takeAlert() && soundsEnabled) cuePlayer.playFailure();
             render();
             writeDiagnostic(false);
             handler.postDelayed(this, 250);
@@ -110,7 +126,12 @@ public final class WorkActivity extends ComponentActivity {
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
+        recovery = new ViewModelProvider(this).get(RecoveryModel.class).recovery;
         ledger = LedgerStore.get(this);
+        if (getIntent().getBooleanExtra(EXTRA_RESUME_SHORT_EXTERNAL_RETURN, false) && ledger.work.active()) {
+            recovery.request();
+            message = "正在恢复监测，等待工作页可用。";
+        }
         cuePlayer = new CuePlayer(this);
         setVolumeControlStream(android.media.AudioManager.STREAM_MUSIC);
         soundsEnabled = getSharedPreferences("ui_preferences", MODE_PRIVATE).getBoolean("presence_sound_enabled", true);
@@ -129,6 +150,7 @@ public final class WorkActivity extends ComponentActivity {
         stateText.setMinHeight(dp(48));
         stateText.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         counters = label(column, "", 17);
+        rewardRule = label(column, "", 13);
         rewardFeedback = label(column, "", 15);
         rewardFeedback.setTextColor(0xFFFFC1A6);
         rewardFeedback.setMinHeight(dp(48));
@@ -162,7 +184,7 @@ public final class WorkActivity extends ComponentActivity {
             detectionCue.reset(); cuePlayer.stop(); render(); writeDiagnostic(true);
         });
         CatUi.add(column, soundButton, -2, 8);
-        label(column, "退出页面会暂停 · 已获时间保留", 12);
+        label(column, "临时切出暂停，回来自动恢复 · 主动暂停需继续", 12);
         if (ledger.work.active()) message = "上次工作已暂停，点击继续后重新确认在场。";
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() { pauseCamera("监测已暂停。"); finish(); }
@@ -177,13 +199,15 @@ public final class WorkActivity extends ComponentActivity {
                 handler.post(() -> {
                     if (destroyed) return;
                     modelReady = true;
-                    message = "人体检测已就绪，固定手机后点击开始/继续。";
+                    message = recovery.failed() ? recovery.failureReason()
+                        : recovery.wanted() ? "正在恢复监测，等待工作页可用。" : "人体检测已就绪，固定手机后点击开始/继续。";
+                    maybeResumeCamera();
                     render(); writeDiagnostic(true);
                 });
             } catch (Exception ex) {
                 handler.post(() -> {
                     if (destroyed) return;
-                    message = "人体模型启动失败，请退出工作页后重试。";
+                    failCamera("人体模型启动失败，请退出工作页后重试。");
                     render(); writeDiagnostic(true);
                 });
             }
@@ -191,18 +215,19 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private boolean available() {
-        return resumed && hasWindowFocus()
+        return !destroyed && !isFinishing() && resumed && hasWindowFocus()
             && getSystemService(PowerManager.class).isInteractive()
             && !getSystemService(KeyguardManager.class).isKeyguardLocked();
     }
 
     private void requestStart() {
-        if (capturing) { pauseCamera("已暂停，已获得时间保留。"); return; }
+        if (recovery.wanted()) { pauseCamera("已暂停，已获得时间保留。"); return; }
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[] {Manifest.permission.CAMERA}, 20);
             return;
         }
-        startCamera();
+        recovery.request();
+        maybeResumeCamera();
     }
 
     @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
@@ -214,11 +239,18 @@ public final class WorkActivity extends ComponentActivity {
         render();
     }
 
+    private void maybeResumeCamera() {
+        if (!available() || !recovery.wanted()) return;
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            failCamera("摄像头权限不可用，监测已暂停，请授权后继续。");
+            return;
+        }
+        if (recovery.beginAttempt(SystemClock.elapsedRealtime(), modelReady && !capturing)) startCamera();
+    }
+
     private void startCamera() {
-        if (!available() || !modelReady) return;
         if (!ledger.saveWork(ledger.work.begin(System.currentTimeMillis(), SystemClock.elapsedRealtime(), ledger.bootCount))) {
-            message = "保存失败，尚未开始计时，请稍后重试。";
-            render();
+            failCamera("保存失败，尚未开始计时，请稍后重试。");
             return;
         }
         ProtectionService service = ProtectionService.current();
@@ -241,7 +273,7 @@ public final class WorkActivity extends ComponentActivity {
                 provider = future.get();
                 CameraSelector selector = CameraSelector.DEFAULT_FRONT_CAMERA;
                 if (!provider.hasCamera(selector)) {
-                    pauseCamera("前置摄像头不可用，请退出工作页后重试。");
+                    failCamera("前置摄像头不可用，请退出工作页后重试。");
                     return;
                 }
                 provider.unbindAll();
@@ -254,7 +286,7 @@ public final class WorkActivity extends ComponentActivity {
                 }
                 message = "等待新画面，请调整机位。";
             } catch (Exception ex) {
-                pauseCamera("摄像头启动失败或被占用，请关闭其他相机应用后重试。");
+                retryCamera("摄像头启动失败或被占用，请关闭其他相机应用后重试。");
             }
             render();
         }, ContextCompat.getMainExecutor(this));
@@ -290,7 +322,13 @@ public final class WorkActivity extends ComponentActivity {
         }
         ImageAnalysis analysis = analysisBuilder.build();
         analysis.setAnalyzer(analyzer, frame -> analyze(frame, token));
-        provider.bindToLifecycle(this, selector, cameraPreview, analysis);
+        boundCamera = provider.bindToLifecycle(this, selector, cameraPreview, analysis);
+        boundCamera.getCameraInfo().getCameraState().observe(this, state -> {
+            if (!capturing || token != generation || !available() || state.getError() == null) return;
+            if (state.getError().getType() == CameraState.ErrorType.CRITICAL)
+                failCamera("摄像头发生错误，监测已暂停，请检查相机后重试。");
+            else retryCamera("摄像头被占用或暂时不可用，请释放相机后重试。");
+        });
         var resolution = cameraPreview.getResolutionInfo();
         previewResolution = resolution == null ? "unknown" : resolution.getResolution().toString();
     }
@@ -334,19 +372,20 @@ public final class WorkActivity extends ComponentActivity {
                     clock.interrupt();
                     detectionCue.reset(); cuePlayer.stop();
                     if (!ledger.saveWork(ledger.work.pause(capturedAt + WorkClock.FRESH_MS, ledger.bootCount))) {
-                        pauseCamera("保存失败，监测已暂停，请重试。");
+                        failCamera("保存失败，监测已暂停，请重试。");
                         return;
                     }
                     message = "画面处理延迟，已暂停计时。";
                     render();
                     return;
                 }
+                recovery.freshFrame(capturedAt);
                 long delta = clock.observe(capturedAt, observed.clockSignal());
                 WorkProgress before = ledger.work;
                 boolean counting = clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE;
                 WorkProgress next = before.observe(delta, counting, SystemClock.elapsedRealtime(), ledger.bootCount);
                 if (next != before && !ledger.saveWork(next)) {
-                    pauseCamera("保存失败，已暂停；未确认的时间不会发放奖励。");
+                    failCamera("保存失败，已暂停；未确认的时间不会发放奖励。");
                     return;
                 }
                 showRewardFeedback(before, ledger.work);
@@ -356,7 +395,7 @@ public final class WorkActivity extends ComponentActivity {
             });
         } catch (RuntimeException ex) {
             handler.post(() -> {
-                if (capturing && token == generation) pauseCamera("图像检测异常，点击继续重试。");
+                if (capturing && token == generation) failCamera("图像检测异常，点击继续重试。");
             });
         } finally {
             if (input != null) input.close();
@@ -367,10 +406,37 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private void pauseCamera(String reason) {
+        MonitoringReturnTicket.clear();
+        recovery.stop();
+        releaseCamera(reason);
+    }
+
+    private void suspendCamera() {
+        boolean wanted = recovery.wanted();
+        recovery.suspend();
+        releaseCamera(wanted ? "监测暂时中断，回到工作页后自动恢复。" : message);
+    }
+
+    private void retryCamera(String reason) {
+        recovery.retry(SystemClock.elapsedRealtime(), reason);
+        releaseCamera(recovery.failed() ? reason : "监测暂时中断，正在尝试恢复…");
+    }
+
+    private void failCamera(String reason) {
+        MonitoringReturnTicket.clear();
+        recovery.fail(reason);
+        releaseCamera(reason);
+    }
+
+    private void releaseCamera(String reason) {
         capturing = false;
         generation++;
         clock.interrupt();
         detectionCue.reset(); cuePlayer.stop(); sampledAt = -1;
+        if (boundCamera != null) {
+            boundCamera.getCameraInfo().getCameraState().removeObservers(this);
+            boundCamera = null;
+        }
         if (provider != null) provider.unbindAll();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         preview.setVisibility(View.INVISIBLE);
@@ -378,21 +444,24 @@ public final class WorkActivity extends ComponentActivity {
         rewardFeedback.setVisibility(View.INVISIBLE);
         rewardUntilElapsed = 0;
         WorkProgress next = ledger.work.pause(SystemClock.elapsedRealtime(), ledger.bootCount);
-        message = next != ledger.work && !ledger.saveWork(next)
-            ? "中断状态保存失败，监测已暂停，请重试。" : reason;
+        if (next != ledger.work && !ledger.saveWork(next)) {
+            reason = "中断状态保存失败，监测已暂停，请重试。";
+            recovery.fail(reason);
+        }
+        message = reason;
         render();
         writeDiagnostic(true);
     }
 
     private void endWork() {
-        pauseCamera("本次工作已结束，已到账奖励保留；下次重新累计 10 分钟。");
+        pauseCamera("本次工作已结束；下轮累计 " + ledger.work.selectedMinutes() + " 分钟开始获得奖励。");
         if (!ledger.saveWork(ledger.work.finish())) message = "结束状态保存失败，计时已暂停，请重试结束。";
         render();
     }
 
     private void render() {
         if (stateText == null) return;
-        String status = message;
+        String status = recovery.failed() ? recovery.failureReason() : message;
         if (capturing) {
             switch (clock.state()) {
                 case PRESENT: status = "观察到在场 · 正在累计"; break;
@@ -404,14 +473,15 @@ public final class WorkActivity extends ComponentActivity {
             }
         }
         WorkProgress work = ledger.work;
+        setTextIfChanged(rewardRule, WorkProgress.ruleText(work.displayedMinutes()));
         long remaining = work.resetRemainingMs(SystemClock.elapsedRealtime());
         if (remaining == 0) status += "\n中断已满 3 分钟，本轮重置；已到账奖励保留";
         else if (remaining > 0 && work.sessionValidMs() > 0)
             status += "\n还有 " + format(remaining + 999) + "，本轮进度将重置";
         setTextIfChanged(stateText, status);
         setTextIfChanged(validTime, format(work.sessionValidMs()));
-        setTextIfChanged(counters, "本轮已获得 " + MainActivity.duration(WorkProgress.earnedFor(work.sessionValidMs()), false) + " 娱乐");
-        setTextIfChanged(start, capturing ? "暂停" : work.active() ? "继续监测" : "开始监测");
+        setTextIfChanged(counters, "本轮已获得 " + MainActivity.duration(work.earnedThisRound(), false) + " 娱乐");
+        setTextIfChanged(start, recovery.wanted() ? "暂停" : work.active() ? "继续监测" : "开始监测");
         start.setEnabled(modelReady);
         setTextIfChanged(soundButton, soundsEnabled ? "提示音：开" : "提示音：关");
         end.setEnabled(work.active());
@@ -424,10 +494,10 @@ public final class WorkActivity extends ComponentActivity {
     private void showRewardFeedback(WorkProgress before, WorkProgress after) {
         long reward = after.sessionRewardMs() - before.sessionRewardMs();
         if (reward <= 0) return;
-        String feedback = reward == WorkProgress.REWARD_NODE_MS ? "+5 分钟娱乐时间" : "+30 秒娱乐时间";
-        if (after.sessionValidMs() / WorkProgress.WORK_NODE_MS > before.sessionValidMs() / WorkProgress.WORK_NODE_MS) {
+        String feedback = "+" + MainActivity.duration(reward, false) + "娱乐时间";
+        if (after.sessionValidMs() / after.thresholdMs() > before.sessionValidMs() / after.thresholdMs()) {
             feedback = "本轮有效工作 " + after.sessionValidMs() / WorkProgress.MINUTE_MS
-                + " 分钟 · 本轮已挣得 " + format(WorkProgress.earnedFor(after.sessionValidMs())) + " 娱乐时间";
+                + " 分钟 · 本轮已挣得 " + format(after.earnedThisRound()) + " 娱乐时间";
         }
         rewardFeedback.animate().cancel();
         rewardFeedback.setText("准玩 · " + feedback);
@@ -453,7 +523,7 @@ public final class WorkActivity extends ComponentActivity {
 
     private void showHelp() {
         new AlertDialog.Builder(this).setTitle("让猫总看到你")
-            .setMessage("使用前置摄像头朝向你的肩部和躯干，手机可放在侧后方。无需露出人脸，背影和椅背遮挡效果仍在试用验证。\n\n新结果未见人物时播“滴～暂时离开”，看到可靠人物时播“欢迎归来”；同状态不重复，声音反映检测变化，不等于计时立即暂停或恢复。声音随媒体音量，可在工作页关闭。多人或检测不确定时暂停计时。\n\n只观察是否在场，不证明正在工作，不识别身份或另一部手机。工作时保持亮屏；切出、锁屏、打开说明或采集中断会暂停，返回后手动继续。\n\n每轮先累计 10 分钟得 5 分钟娱乐，之后每分钟得 30 秒。连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度。已到账奖励和历史工作保留。\n\n画面仅在本机处理，不保存、不上传。")
+            .setMessage("使用前置摄像头朝向你的肩部和躯干，手机可放在侧后方。无需露出人脸，背影和椅背遮挡效果仍在试用验证。\n\n新结果未见人物时播“滴～暂时离开”，看到可靠人物时播“欢迎归来”；同状态不重复，声音反映检测变化，不等于计时立即暂停或恢复。声音随媒体音量，可在工作页关闭。多人或检测不确定时暂停计时。\n\n只观察是否在场，不证明正在工作，不识别身份或另一部手机。工作时保持亮屏；来电、电量提醒、切出、锁屏或打开说明会暂停；回到工作页后自动尝试恢复，重新确认在场后计时。主动暂停、返回首页或应用重开需手动继续；恢复失败时显示原因，提示音开启且适合播放时提醒一次。\n\n" + WorkProgress.ruleText(ledger.work.displayedMinutes()) + "连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度。本轮重置不倒扣奖励，历史工作保留。" + ledger.expiryDescription() + "\n\n画面仅在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).show();
     }
 
@@ -479,20 +549,28 @@ public final class WorkActivity extends ComponentActivity {
     @Override protected void onResume() {
         super.onResume();
         resumed = true;
+        handler.removeCallbacks(tick);
         handler.post(tick);
     }
     @Override public void onWindowFocusChanged(boolean focus) {
         super.onWindowFocusChanged(focus);
-        if (!focus && capturing) pauseCamera("工作页已离开前台，点击继续后重新确认在场。");
+        if (recovery == null) return;
+        if (!focus) suspendCamera();
+        else maybeResumeCamera();
     }
     @Override protected void onPause() {
+        if (recovery != null && recovery.wanted() && ledger != null && ledger.work.active())
+            MonitoringReturnTicket.arm(ledger.work.startedWallMs(), SystemClock.elapsedRealtime());
         resumed = false;
         handler.removeCallbacks(tick);
-        pauseCamera("监测已暂停，已获得时间保留；点击继续恢复。");
+        suspendCamera();
         super.onPause();
     }
     @Override protected void onDestroy() {
         destroyed = true;
+        handler.removeCallbacks(tick);
+        if (isChangingConfigurations()) MonitoringReturnTicket.clear();
+        else recovery.stop();
         cuePlayer.stop();
         analyzer.execute(() -> { if (detector != null) detector.close(); });
         analyzer.shutdown();
@@ -511,6 +589,8 @@ public final class WorkActivity extends ComponentActivity {
             data.put("schema", 1).put("session", cameraSession).put("generation", generation)
                 .put("heartbeat_elapsed_ms", now).put("captured_elapsed_ms", sampledAt).put("sequence", sequence)
                 .put("running", capturing).put("model_ready", modelReady)
+                .put("recovery_state", recovery.state().name()).put("recovery_failures", recovery.failures())
+                .put("monitoring_wanted", recovery.wanted())
                 .put("camera_permission", checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
                 .put("lens", "front")
                 .put("capture_policy", capturePolicy).put("preview_resolution", previewResolution)

@@ -8,18 +8,24 @@
 
 | 文件 | 职责 |
 |---|---|
-| MainActivity.java | 猫总首页，以及用 page 参数区分的设置/开发工具页面实例；保留授权、保护启停与测试动作，前台时按已保存开关恢复服务 |
-| CatUi.java | 原生页面宽度/系统边距、纸色与黑色样式、控件与图片解码；blocker共享猫总阻止页供Activity与浮层调用，不写入业务状态 |
+| MainActivity.java | 猫总首页，以及用 page 参数区分的设置/权限详情/开发工具页面实例；保留授权、保护启停与测试动作，前台时按已保存开关恢复服务 |
+| ProtectionUiState.java | 纯展示状态优先级：停止意愿、必要授权缺失、运行中断、服务异常、后台受限、运行中；不写账本或启动服务 |
+| CatUi.java | 原生页面宽度/系统边距、纸色与黑色样式、控件与图片解码；blocker 创建共享原生 BlockerView，不写入业务状态 |
+| BlockerView.java | 猫总无道具形象、独立零余额/说明/返回区；1550ms 共用镜头/字效，退出和移除时取消；遵循系统关闭动画 |
+| ExhaustionFeedback.java | 进程内一次性消费耗尽事件；核对扣费前后数值、短时有效令牌与一次领取，不写账本 |
 | Permissions.java | 查询使用情况访问和 Settings.canDrawOverlays，不查询或申请无障碍 |
 | ProtectionService.java | 普通 Service，使用 specialUse 前台服务运行监测；通知提供回首页和停止操作；显示 TYPE_APPLICATION_OVERLAY |
 | BlockerActivity.java | 非导出的不透明全屏阻止页；独立任务、不进最近任务、离开不保留历史；真正让目标退后台，返回工具/桌面及系统返回不重新露出目标 |
 | BalanceEngine.java | 原版复用的纯余额算法，按使用区间扣减，仅显式奖励能增加余额 |
 | LedgerStore.java | 实验版同进程单例与 SharedPreferences 快照，原版私有数据不读取、不迁移 |
 | WorkActivity.java | 前置预览、离线人体检测、显式开始/暂停/继续/结束、声音开关、在场与奖励展示；帧仅在内存存在 |
+| CameraRecovery.java | 内存中的监测意愿、临时中断、采集健康度与有限重试；WorkActivity 的 ViewModel 仅跨同进程配置重建保留，不从账本恢复开相机意愿 |
+| MonitoringReturnTicket.java | 进程级、一次性、90 秒的外部应用返回交接；只允许根首页回到工作页，不持久化且不启动相机 |
 | PersonObservation.java | 无图像的人体候选/可靠数量及分数，转为 WorkClock 的单人/无人/不确定信号 |
 | DetectionCue.java / CuePlayer.java | 原始检测变化去重与随包语音播放；新声替换旧声，过期/暂停停止，不改变计时 |
 | WorkClock.java | 单调时钟和新鲜帧约束下的在场容错计时，不使用系统日期计算奖励 |
-| WorkProgress.java | 不可变的历史工作、本轮十分钟门槛/分钟奖励、中断期限与恢复计算 |
+| DailyReset.java | 本地 06:00 截止点、到期判断、时区重排及清零提示状态的纯计算 |
+| WorkProgress.java | 不可变的历史工作、本轮 10/15/20 分钟门槛/分钟奖励、中断期限与恢复计算 |
 | ProtectionPolicy.java | 默认开启/已保存停止的加载规则，按当前时区计算四小时及09:00—21:00提醒边界，可独立测试 |
 | ProtectionRecovery.java | 开机/本包更新后的保护恢复请求、时间/时区变化后的提醒重排、单次非精确提醒及取消；不启动摄像头 |
 
@@ -39,18 +45,30 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/�
 
 - AndroidManifest 的应用图标引用 drawable-nodpi/app_icon_hourglass.png，直接使用已确认的 C 标准沙漏修正版；原 drawable/ic_launcher.xml 继续供后台运行与提醒通知使用，避免彩色整块位图进入通知小图标路径。
 - 首页只展示实际娱乐余额、累计有效工作和两个主要操作；有余额时“准玩”，零余额禁用本应用内小红书入口，外部应用拦截仍由原服务处理。首页保留真实保护状态，点击进入设置；权限和测试按钮从首页移入二级页面，保护动作沿用既有逻辑。
-- MainActivity 通过显式 Intent 的 page 值打开 home/settings/tools 页面实例；每页在 onPause 移除刷新，在 onResume 沿用原有恢复调用。原生返回逐级退出，账本、应用 ID、签名与权限不变。
-- ui_preferences/cat_intro_seen_v2 仅记录当前每轮规则说明已展示，升级后说明一次；不写 ledger，不迁移或清零余额。设置可重新打开使用及隐私说明。
-- drawable-nodpi 中首页使用 cat_home_waiting / cat_home_approved 两张 A 方案图片：MainActivity 创建首页时通过 CatUi 以 inSampleSize=2 各解码一次，页面持有两个 Drawable，500ms 刷新只在 balanceMs > 0 状态变化时切换引用，与文案、娱乐按钮使用同一条件。阻止页共用 CatUi.blocker 与 cat_blocker_expired 到期假条图，以 inSampleSize=2 解码并 FIT_CENTER 完整显示；旧 cat_home 保留为历史素材。工作页的盯场、持续离开、到账三图以 inSampleSize=4 按资源缓存，250ms 的状态刷新不重新解码图片。
+- MainActivity 通过显式 Intent 的 page 值打开 home/settings/permissions/tools 页面实例；每页在 onPause 移除刷新，在 onResume 沿用原有恢复调用。原生返回逐级退出，账本、应用 ID、签名与权限不变。
+- settings 保护卡读取 ProtectionUiState，必要授权摘要独立呈现；permissions 从系统重读 usage/overlay/notification/backgroundRestricted，不新增配置成功标记。小米后台未报告受限时仍显示待核对。停止确认只在用户确认且 ledger.enabled 仍为 true 时执行原停用逻辑；恢复请求先检查原开启意愿及必要授权，保留既有 startForegroundService 路径，不凭请求成功宣称服务健康。运行诊断放入 tools。
+- ui_preferences/cat_intro_seen_v3 仅记录当前每轮规则说明已展示，升级后说明一次；引导自身不写 ledger 或清零余额，每日规则初始化由账本负责。设置可重新打开使用及隐私说明。
+- drawable-nodpi 中首页使用 cat_home_waiting / cat_home_approved 两张 A 方案图片：MainActivity 创建首页时通过 CatUi 以 inSampleSize=2 各解码一次，页面持有两个 Drawable，500ms 刷新只在 balanceMs > 0 状态变化时切换引用，与文案、娱乐按钮使用同一条件。阻止页共用 CatUi.blocker / BlockerView 与 cat_time_up.webp 无道具半身图，以 inSampleSize=2 解码并 FIT_CENTER 显示；旧 cat_blocker_expired 不再作为阻止页素材。旧 cat_home 保留为历史素材。工作页的盯场、持续离开、到账三图以 inSampleSize=4 按资源缓存，250ms 的状态刷新不重新解码图片。
 - WorkActivity 仅在 capturing 且 WorkClock.AWAY 时显示“人呢？”；其他暂停/不确定状态说明真实原因。奖励提交后 2.8 秒内切换盖章图，AWAY 显示优先；pauseCamera 清除奖励表现。猫图与奖励反馈自身不触发声音或推理；人体检测声音由前述 DetectionCue / CuePlayer 独立处理，无网络调用。
-- 页面用原生 ScrollView/LinearLayout 并限制内容最大宽度 480dp，处理系统栏和刘海边距；小屏、大字体及横屏允许滚动。工作页预览为 210×130dp，关闭时显示占位文字。打开说明因焦点变化暂停相机，关闭后仍需手动继续。
+- 页面用原生 ScrollView/LinearLayout 并限制内容最大宽度 480dp，处理系统栏和刘海边距；小屏、大字体及横屏允许滚动。工作页预览为 210×130dp，关闭时显示占位文字。打开说明因焦点变化暂停相机，关闭后按保留的监测意愿自动恢复。
+
+## 耗尽反馈的触发与去重
+
+- ProtectionService.settleUntil 在原用量结算前后只读比较：余额由正变零，且新增 consumedMs 恰等于原余额，才创建 ExhaustionFeedback；不改变 BalanceEngine、计时或每日清零算法。
+- 事件为随机令牌，最长 5 秒内有效，不落盘。每日清零、重新获得余额、观测重建、权限/保存错误和服务销毁会清除；用户导航取消未呈现事件。服务重建后来源不明的零余额显示中性事实，不补演历史耗尽。
+- 浮层立即显示同一静态画面并沿用现有音频焦点处理；它不播放动画。请求全屏页的 Intent 带令牌，BlockerActivity 实际获焦后向服务领取一次，再撤浮层并播放。动画不延迟拦截、页面启动或停声路径；Activity 保存状态恢复、不带令牌或旧令牌只呈现静态。onNewIntent 同样核对令牌；onPause/onDestroy 和 View 移除时取消动画。
+- 角色、标题与底线分别做属性动画，余额和按钮不参与缩放。系统禁用动画时直接静态展示；不新增声音、震动、权限或联网。
+- androidTest 的 FeedbackInstrumentation 只用于已有零余额且未工作时的原生样片验证；模拟的是进程内事件，禁止修改真实余额/消费/累计工作。它不证明真实消费到拦截的完整闭环。
 
 ## 摄像头与奖励边界
 
 - 0.4.2 降负载试用：预览与分析使用 ResolutionSelector 的 640×480（传感器坐标）目标，优先请求前置支持的 [15,15] FPS，PreviewView 使用 PERFORMANCE（设备允许时采用 SurfaceView）。不支持该帧率时不设置帧率；低负载组合绑定抛 IllegalArgumentException 时重新解绑，恢复原默认预览尺寸/FPS、分析 setTargetResolution 和 COMPATIBLE。推理 500ms 频率保持原值。配置请求不等于实际帧率或降温证明，预览圆角/镜像/缩放须真机验收。
 - camera-status.json 增加 capture_policy、preview_resolution、analysis_width/height、preview_mode；尺寸来自绑定后的 ResolutionInfo 和实际分析帧，mode 是请求模式而非已证实的 SurfaceView 类型。读取脚本兼容旧版缺少这些字段的快照。帧率结合只读 media.camera 的当前请求/输出状态核对，不能从约 2Hz 推理次数反推。
 - [断线测温脚本](scripts/camera-thermal-record.sh)在 ADB shell 中独立运行，适用于两版 APK：armed 模式等待拔线及新鲜监测后，以 BatteryService 同源读数记录第 0 秒至 600 秒、每 60 秒一份数值快照；本地 /data/local/tmp 保存温度（0.1°C）、电量、充电状态和原有相机数值诊断，无图像。启动等待最多 20 分钟；每分钟的新鲜度只能证明采样时状态，不能证明两次采样之间完全无中断。smoke 模式仅作 5 秒日志验证，不算温升测试。
-- 工作页由用户主动启动，使用 KEEP_SCREEN_ON；不修改系统自动锁屏设置。暂停、结束、离开前台时解绑相机并释放亮屏标记。重返、旋转重建或进程重启后必须点击继续，不自动开启摄像头。
+- 工作页首次由用户主动启动，使用 KEEP_SCREEN_ON；不修改系统自动锁屏设置。暂停、结束、离开前台时解绑相机并释放亮屏标记。临时失焦/后台/锁屏保留内存监测意愿；onResume 刷新、窗口焦点及模型就绪经过同一个 maybeResumeCamera，只有前台可交互、解锁、有权限且用户仍希望监测时恢复。同进程旋转由 RecoveryModel 保留 CameraRecovery。外部应用短暂切换后，进程级 MonitoringReturnTicket 可在 90 秒内被根 MainActivity 一次性消费并转回工作页；它仅交接导航，WorkActivity 仍调用同一恢复门槛。主动暂停、工作页返回或结束清除凭证；进程重启、强停、划掉最近任务和冷启动默认停止。
+- CameraRecovery 区分 IDLE/WAITING/STARTING/MONITORING/FAILED；每次启动或失去新鲜结果 8 秒重试，最多连续 3 次失败，间隔 1/2 秒，连续可用前台的一轮恢复总时限为 30 秒。连续新鲜分析结果 5 秒才清除失败预算，单帧不能无限重置；真实失焦取消本次尝试并在返回时重新给启动时间，保留已发生失败数，不修改账本的首次中断时间。模型准备超过 15 秒、权限缺失、不可恢复相机错误、检测或保存失败直接进入失败出口。无人/多人结果不触发相机重启。
+- WorkActivity 同时观察 CameraX CameraState 与结果新鲜度；释放时先使采集代次失效并移除相机观察者，再解绑。恢复成功仍由 WorkClock 新鲜结果及在场确认驱动计时，绑定成功和 MONITORING 仅表示采集状态，不证明在场。诊断增加 recovery_state、recovery_failures 和 monitoring_wanted，不保存图像。
+- 恢复失败在工作页持续显示原因及继续入口。CuePlayer 的一次短双提示音独立于在场语音；遵循原声音开关和媒体音量，音频模式非正常、正在播放媒体或无法立即取得音频焦点时静默，不排队、不调音量。失焦/暂停释放提示音及焦点，失败提示同一故障只尝试一次；原在场语音也在通话音频模式下抑制。实际可听及系统来电行为仍需真机确认。
 - 初始实验参数：640×480 目标分析尺寸，每 500 ms 最多一次推理，KEEP_ONLY_LATEST 丢弃积压；实际分辨率由 CameraX 与设备协商。监测期间相机持续采集，分析限频不等于硬件每秒只采两帧或间歇关闭相机；每帧处理后关闭 MPImage / ImageProxy 并回收 Bitmap，没有录像编码或图像落盘路径。仅一个可靠人体作为在场线索，连续约 1 秒确认后计时；零人体候选允许 3 秒宽限，超过后暂停；多个可靠人体或仅有低分候选视为不确定，立即暂停。无身份识别，不证明工作行为，不含手机移动/另一部手机检测。
 - 采集到结果超过 1.5 秒、相邻结果间隔超过 1.5 秒、锁屏、失去焦点或 Activity 暂停均不补计未知区间。仅接收当前采集代次的新结果，旧异步回调无法跨暂停或新会话发放时间；确认窗口不追补。页面定时器只刷新和检查失联，不生成有效时间。
 - totalValidMs 保存历史有效工作；sessionValidMs 为当前轮有效进度，当前轮不足 600000 ms 时应得为零，达到后按 `floor(sessionValidMs / 60000) * 30000` 计算。每次观察仅加入本轮前后应得差额；sessionRewardMs 是本次显式开启期间累计成功奖励，只增不减，重置轮次时保留，用于同快照钱包差额计算。界面“本轮已获得”来自本轮应得值，不把以前轮次奖励算到当前轮。
@@ -58,8 +76,16 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/�
 - work_interrupted_elapsed_ms 保存首次中断起点（-1 为计时中），work_checkpoint_elapsed_ms 保存最近工作状态检查点，work_checkpoint_boot_count 保存启动编号。暂停重复调用不能推迟起点，返回确认在场后才清除；后台不需常驻倒计时，回到工作页/继续/新帧前按实际单调时间检查期限。WorkClock.expire 返回最后画面新鲜度失效时间，延迟 UI tick 不会重新赠送三分钟。
 - 进程重建时，未保存暂停的活跃检查点以最后观察时间起算中断；已有暂停则沿用原起点。设备启动编号变化、单调时间倒退或旧记录无时间基准时清除本轮资格，不补计未知时间。系统墙钟改动不参与三分钟判断。
 - work_reward_rule_version=3 迁移只清除旧规则当前轮进度，保留实际余额、历史工作、已计入的历史补齐和当前开启期间奖励；不新发补差或追回。规则版本与数据同次提交，失败不发布内存结果；迁移前构造的候选不得覆盖迁移后状态。仅同一实验版沙箱迁移。
-- 工作页有效时间最高 62sp（长时间按可用宽度缩放），奖励信息为辅；每分钟提交成功后轻提示一次，跨本轮十分钟边界时用本轮里程碑替代。约 2.2 秒后 0.6 秒淡出，暂停取消、重开不重播；不增加声音、震动或弹窗。不变的文字不重复设置，页面刷新不等于发奖。
+- 工作页有效时间最高 62sp（长时间按可用宽度缩放），奖励信息为辅；每分钟提交成功后轻提示一次，跨本轮所选门槛时长的倍数边界时用本轮里程碑替代。约 2.2 秒后 0.6 秒淡出，暂停取消、重开不重播；不增加声音、震动或弹窗。不变的文字不重复设置，页面刷新不等于发奖。
 - 该方案避免正常重启/重复回调重复发奖；不是数据库交易日志或对磁盘故障、文件篡改的全面保证。消费、工作页面和保存都在主线程串行运行；摄像头分析在独立执行器进行，结果回主线程。
+
+## 可配置奖励与每日到期
+
+- WorkProgress 保存 `roundMinutes` 与 `selectedMinutes`，默认均为 10。短暂停只改变中断状态，保留本轮比例；结束后新开、三分钟重置或无法证明连续性的重启采用所选比例。门槛后奖励为每分钟 `300000 / roundMinutes` 毫秒。历史累计奖励只用于差额入账，不因余额到期回退。
+- LedgerStore 快照新增 `work_round_minutes`、`work_selected_minutes`、`daily_reset_enabled/next_ms/zone/last_ms/notice`。旧版本缺少字段时保留规则 v3 的既有进度、余额与历史，初始化默认开启的下一本地 06:00；不重复执行旧规则迁移，不重置后续用户选择。
+- DailyReset 负责纯日期策略；LedgerStore.refreshDailyReset 负责到期时先请求服务结算可核实的截止点前用量，再把清零余额与新截止点同次保存，成功后发布。失败恢复消费游标、消费累计及余额，不先发新奖励。连续工作只清钱包，已记账奖励保持，避免再次补发。
+- ProtectionService 在到期截止点拆开用量结算；账本发奖先补做到期结算再入新奖励。主页面展示、娱乐入口、设置切换、保存及恢复广播均检查到期。无精确闹钟或新增权限；后台冻结、强停、停止保护时不承诺准点执行，恢复前不能把旧余额当新余额使用。
+- 首页使用清零开关与截止点显示下一次时间；一次性清零提示与账本持久化，消费统计不含到期删除。工作页与共用阻止页读取实际比例；新规则引导使用 UI 偏好 v3。
 
 ## 运行与恢复边界
 

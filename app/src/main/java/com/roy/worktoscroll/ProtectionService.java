@@ -42,6 +42,8 @@ public final class ProtectionService extends Service {
     static ProtectionService current() { return reference.get(); }
     private final Handler handler = new Handler(Looper.getMainLooper());
     private LedgerStore ledger;
+    private final ExhaustionFeedback exhaustion = new ExhaustionFeedback();
+    private long feedbackResetBoundary;
     private View blocker;
     private AudioFocusRequest blockerAudioFocus;
     private long lastWall;
@@ -64,6 +66,7 @@ public final class ProtectionService extends Service {
         super.onCreate();
         reference = new WeakReference<>(this);
         ledger = LedgerStore.get(this);
+        feedbackResetBoundary = ledger.daily.lastMs();
         lastWall = System.currentTimeMillis();
         lastElapsed = SystemClock.elapsedRealtime();
         getSystemService(NotificationManager.class).createNotificationChannel(
@@ -150,6 +153,7 @@ public final class ProtectionService extends Service {
         lastElapsed = heartbeatElapsed;
         try {
             if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this)) {
+                exhaustion.clear();
                 healthy = false;
                 failure = ledger.enabled ? "系统授权未开启，保护已失效" : "保护未开启";
                 reconcileObservation = true;
@@ -164,11 +168,20 @@ public final class ProtectionService extends Service {
             }
             long end = now - EVENT_LAG_MS;
             if (reconcileObservation) {
+                exhaustion.clear();
                 // Recent events establish current state only. Never charge pre-start/frozen time.
                 ledger.engine.recoverObservation(queryTransitions(Math.max(0, end - 86_400_000L), end), end, now);
                 reconcileObservation = false;
-            } else settleUntil(end);
+            } else {
+                // Never charge yesterday's balance beyond its deadline.
+                settleUntil(ledger.daily.enabled() && ledger.daily.nextMs() > 0
+                    ? Math.min(end, ledger.daily.nextMs()) : end);
+            }
+            if (!ledger.refreshDailyReset()) throw new IllegalStateException("Daily reset save failed");
+            settleUntil(end);
             healthy = ledger.save();
+            syncExhaustion();
+            if (!healthy) exhaustion.clear();
             failure = healthy ? "" : "余额保存失败，保护状态异常";
             boolean visible = getSystemService(PowerManager.class).isInteractive()
                 && !getSystemService(KeyguardManager.class).isKeyguardLocked();
@@ -176,6 +189,7 @@ public final class ProtectionService extends Service {
                     && ledger.engine.balanceMs == 0 && heartbeatElapsed >= dismissUntilElapsed) showBlocker();
             else hideBlocker();
         } catch (RuntimeException ex) {
+            exhaustion.clear();
             healthy = false;
             failure = "监测中断，请返回应用检查权限并重新开启保护";
             ledger.note = failure;
@@ -187,10 +201,39 @@ public final class ProtectionService extends Service {
         }
     }
 
+    void settleBeforeExpiry(long deadline) {
+        // Called by ledger from any foreground path. Unknown/frozen intervals stay uncharged.
+        if (monitoring && healthy && heartbeatElapsed > 0
+                && SystemClock.elapsedRealtime() - heartbeatElapsed < 5_000
+                && Permissions.usage(this) && ledger.engine.cursorMs < deadline)
+            settleUntil(deadline);
+    }
+
     private void settleUntil(long end) {
         BalanceEngine e = ledger.engine;
         if (end <= e.cursorMs) return;
+        syncExhaustion();
+        long balanceBefore = e.balanceMs, consumedBefore = e.consumedMs;
         e.settle(queryTransitions(e.cursorMs, end), end);
+        // Daily expiry is a separate event; never infer consumption from a generic zero balance.
+        if (!ledger.daily.due(System.currentTimeMillis()))
+            exhaustion.settled(balanceBefore, e.balanceMs, consumedBefore, e.consumedMs,
+                SystemClock.elapsedRealtime());
+    }
+
+    private void syncExhaustion() {
+        if (ledger.engine.balanceMs > 0 || ledger.daily.lastMs() != feedbackResetBoundary
+                || ledger.daily.due(System.currentTimeMillis())) exhaustion.clear();
+        feedbackResetBoundary = ledger.daily.lastMs();
+    }
+
+    boolean hasExhaustedBalance() {
+        syncExhaustion();
+        return ledger.enabled && healthy && ledger.engine.balanceMs == 0 && exhaustion.exhausted();
+    }
+
+    boolean consumeExhaustion(String id) {
+        return hasExhaustedBalance() && exhaustion.consume(id, SystemClock.elapsedRealtime());
     }
 
     private ArrayList<BalanceEngine.Transition> queryTransitions(long begin, long end) {
@@ -218,12 +261,14 @@ public final class ProtectionService extends Service {
     /** Used only from our visible test controls: settle old credit before applying a new grant. */
     void prepareManualChange() {
         refresh();
+        exhaustion.clear();
         // The visible main activity is not Xiaohongshu. Close the short delivery-lag tail here.
         ledger.engine.resetObservation(System.currentTimeMillis());
         hideBlocker();
     }
 
     void dismissForNavigation() {
+        exhaustion.discardPending();
         // The user's departure must win over the short, delayed usage-event tail.
         dismissUntilElapsed = SystemClock.elapsedRealtime() + EVENT_LAG_MS + POLL_MS;
         hideBlocker();
@@ -244,7 +289,7 @@ public final class ProtectionService extends Service {
             } catch (RuntimeException ex) {
                 android.widget.Toast.makeText(this, "请使用系统主页手势返回桌面", android.widget.Toast.LENGTH_LONG).show();
             }
-        });
+        }, hasExhaustedBalance());
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
             -1, -1, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             // Take touches inside the full overlay, but keep focus on the underlying activity
@@ -278,6 +323,7 @@ public final class ProtectionService extends Service {
                     || !ledger.engine.targetActive) return;
             try {
                 startActivity(new Intent(this, BlockerActivity.class)
+                    .putExtra(BlockerActivity.EXTRA_EXHAUSTION, exhaustion.pendingId(SystemClock.elapsedRealtime()))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
                         | Intent.FLAG_ACTIVITY_NO_ANIMATION));
                 Log.i("WTS_BLOCK_PAGE", "PAGE_REQUESTED");
@@ -335,6 +381,7 @@ public final class ProtectionService extends Service {
     }
 
     @Override public void onDestroy() {
+        exhaustion.clear();
         monitoring = false;
         handler.removeCallbacksAndMessages(null);
         if (ledger != null) {

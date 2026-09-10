@@ -1,13 +1,17 @@
 #!/system/bin/sh
-# ADB shell helper, identical for both APKs. No camera images are read.
-# Usage: sh camera-thermal-record.sh OUTPUT MODE DURATION_SECONDS
-# MODE=armed waits for unplugged, fresh monitoring; MODE=smoke only validates the logger.
+# ADB shell helper. It records only system battery telemetry and the app's
+# numerical camera-status snapshot; it never reads or saves camera frames.
+# Usage: sh camera-thermal-record.sh OUTPUT armed DURATION_SECONDS
 out="$1"
 mode="$2"
 duration="$3"
 case "$out" in /data/local/tmp/wts-thermal-*.txt) ;; *) exit 2 ;; esac
-case "$mode:$duration" in armed:600|smoke:5) ;; *) exit 2 ;; esac
+case "$mode:$duration" in armed:600|armed:1800|smoke:5) ;; *) exit 2 ;; esac
 [ ! -e "$out" ] || exit 3
+lock=/data/local/tmp/wts-camera-thermal-record.lock
+mkdir "$lock" 2>/dev/null || exit 4
+trap 'rmdir "$lock"' EXIT
+trap 'exit 130' HUP INT TERM
 pkg=com.roy.worktoscroll.overlaytest
 uptime_s() { cut -d. -f1 /proc/uptime; }
 read_state() {

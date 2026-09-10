@@ -1,6 +1,6 @@
 # 任务索引
 
-这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主任务为[摄像头监控发热对照测试](active/camera-thermal-test.md)，按 Roy 授权安装降负载版本并开展两版本各 10 分钟、相近起温的实际使用对照。[侧后方在场观察](active/side-rear-presence-exploration.md)及[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
+这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主任务为[摄像头计时与每轮奖励验收](active/camera-rewards.md)，接续临时中断自动恢复后的具体场景验收。此前[设置页重新设计](active/settings-redesign.md)，0.5.1 已安装并完成页面及启停检查，正在核实后台待核对提示的误导问题。[每日清零与兑换比例](active/entertainment-rules.md)此前 0.5.0 已覆盖安装、79 项测试通过，余额和历史保留；等待真实新增档位奖励与自然跨夜验收。此前[猫总监工界面验收](active/cat-ui.md)，0.4.4 已安装“猫总批假”双状态图（零余额“工作优先”桌牌／有余额“准了”红章）并提交 `7ce99bb`，下一步是解锁手机核对实机显示、零余额画面及余额双向切换。[摄像头监控发热对照测试](active/camera-thermal-test.md)短测三轮已完成、支持低负载版本明显减轻发热，长期耐久与量化识别表现仍未验收。[侧后方在场观察](active/side-rear-presence-exploration.md)及[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
 
 ## 目录与状态规则
 
@@ -26,11 +26,15 @@
 
 | 任务 | 目标与依赖 |
 | --- | --- |
+| [状态变化的戏剧化 UI 反馈设计](active/state-feedback-design.md) | 猫总耗尽单幕 0.5.4 已覆盖安装、103 项单测通过；零余额静态页已核对，接续动效与消费验收 |
+| [设置页重新设计](active/settings-redesign.md) | 已安装并通过页面与启停检查；接续后台待核对提示修正及体验反馈 |
+| [每日清零与兑换比例](active/entertainment-rules.md) | 已安装；接续真实 15/20 分钟奖励、自然跨夜清零及后台到期验证 |
 | [侧后方无脸在场检测探索](active/side-rear-presence-exploration.md) | 接续主 App 前置人体检测与声音的日常使用观察，核对误报、漏报及耐久；关联摄像头及发热验收 |
 | [摄像头监控发热对照测试](active/camera-thermal-test.md) | 检查采集、推理与预览负载并尝试降温；连电脑诊断与断线温升证据分开 |
 | [零余额阻止页音频处理](active/audio-blocking.md) | 处理阻止后继续出声，保留共享音频焦点的确认与真机验收边界 |
-| [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 验证在场、每轮奖励、中断恢复及真实消费闭环；消费部分关联后台保护 |
+| [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 0.5.5 已安装；新增微信后经桌面图标返回的 90 秒同进程恢复，待真机路径及来电、电量弹窗、锁屏、相机占用和声音验收 |
 | [猫总监工界面验收](active/cat-ui.md) | 0.5.2 已安装阻止页 A 到期假条图，待解锁验收；接续首页双状态、引导、返回路径及工作反馈验收 |
+| [上架/发布准备（国内渠道为主）](active/release-readiness.md) | 已拆分"产品可靠性待验收"与"上架流程性事项"两张简报；等待 Roy 决定首发商店（小米/华为/OPPO·vivo）后接续资质准备 |
 | [后台冻结与消费拦截耐久验收](active/background-protection.md) | 验证真实后台保护、消费、耗尽阻止和退出路径 |
 | [默认保护与提醒验收](active/default-protection.md) | 验证开机/回收恢复、手动停止和四小时实际提醒 |
 
@@ -38,6 +42,7 @@
 
 | 任务 | 目标与依赖 |
 | --- | --- |
+| [海外版目标娱乐应用适配准备](todo/overseas-target-apps.md) | 为 Google Play 后续版本探索 TikTok、Facebook、Instagram 的首批适配；先定首发市场和目标应用，不改变当前小红书原型 |
 | [iPhone 核心原型开发准备](todo/ios-prototype.md) | 暂缓方向；恢复时核实 Mac、Xcode、设备、账号与签名 |
 
 ## completed

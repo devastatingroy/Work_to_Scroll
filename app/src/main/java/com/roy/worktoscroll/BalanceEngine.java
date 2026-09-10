@@ -10,6 +10,12 @@ public final class BalanceEngine {
     public long cursorMs;
     public boolean targetActive;
     private long chargeFromMs;
+    record Checkpoint(long balance, long consumed, long cursor, boolean active, long chargeFrom) {}
+    Checkpoint checkpoint() { return new Checkpoint(balanceMs, consumedMs, cursorMs, targetActive, chargeFromMs); }
+    void restore(Checkpoint c) {
+        balanceMs = c.balance; consumedMs = c.consumed; cursorMs = c.cursor;
+        targetActive = c.active; chargeFromMs = c.chargeFrom;
+    }
 
     public BalanceEngine(long balanceMs, long consumedMs, long cursorMs, boolean targetActive) {
         this.balanceMs = Math.max(0, balanceMs);

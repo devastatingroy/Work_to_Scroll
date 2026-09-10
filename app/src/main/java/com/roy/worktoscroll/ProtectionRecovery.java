@@ -65,6 +65,7 @@ public final class ProtectionRecovery extends BroadcastReceiver {
         if (context.getSharedPreferences("ledger", Context.MODE_PRIVATE)
                 .getInt("protection_policy_version", 0) < 1) return;
         LedgerStore ledger = LedgerStore.get(context);
+        if (!ledger.refreshDailyReset()) return;
         String action = intent.getAction();
         if (REMIND.equals(action) && !ledger.enabled) {
             SharedPreferences prefs = preferences(context);
