@@ -32,11 +32,11 @@ read_state() {
 sample() {
     {
         printf '\nSAMPLE epoch_s=%s elapsed_s=%s powered=%s fresh_at_sample=%s\n' "$(date +%s)" "$((now - started))" "$powered" "$fresh"
-        printf '%s\n' "$battery" | grep -E 'powered:|status:|level:|scale:|temperature:'
+        printf '%s\n' "$battery" | grep -E 'powered:|Charge counter:|status:|level:|scale:|voltage:|temperature:'
         printf 'camera_status=%s\n' "$camera"
     } >> "$out"
 }
-printf 'mode=%s duration_s=%s source=BatteryService temperature_unit=0.1C\n' "$mode" "$duration" > "$out"
+printf 'mode=%s duration_s=%s source=BatteryService temperature_unit=0.1C charge_counter_unit=uAh voltage_unit=mV\n' "$mode" "$duration" > "$out"
 dumpsys package "$pkg" | grep -E 'versionCode=|versionName=' >> "$out"
 wait_started=$(uptime_s)
 while :; do
