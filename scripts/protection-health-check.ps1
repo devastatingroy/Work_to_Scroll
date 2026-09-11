@@ -8,8 +8,17 @@ $repairPackage = 'com.roy.worktoscroll.overlaytest'
 
 # Read-only: does not launch/unfreeze the app, change credit, or collect page contents.
 function Read-Adb([string[]]$Arguments, [switch]$Optional) {
-    $output = & adb -s $Serial @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) {
+    # An absent optional private-preference file is an expected state on older
+    # installations.  Keep its stderr out of PowerShell's native-error stream
+    # so ErrorActionPreference=Stop can still return $null to the caller.
+    try {
+        $output = & adb -s $Serial @Arguments 2>$null
+        $exitCode = $LASTEXITCODE
+    } catch {
+        if ($Optional) { return $null }
+        throw "ADB read failed: $($Arguments -join ' ')"
+    }
+    if ($exitCode -ne 0) {
         if ($Optional) { return $null }
         throw "ADB read failed: $($Arguments -join ' ')"
     }
@@ -22,6 +31,19 @@ for ($sampleIndex = 0; $sampleIndex -lt $Samples; $sampleIndex++) {
     foreach ($entry in $snapshot.map.ChildNodes) {
         $fields[$entry.name] = if ($entry.HasAttribute('value')) { $entry.value } else { $entry.InnerText }
     }
+    $recoveryFields = @{}
+    $recoveryXml = Read-Adb @('shell', 'run-as', $repairPackage, 'cat', 'shared_prefs/boot_recovery_status.xml') -Optional
+    if ($recoveryXml) {
+        try {
+            [xml]$recoverySnapshot = $recoveryXml
+            foreach ($entry in $recoverySnapshot.map.ChildNodes) {
+                $recoveryFields[$entry.name] = if ($entry.HasAttribute('value')) { $entry.value } else { $entry.InnerText }
+            }
+        } catch { $recoveryFields = @{} }
+    }
+    $bootCountText = Read-Adb @('shell', 'settings', 'get', 'global', 'boot_count') -Optional
+    $currentBootCount = if ($bootCountText -match '^\d+$') { [int]$bootCountText } else { $null }
+    $recoveryBootCount = if ($recoveryFields.ContainsKey('outcome_boot_count')) { [int]$recoveryFields['outcome_boot_count'] } else { $null }
     $deviceMs = 1000 * [long](Read-Adb @('shell', 'date', '+%s'))
     $processIdText = Read-Adb @('shell', 'pidof', $repairPackage) -Optional
     $frozen = $null
@@ -72,6 +94,11 @@ for ($sampleIndex = 0; $sampleIndex -lt $Samples; $sampleIndex++) {
             [long]$fields.balance_ms -eq 0 -and $targetForeground -and -not $blockerVisible
         observation_gaps = [long]$fields.observation_gaps
         last_observation_gap_ms = [long]$fields.last_observation_gap_ms
+        boot_recovery_outcome = $recoveryFields['outcome']
+        boot_recovery_boot_count = $recoveryBootCount
+        current_boot_count = $currentBootCount
+        boot_recovery_matches_current_boot = $null -ne $currentBootCount -and $null -ne $recoveryBootCount -and $currentBootCount -eq $recoveryBootCount
+        boot_recovery_wall_ms = $recoveryFields['outcome_wall_ms']
     } | ConvertTo-Json -Compress
 }
 # A listed window is diagnostic evidence only; verify actual visibility and touch blocking on device.

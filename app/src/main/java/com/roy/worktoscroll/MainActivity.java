@@ -30,7 +30,7 @@ public final class MainActivity extends Activity {
     private TextView balance, status, diagnostics, worked, speech, seal;
     private Button workButton, toggle, usagePermission, overlayPermission, entertainment, repair;
     private TextView expiry, ratio, ratioDetail, protectionDetail, permissionSummary, backgroundSummary;
-    private TextView usageState, overlayState, notificationState, backgroundState, dailyDetail;
+    private TextView usageState, overlayState, notificationState, backgroundState, bootRecoveryState, dailyDetail;
     private static final int SETTINGS_SURFACE = 0xFFFFFDF8, SETTINGS_BORDER = 0xFFE8E0D1;
     private static final int GOOD = 0xFF456447, WARNING = 0xFF946119;
     private android.widget.Switch dailySwitch;
@@ -45,6 +45,7 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         ledger = LedgerStore.get(this);
+        BootRecoveryStatus.inspectOnAppOpen(this, ledger.enabled);
         page = getIntent().getStringExtra("page");
         content = CatUi.screen(this, false);
         if ("settings".equals(page)) buildSettings();
@@ -173,8 +174,13 @@ public final class MainActivity extends Activity {
         LinearLayout background = settingsCard(10);
         backgroundState = permissionItem(background, "允许持续后台运行", "避免系统休眠应用，导致用时扣减或阻止失效。");
         permissionLink(background, isXiaomi() ? "核对小米后台设置  ›" : "核对后台设置  ›", this::openBackgroundSettings);
+        if (isXiaomi()) {
+            settingsDivider(background);
+            bootRecoveryState = permissionItem(background, "允许开机自启动", "重启后恢复保护需要小米允许自启动；省电策略和最近任务锁定不能替代它。");
+            permissionLink(background, "查看自启动说明  ›", this::showXiaomiAutostartGuide);
+        }
         TextView note = paragraph(isXiaomi()
-            ? "小米省电策略请选「无限制」。应用无法自动确认此项，当前运行中也不代表已配置。"
+            ? "小米请完成三项设置：省电策略选「无限制」、允许自启动，并锁定最近任务。应用无法自动确认这些厂商设置，当前运行中也不代表已配置。"
             : "请核对系统的后台运行与省电设置。当前运行中不代表后台能够持续运行。");
         note.setTextSize(13);
         permissionHeading("可选", "通知提醒", CatUi.MUTED);
@@ -198,6 +204,18 @@ public final class MainActivity extends Activity {
             .setNegativeButton("取消", null)
             .setPositiveButton("进入本应用设置", (d, w) -> openSettings(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.parse("package:" + getPackageName())))).show();
+    }
+
+
+    private void showXiaomiAutostartGuide() {
+        new AlertDialog.Builder(this).setTitle("允许 WorkToScroll 自启动")
+            .setMessage("手机重启后，保护需要由系统开机广播重新启动。小米默认可能阻止自启动，即使省电策略已经设为「无限制」。\n\n请打开系统设置，搜索「自启动」，找到 WorkToScroll 后允许。不同 HyperOS 版本的入口可能不同；若搜索不到，可在系统安全中心或应用管理中查找「自启动」。\n\n应用无法代为开启或可靠读取这项厂商设置。完成后请回到这里点「我已允许」，它只记录你的确认，不会伪装成系统已检测通过。")
+            .setNegativeButton("稍后", null)
+            .setNeutralButton("我已允许", (dialog, which) -> {
+                uiPreferences().edit().putBoolean("xiaomi_autostart_confirmed", true).apply();
+                render();
+            })
+            .setPositiveButton("打开系统设置", (dialog, which) -> openSettings(new Intent(Settings.ACTION_SETTINGS))).show();
     }
 
     private LinearLayout settingsCard(int top) {
@@ -476,6 +494,14 @@ public final class MainActivity extends Activity {
             CatUi.setText(usagePermission, usage ? "查看系统设置  ›" : "去授权  ›");
             CatUi.setText(overlayPermission, overlay ? "查看系统设置  ›" : "去授权  ›");
         }
+        if (bootRecoveryState != null) {
+            BootRecoveryStatus.Snapshot recovery = BootRecoveryStatus.read(this);
+            String recoveryText = recovery.description(ledger.enabled, BootRecoveryStatus.bootCount(this));
+            boolean attention = BootRecoveryPolicy.needsAttention(recovery.outcome());
+            boolean confirmed = uiPreferences().getBoolean("xiaomi_autostart_confirmed", false);
+            CatUi.setText(bootRecoveryState, (confirmed ? "✓ 已由你确认" : "待核对") + " · " + recoveryText);
+            bootRecoveryState.setTextColor(attention ? CatUi.RED : confirmed ? GOOD : WARNING);
+        }
         if (diagnostics != null) CatUi.setText(diagnostics,
             "监测服务：" + (running ? "运行中" : "未连接")
             + (service != null && !service.healthy ? "\n运行异常：" + service.failure : "")
@@ -485,6 +511,7 @@ public final class MainActivity extends Activity {
             + (ledger.workUpgradeCreditMs > 0 ? "\n历史规则补齐：" + duration(ledger.workUpgradeCreditMs, false) + "（已计入余额）" : "")
             + "\n监测中断记录：" + ledger.observationGaps + " 次"
             + "\n最近中断：" + duration(ledger.lastObservationGapMs, false) + "（含系统休眠等停顿）"
+            + "\n开机恢复：" + BootRecoveryStatus.read(this).description(ledger.enabled, BootRecoveryStatus.bootCount(this))
             + "\n" + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + " · Android " + android.os.Build.VERSION.RELEASE
             + "\n" + getString(R.string.app_version) + (ledger.note.isEmpty() ? "" : "\n" + ledger.note));
     }

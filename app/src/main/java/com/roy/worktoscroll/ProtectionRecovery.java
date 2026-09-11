@@ -14,6 +14,7 @@ import java.time.ZoneId;
 /** No camera access. Reminders use one inexact alarm; only system recovery events start protection. */
 public final class ProtectionRecovery extends BroadcastReceiver {
     private static final String REMIND = "com.roy.worktoscroll.overlaytest.REMIND_UNPROTECTED";
+    static final String EXTRA_BOOT_RECOVERY = "com.roy.worktoscroll.overlaytest.BOOT_RECOVERY";
     private static final String CHANNEL = "unprotected_reminder";
     private static final int NOTICE = 2;
 
@@ -33,18 +34,39 @@ public final class ProtectionRecovery extends BroadcastReceiver {
     }
 
     static void sync(Context context, boolean recover) {
+        sync(context, recover, false);
+    }
+
+    private static void sync(Context context, boolean recover, boolean bootRecovery) {
         LedgerStore ledger = LedgerStore.get(context);
         AlarmManager alarms = context.getSystemService(AlarmManager.class);
         if (ledger.enabled) {
             alarms.cancel(alarmIntent(context));
             context.getSystemService(NotificationManager.class).cancel(NOTICE);
-            if (recover && Permissions.usage(context) && Permissions.overlay(context)
-                    && ProtectionService.current() == null && ledger.save()) {
-                try { context.startForegroundService(new Intent(context, ProtectionService.class)); }
-                catch (RuntimeException ex) {
-                    ledger.note = "系统暂未允许恢复保护，请打开应用检查状态。";
-                    ledger.save();
-                }
+            if (!recover) return;
+            if (!Permissions.usage(context) || !Permissions.overlay(context)) {
+                if (bootRecovery) BootRecoveryStatus.record(context, BootRecoveryPolicy.Outcome.MISSING_PERMISSION);
+                return;
+            }
+            if (ProtectionService.current() != null) {
+                if (bootRecovery) BootRecoveryStatus.record(context, BootRecoveryPolicy.Outcome.STARTED);
+                return;
+            }
+            if (!ledger.save()) {
+                if (bootRecovery) BootRecoveryStatus.record(context, BootRecoveryPolicy.Outcome.STORAGE_FAILED);
+                return;
+            }
+            Intent start = new Intent(context, ProtectionService.class);
+            if (bootRecovery) {
+                BootRecoveryStatus.record(context, BootRecoveryPolicy.Outcome.START_REQUESTED);
+                start.putExtra(EXTRA_BOOT_RECOVERY, true);
+            }
+            try { context.startForegroundService(start); }
+            catch (RuntimeException ex) {
+                if (bootRecovery) BootRecoveryStatus.record(context, BootRecoveryPolicy.Outcome.START_REJECTED);
+                ledger.note = bootRecovery ? "开机恢复被系统拒绝，请检查小米自启动后再试。"
+                    : "系统暂未允许恢复保护，请打开应用检查状态。";
+                ledger.save();
             }
             return;
         }
@@ -65,8 +87,12 @@ public final class ProtectionRecovery extends BroadcastReceiver {
         if (context.getSharedPreferences("ledger", Context.MODE_PRIVATE)
                 .getInt("protection_policy_version", 0) < 1) return;
         LedgerStore ledger = LedgerStore.get(context);
-        if (!ledger.refreshDailyReset()) return;
         String action = intent.getAction();
+        boolean bootRecovery = Intent.ACTION_BOOT_COMPLETED.equals(action);
+        if (!ledger.refreshDailyReset()) {
+            if (bootRecovery) BootRecoveryStatus.record(context, BootRecoveryPolicy.Outcome.STORAGE_FAILED);
+            return;
+        }
         if (REMIND.equals(action) && !ledger.enabled) {
             SharedPreferences prefs = preferences(context);
             long now = System.currentTimeMillis();
@@ -92,8 +118,9 @@ public final class ProtectionRecovery extends BroadcastReceiver {
                 }
             }
         }
-        boolean recover = Intent.ACTION_BOOT_COMPLETED.equals(action)
-            || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action);
-        sync(context, recover);
+        if (bootRecovery) BootRecoveryStatus.record(context, ledger.enabled
+            ? BootRecoveryPolicy.Outcome.RECEIVED : BootRecoveryPolicy.Outcome.MANUAL_STOPPED);
+        boolean recover = bootRecovery || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action);
+        sync(context, recover, bootRecovery);
     }
 }

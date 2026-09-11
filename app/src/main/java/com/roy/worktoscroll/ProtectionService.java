@@ -76,15 +76,26 @@ public final class ProtectionService extends Service {
     @Override public IBinder onBind(Intent intent) { return null; }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
+        boolean bootRecovery = intent != null && intent.getBooleanExtra(ProtectionRecovery.EXTRA_BOOT_RECOVERY, false);
         if (intent != null && ACTION_STOP.equals(intent.getAction())) {
             stopProtection();
             return START_NOT_STICKY;
         }
         Notification notification = notification();
-        if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-        } else startForeground(NOTIFICATION_ID, notification);
+        try {
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            } else startForeground(NOTIFICATION_ID, notification);
+        } catch (RuntimeException ex) {
+            if (bootRecovery) BootRecoveryStatus.record(this, BootRecoveryPolicy.Outcome.START_REJECTED);
+            ledger.note = bootRecovery ? "开机恢复被系统拒绝，请检查小米自启动后再试。"
+                : "监测服务启动失败，请检查系统设置后重新打开测试版。";
+            ledger.save();
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this)) {
+            if (bootRecovery) BootRecoveryStatus.record(this, BootRecoveryPolicy.Outcome.MISSING_PERMISSION);
             ledger.note = "监测未启动，请检查使用情况访问和悬浮窗授权。";
             ledger.save();
             stopForeground(STOP_FOREGROUND_REMOVE);
@@ -99,6 +110,7 @@ public final class ProtectionService extends Service {
             monitoring = true;
             handler.post(loop);
         }
+        if (bootRecovery) BootRecoveryStatus.record(this, BootRecoveryPolicy.Outcome.STARTED);
         // Request system restart; the persisted user opt-out is checked on every start.
         return START_STICKY;
     }
