@@ -1,0 +1,320 @@
+mode=armed duration_s=1200 source=BatteryService temperature_unit=0.1C charge_counter_unit=uAh voltage_unit=mV
+    versionCode=30 minSdk=29 targetSdk=36
+    versionName=0.5.8-preview-off-trial
+
+SAMPLE epoch_s=1789100567 elapsed_s=0 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2986000
+  status: 3
+  level: 68
+  scale: 100
+  voltage: 4010
+  temperature: 322
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":1,"heartbeat_elapsed_ms":14928437,"captured_elapsed_ms":14928057,"sequence":17,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.89453125,"processing_ms":38,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":1,"media_volume":10,"detail":"自拍预览已关闭，人体监测继续。"}
+
+SAMPLE epoch_s=1789100627 elapsed_s=60 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2986000
+  status: 3
+  level: 68
+  scale: 100
+  voltage: 4010
+  temperature: 322
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":1,"heartbeat_elapsed_ms":14988789,"captured_elapsed_ms":14988307,"sequence":130,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.59375,"processing_ms":48,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":1,"media_volume":10,"detail":"自拍预览已关闭，人体监测继续。"}
+
+SAMPLE epoch_s=1789100688 elapsed_s=120 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2986000
+  status: 3
+  level: 68
+  scale: 100
+  voltage: 4010
+  temperature: 322
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":1,"heartbeat_elapsed_ms":15049148,"captured_elapsed_ms":15049092,"sequence":244,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.61328125,"processing_ms":49,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":1,"media_volume":10,"detail":"自拍预览已关闭，人体监测继续。"}
+
+SAMPLE epoch_s=1789100748 elapsed_s=180 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2956000
+  status: 3
+  level: 68
+  scale: 100
+  voltage: 3993
+  temperature: 333
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":1,"heartbeat_elapsed_ms":15109514,"captured_elapsed_ms":15109349,"sequence":357,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.546875,"processing_ms":48,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":1,"media_volume":10,"detail":"自拍预览已关闭，人体监测继续。"}
+
+SAMPLE epoch_s=1789100807 elapsed_s=240 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2956000
+  status: 3
+  level: 67
+  scale: 100
+  voltage: 3993
+  temperature: 333
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15168378,"captured_elapsed_ms":15168222,"sequence":44,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.65625,"processing_ms":48,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789100867 elapsed_s=300 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2936000
+  status: 3
+  level: 67
+  scale: 100
+  voltage: 3989
+  temperature: 340
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15228744,"captured_elapsed_ms":15228480,"sequence":157,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.6796875,"processing_ms":64,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789100927 elapsed_s=360 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2936000
+  status: 3
+  level: 67
+  scale: 100
+  voltage: 3989
+  temperature: 340
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15289138,"captured_elapsed_ms":15288735,"sequence":270,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.69921875,"processing_ms":47,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789100988 elapsed_s=420 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2913000
+  status: 3
+  level: 66
+  scale: 100
+  voltage: 3983
+  temperature: 347
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15349466,"captured_elapsed_ms":15348986,"sequence":383,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.71875,"processing_ms":51,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101048 elapsed_s=480 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2902000
+  status: 3
+  level: 66
+  scale: 100
+  voltage: 3982
+  temperature: 350
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15408752,"captured_elapsed_ms":15408697,"sequence":495,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.73828125,"processing_ms":47,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101108 elapsed_s=540 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2902000
+  status: 3
+  level: 66
+  scale: 100
+  voltage: 3982
+  temperature: 350
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15469130,"captured_elapsed_ms":15468956,"sequence":608,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.65625,"processing_ms":54,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101167 elapsed_s=600 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2902000
+  status: 3
+  level: 66
+  scale: 100
+  voltage: 3982
+  temperature: 350
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15528490,"captured_elapsed_ms":15528215,"sequence":719,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.63671875,"processing_ms":53,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101227 elapsed_s=660 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2868000
+  status: 3
+  level: 65
+  scale: 100
+  voltage: 3974
+  temperature: 358
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15588811,"captured_elapsed_ms":15588461,"sequence":832,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.6796875,"processing_ms":51,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101287 elapsed_s=720 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2868000
+  status: 3
+  level: 65
+  scale: 100
+  voltage: 3974
+  temperature: 358
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15649202,"captured_elapsed_ms":15648708,"sequence":945,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.63671875,"processing_ms":51,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101348 elapsed_s=780 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2856000
+  status: 3
+  level: 65
+  scale: 100
+  voltage: 3971
+  temperature: 360
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15709582,"captured_elapsed_ms":15709497,"sequence":1059,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.5234375,"processing_ms":72,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101408 elapsed_s=840 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2856000
+  status: 3
+  level: 65
+  scale: 100
+  voltage: 3971
+  temperature: 360
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15768918,"captured_elapsed_ms":15768669,"sequence":1170,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.5703125,"processing_ms":50,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101468 elapsed_s=901 powered=false fresh_at_sample=false
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2825000
+  status: 3
+  level: 65
+  scale: 100
+  voltage: 3964
+  temperature: 365
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15829357,"captured_elapsed_ms":15828922,"sequence":1283,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.5703125,"processing_ms":53,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101527 elapsed_s=960 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2825000
+  status: 3
+  level: 64
+  scale: 100
+  voltage: 3965
+  temperature: 365
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15888708,"captured_elapsed_ms":15888645,"sequence":1395,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.5703125,"processing_ms":49,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101587 elapsed_s=1020 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2825000
+  status: 3
+  level: 64
+  scale: 100
+  voltage: 3965
+  temperature: 365
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":15949063,"captured_elapsed_ms":15948898,"sequence":1508,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"CHECKING","person_candidates":1,"reliable_people":1,"max_score":0.546875,"processing_ms":52,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101647 elapsed_s=1080 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2825000
+  status: 3
+  level: 64
+  scale: 100
+  voltage: 3965
+  temperature: 365
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":16009468,"captured_elapsed_ms":16009148,"sequence":1621,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.546875,"processing_ms":51,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101708 elapsed_s=1140 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2787000
+  status: 3
+  level: 64
+  scale: 100
+  voltage: 3956
+  temperature: 370
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":16068759,"captured_elapsed_ms":16068338,"sequence":1732,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.5703125,"processing_ms":52,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+SAMPLE epoch_s=1789101768 elapsed_s=1200 powered=false fresh_at_sample=true
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Dock powered: false
+  Max charging voltage: 0
+  Charge counter: 2772000
+  status: 3
+  level: 63
+  scale: 100
+  voltage: 3954
+  temperature: 371
+  Capacity level: -1
+camera_status={"schema":1,"session":"bbf53bac-31eb-4c04-81f6-064a39d1aeb0","generation":3,"heartbeat_elapsed_ms":16129162,"captured_elapsed_ms":16128585,"sequence":1845,"running":true,"model_ready":true,"recovery_state":"MONITORING","recovery_failures":0,"monitoring_wanted":true,"camera_permission":true,"lens":"front","capture_policy":"analysis_only_requested_15_fps","preview_resolution":"unbound_after_calibration","preview_bound":false,"analysis_width":640,"analysis_height":480,"preview_mode":"PERFORMANCE","scope":"whole_frame_person_trial","state":"PRESENT","person_candidates":1,"reliable_people":1,"max_score":0.5703125,"processing_ms":51,"sounds_enabled":true,"audio_last_cue":"return","audio_status":"completed","audio_events":2,"media_volume":10,"detail":"等待新画面，请调整机位。"}
+
+COMPLETE actual_duration_s=1200

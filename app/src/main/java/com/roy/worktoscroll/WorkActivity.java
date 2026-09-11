@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.KeyguardManager;
 import android.app.AlertDialog;
 import android.content.pm.PackageManager;
+import android.hardware.camera2.CaptureRequest;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,6 +28,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.OptIn;
+import androidx.camera.camera2.interop.Camera2Interop;
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.CameraState;
 import androidx.camera.core.ImageAnalysis;
@@ -59,9 +63,15 @@ import java.util.concurrent.Executors;
 /** Explicit foreground camera session. Preview pixels never leave the in-memory pipeline. */
 public final class WorkActivity extends ComponentActivity {
     static final String EXTRA_RESUME_SHORT_EXTERNAL_RETURN = "resume_short_external_return";
+    private static final Size THERMAL_STREAM_SIZE = new Size(320, 240);
+    private static final Range<Integer> THERMAL_FRAME_RATE = new Range<>(10, 10);
+    private static final long ANALYSIS_INTERVAL_MS = 1_000;
+    private static final float MONITORING_SCREEN_BRIGHTNESS = 0.05f;
     public static final class RecoveryModel extends ViewModel {
         final CameraRecovery recovery = new CameraRecovery();
+        final PreviewTrial previewTrial = new PreviewTrial();
     }
+    private RecoveryModel recoveryModel;
     private CameraRecovery recovery;
     private final long createdAtElapsed = SystemClock.elapsedRealtime();
     private androidx.camera.core.Camera boundCamera;
@@ -75,10 +85,13 @@ public final class WorkActivity extends ComponentActivity {
     private CuePlayer cuePlayer;
     private boolean soundsEnabled;
     private Button soundButton;
+    private Button previewButton;
     private long sampledAt = -1, processingMs, sequence, lastDiagnosticWrite;
     private PersonObservation observation = new PersonObservation(-1, -1, 0);
     private final String cameraSession = UUID.randomUUID().toString();
     private ProcessCameraProvider provider;
+    private Preview cameraPreview;
+    private boolean trialScreenDimmed;
     private PreviewView preview;
     private TextView stateText;
     private TextView counters;
@@ -120,13 +133,14 @@ public final class WorkActivity extends ComponentActivity {
             if (available() && recovery.failed() && recovery.takeAlert() && soundsEnabled) cuePlayer.playFailure();
             render();
             writeDiagnostic(false);
-            handler.postDelayed(this, 250);
+            handler.postDelayed(this, 500);
         }
     };
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
-        recovery = new ViewModelProvider(this).get(RecoveryModel.class).recovery;
+        recoveryModel = new ViewModelProvider(this).get(RecoveryModel.class);
+        recovery = recoveryModel.recovery;
         ledger = LedgerStore.get(this);
         if (getIntent().getBooleanExtra(EXTRA_RESUME_SHORT_EXTERNAL_RETURN, false) && ledger.work.active()) {
             recovery.request();
@@ -170,6 +184,8 @@ public final class WorkActivity extends ComponentActivity {
         previewParams.gravity = Gravity.CENTER_HORIZONTAL;
         previewParams.topMargin = dp(4);
         column.addView(previewFrame, previewParams);
+        previewButton = CatUi.button(this, "机位调好，关闭预览（试验）", false, true, this::suppressPreview);
+        CatUi.add(column, previewButton, -2, 8);
         LinearLayout actions = new LinearLayout(this);
         start = CatUi.button(this, "开始监测", false, true, this::requestStart);
         end = CatUi.button(this, "结束工作", false, true, this::endWork);
@@ -226,6 +242,7 @@ public final class WorkActivity extends ComponentActivity {
             requestPermissions(new String[] {Manifest.permission.CAMERA}, 20);
             return;
         }
+        recoveryModel.previewTrial.resetForManualStart();
         recovery.request();
         maybeResumeCamera();
     }
@@ -261,7 +278,8 @@ public final class WorkActivity extends ComponentActivity {
         observation = new PersonObservation(-1, -1, 0);
         capturing = true;
         message = "正在启动前置摄像头…";
-        preview.setVisibility(View.VISIBLE);
+        preview.setVisibility(recoveryModel.previewTrial.suppressed() ? View.INVISIBLE : View.VISIBLE);
+        setTrialScreenDim(recoveryModel.previewTrial.suppressed());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         int token = ++generation;
         analysisWidth = analysisHeight = 0;
@@ -293,50 +311,87 @@ public final class WorkActivity extends ComponentActivity {
         render();
     }
 
+    @OptIn(markerClass = ExperimentalCamera2Interop.class)
     private void bindCamera(CameraSelector selector, int token, boolean lowLoad) {
         Preview.Builder builder = new Preview.Builder();
         capturePolicy = lowLoad ? "low_resolution_default_fps" : "baseline_fallback";
         preview.setImplementationMode(lowLoad ? PreviewView.ImplementationMode.PERFORMANCE
             : PreviewView.ImplementationMode.COMPATIBLE);
+        Range<Integer> target = THERMAL_FRAME_RATE;
+        boolean requestLowFps = lowLoad
+            && selector.filter(provider.getAvailableCameraInfos()).get(0).getSupportedFrameRateRanges().contains(target);
         if (lowLoad) {
             builder.setResolutionSelector(new ResolutionSelector.Builder()
-                .setResolutionStrategy(new ResolutionStrategy(new Size(640, 480),
+                .setResolutionStrategy(new ResolutionStrategy(THERMAL_STREAM_SIZE,
                     ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build());
-            Range<Integer> target = new Range<>(15, 15);
-            if (selector.filter(provider.getAvailableCameraInfos()).get(0).getSupportedFrameRateRanges().contains(target)) {
+            if (requestLowFps) {
                 builder.setTargetFrameRate(target);
-                capturePolicy = "requested_15_fps";
+                capturePolicy = "requested_10_fps";
             }
         }
-        Preview cameraPreview = builder.build();
-        cameraPreview.setSurfaceProvider(preview.getSurfaceProvider());
         ImageAnalysis.Builder analysisBuilder = new ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST);
         if (lowLoad) {
             // ResolutionStrategy uses sensor coordinates; the old target-resolution path selected 2448x2448 here.
             analysisBuilder.setResolutionSelector(new ResolutionSelector.Builder()
-                .setResolutionStrategy(new ResolutionStrategy(new Size(640, 480),
+                .setResolutionStrategy(new ResolutionStrategy(THERMAL_STREAM_SIZE,
                     ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build());
         } else {
             analysisBuilder.setTargetResolution(new Size(640, 480));
         }
+        if (requestLowFps) {
+            new Camera2Interop.Extender<>(analysisBuilder)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, target);
+        }
         ImageAnalysis analysis = analysisBuilder.build();
         analysis.setAnalyzer(analyzer, frame -> analyze(frame, token));
-        boundCamera = provider.bindToLifecycle(this, selector, cameraPreview, analysis);
+        if (recoveryModel.previewTrial.suppressed()) {
+            cameraPreview = null;
+            boundCamera = provider.bindToLifecycle(this, selector, analysis);
+            previewResolution = "unbound_after_calibration";
+            capturePolicy = "analysis_only_" + capturePolicy;
+            preview.setVisibility(View.INVISIBLE);
+        } else {
+            cameraPreview = builder.build();
+            cameraPreview.setSurfaceProvider(preview.getSurfaceProvider());
+            boundCamera = provider.bindToLifecycle(this, selector, cameraPreview, analysis);
+            recoveryModel.previewTrial.previewBound(SystemClock.elapsedRealtime());
+            var resolution = cameraPreview.getResolutionInfo();
+            previewResolution = resolution == null ? "unknown" : resolution.getResolution().toString();
+        }
         boundCamera.getCameraInfo().getCameraState().observe(this, state -> {
             if (!capturing || token != generation || !available() || state.getError() == null) return;
             if (state.getError().getType() == CameraState.ErrorType.CRITICAL)
                 failCamera("摄像头发生错误，监测已暂停，请检查相机后重试。");
             else retryCamera("摄像头被占用或暂时不可用，请释放相机后重试。");
         });
-        var resolution = cameraPreview.getResolutionInfo();
-        previewResolution = resolution == null ? "unknown" : resolution.getResolution().toString();
+    }
+
+    private void suppressPreview() {
+        long now = SystemClock.elapsedRealtime();
+        if (!capturing || provider == null || cameraPreview == null || !recoveryModel.previewTrial.canSuppress(now)) return;
+        try {
+            provider.unbind(cameraPreview);
+            cameraPreview = null;
+            if (!recoveryModel.previewTrial.suppress(now)) return;
+            previewResolution = "unbound_after_calibration";
+            if (!capturePolicy.startsWith("analysis_only_")) capturePolicy = "analysis_only_" + capturePolicy;
+            preview.setVisibility(View.INVISIBLE);
+            setTrialScreenDim(true);
+            message = "自拍预览已关闭，人体监测继续。";
+            render();
+            writeDiagnostic(true);
+        } catch (RuntimeException ex) {
+            message = "关闭自拍预览失败，仍按原方式监测。";
+            render();
+            writeDiagnostic(true);
+        }
     }
 
     @SuppressLint("UnsafeOptInUsageError")
     private void analyze(ImageProxy frame, int token) {
         long capturedAt = SystemClock.elapsedRealtime();
-        if (!capturing || token != generation || capturedAt - lastAnalysisElapsed < 500 || frame.getImage() == null) {
+        if (!capturing || token != generation || capturedAt - lastAnalysisElapsed < ANALYSIS_INTERVAL_MS || frame.getImage() == null) {
             frame.close();
             return;
         }
@@ -438,6 +493,8 @@ public final class WorkActivity extends ComponentActivity {
             boundCamera = null;
         }
         if (provider != null) provider.unbindAll();
+        cameraPreview = null;
+        setTrialScreenDim(false);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         preview.setVisibility(View.INVISIBLE);
         rewardFeedback.animate().cancel();
@@ -485,7 +542,15 @@ public final class WorkActivity extends ComponentActivity {
         start.setEnabled(modelReady);
         setTextIfChanged(soundButton, soundsEnabled ? "提示音：开" : "提示音：关");
         end.setEnabled(work.active());
-        previewHint.setVisibility(capturing ? View.GONE : View.VISIBLE);
+        if (!capturing) setTextIfChanged(previewHint, "摄像头已关闭");
+        else if (recoveryModel.previewTrial.suppressed()) setTextIfChanged(previewHint, "自拍预览已关闭\n人体监测继续");
+        previewHint.setVisibility(capturing && !recoveryModel.previewTrial.suppressed() ? View.GONE : View.VISIBLE);
+        previewButton.setVisibility(capturing ? View.VISIBLE : View.GONE);
+        long previewWait = recoveryModel.previewTrial.closeRemainingMs(SystemClock.elapsedRealtime());
+        previewButton.setEnabled(capturing && cameraPreview != null && recoveryModel.previewTrial.canSuppress(SystemClock.elapsedRealtime()));
+        setTextIfChanged(previewButton, recoveryModel.previewTrial.suppressed() ? "预览已关闭 · 监测继续"
+            : previewWait > 0 ? "预览展示中 · " + ((previewWait + 999) / 1000) + "秒后可关闭"
+            : cameraPreview == null ? "预览正在启动…" : "机位调好，关闭预览（试验）");
         int pose = capturing && clock.state() == WorkClock.State.AWAY ? R.drawable.cat_away
             : capturing && SystemClock.elapsedRealtime() < rewardUntilElapsed ? R.drawable.cat_reward : R.drawable.cat_work;
         setMascot(pose);
@@ -529,6 +594,14 @@ public final class WorkActivity extends ComponentActivity {
 
     private static void setTextIfChanged(TextView view, String text) {
         if (!text.contentEquals(view.getText())) view.setText(text);
+    }
+    private void setTrialScreenDim(boolean dimmed) {
+        WindowManager.LayoutParams attributes = getWindow().getAttributes();
+        float brightness = dimmed ? MONITORING_SCREEN_BRIGHTNESS : WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+        if (attributes.screenBrightness == brightness) return;
+        attributes.screenBrightness = brightness;
+        getWindow().setAttributes(attributes);
+        trialScreenDimmed = dimmed;
     }
 
     private static String format(long millis) {
@@ -594,7 +667,10 @@ public final class WorkActivity extends ComponentActivity {
                 .put("camera_permission", checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
                 .put("lens", "front")
                 .put("capture_policy", capturePolicy).put("preview_resolution", previewResolution)
+                .put("preview_bound", cameraPreview != null)
                 .put("analysis_width", analysisWidth).put("analysis_height", analysisHeight)
+                .put("analysis_interval_ms", ANALYSIS_INTERVAL_MS).put("screen_dimmed", trialScreenDimmed)
+                .put("preview_close_remaining_ms", recoveryModel.previewTrial.closeRemainingMs(now))
                 .put("preview_mode", preview.getImplementationMode().name())
                 .put("scope", "whole_frame_person_trial").put("state", fresh ? clock.state().name() : "NO_FRESH_RESULT")
                 .put("person_candidates", fresh ? observation.candidates : -1)

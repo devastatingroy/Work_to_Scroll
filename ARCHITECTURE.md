@@ -18,7 +18,8 @@
 | BlockerActivity.java | 非导出的不透明全屏阻止页；独立任务、不进最近任务、离开不保留历史；真正让目标退后台，返回工具/桌面及系统返回不重新露出目标 |
 | BalanceEngine.java | 原版复用的纯余额算法，按使用区间扣减，仅显式奖励能增加余额 |
 | LedgerStore.java | 实验版同进程单例与 SharedPreferences 快照，原版私有数据不读取、不迁移 |
-| WorkActivity.java | 前置预览、离线人体检测、显式开始/暂停/继续/结束、声音开关、在场与奖励展示；帧仅在内存存在 |
+| WorkActivity.java | 前置预览、离线人体检测、显式开始/暂停/继续/结束、试验性预览解绑、声音开关、在场与奖励展示；帧仅在内存存在 |
+| PreviewTrial.java | 当前工作页进程内的预览关闭状态和至少10秒展示门槛；自动恢复保持关闭，用户主动暂停后重新开始则恢复校准预览 |
 | CameraRecovery.java | 内存中的监测意愿、临时中断、采集健康度与有限重试；WorkActivity 的 ViewModel 仅跨同进程配置重建保留，不从账本恢复开相机意愿 |
 | MonitoringReturnTicket.java | 进程级、一次性、90 秒的外部应用返回交接；只允许根首页回到工作页，不持久化且不启动相机 |
 | PersonObservation.java | 无图像的人体候选/可靠数量及分数，转为 WorkClock 的单人/无人/不确定信号 |
@@ -48,7 +49,7 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/�
 - MainActivity 通过显式 Intent 的 page 值打开 home/settings/permissions/tools 页面实例；每页在 onPause 移除刷新，在 onResume 沿用原有恢复调用。原生返回逐级退出，账本、应用 ID、签名与权限不变。
 - settings 保护卡读取 ProtectionUiState，必要授权摘要独立呈现；permissions 从系统重读 usage/overlay/notification/backgroundRestricted，不新增配置成功标记。小米后台未报告受限时仍显示待核对。停止确认只在用户确认且 ledger.enabled 仍为 true 时执行原停用逻辑；恢复请求先检查原开启意愿及必要授权，保留既有 startForegroundService 路径，不凭请求成功宣称服务健康。运行诊断放入 tools。
 - ui_preferences/cat_intro_seen_v3 仅记录当前每轮规则说明已展示，升级后说明一次；引导自身不写 ledger 或清零余额，每日规则初始化由账本负责。设置可重新打开使用及隐私说明。
-- drawable-nodpi 中首页使用 cat_home_waiting / cat_home_approved 两张 A 方案图片：MainActivity 创建首页时通过 CatUi 以 inSampleSize=2 各解码一次，页面持有两个 Drawable，500ms 刷新只在 balanceMs > 0 状态变化时切换引用，与文案、娱乐按钮使用同一条件。阻止页共用 CatUi.blocker / BlockerView 与 cat_time_up.webp 无道具半身图，以 inSampleSize=2 解码并 FIT_CENTER 显示；旧 cat_blocker_expired 不再作为阻止页素材。旧 cat_home 保留为历史素材。工作页的盯场、持续离开、到账三图以 inSampleSize=4 按资源缓存，250ms 的状态刷新不重新解码图片。
+- drawable-nodpi 中首页使用 cat_home_waiting / cat_home_approved 两张 A 方案图片：MainActivity 创建首页时通过 CatUi 以 inSampleSize=2 各解码一次，页面持有两个 Drawable，500ms 刷新只在 balanceMs > 0 状态变化时切换引用，与文案、娱乐按钮使用同一条件。阻止页共用 CatUi.blocker / BlockerView 与 cat_time_up.webp 无道具半身图，以 inSampleSize=2 解码并 FIT_CENTER 显示；旧 cat_blocker_expired 不再作为阻止页素材。旧 cat_home 保留为历史素材。工作页的盯场、持续离开、到账三图以 inSampleSize=4 按资源缓存，500ms 的状态刷新不重新解码图片。
 - WorkActivity 仅在 capturing 且 WorkClock.AWAY 时显示“人呢？”；其他暂停/不确定状态说明真实原因。奖励提交后 2.8 秒内切换盖章图，AWAY 显示优先；pauseCamera 清除奖励表现。猫图与奖励反馈自身不触发声音或推理；人体检测声音由前述 DetectionCue / CuePlayer 独立处理，无网络调用。
 - 页面用原生 ScrollView/LinearLayout 并限制内容最大宽度 480dp，处理系统栏和刘海边距；小屏、大字体及横屏允许滚动。工作页预览为 210×130dp，关闭时显示占位文字。打开说明因焦点变化暂停相机，关闭后按保留的监测意愿自动恢复。
 
@@ -62,14 +63,14 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/�
 
 ## 摄像头与奖励边界
 
-- 0.4.2 降负载试用：预览与分析使用 ResolutionSelector 的 640×480（传感器坐标）目标，优先请求前置支持的 [15,15] FPS，PreviewView 使用 PERFORMANCE（设备允许时采用 SurfaceView）。不支持该帧率时不设置帧率；低负载组合绑定抛 IllegalArgumentException 时重新解绑，恢复原默认预览尺寸/FPS、分析 setTargetResolution 和 COMPATIBLE。推理 500ms 频率保持原值。配置请求不等于实际帧率或降温证明，预览圆角/镜像/缩放须真机验收。
-- camera-status.json 增加 capture_policy、preview_resolution、analysis_width/height、preview_mode；尺寸来自绑定后的 ResolutionInfo 和实际分析帧，mode 是请求模式而非已证实的 SurfaceView 类型。读取脚本兼容旧版缺少这些字段的快照。帧率结合只读 media.camera 的当前请求/输出状态核对，不能从约 2Hz 推理次数反推。
-- [断线测温脚本](scripts/camera-thermal-record.sh)在 ADB shell 中独立运行，适用于两版 APK：armed 模式等待拔线及新鲜监测后，以 BatteryService 同源读数记录第 0 秒至 600 秒、每 60 秒一份数值快照；本地 /data/local/tmp 保存温度（0.1°C）、电量、充电状态和原有相机数值诊断，无图像。启动等待最多 20 分钟；每分钟的新鲜度只能证明采样时状态，不能证明两次采样之间完全无中断。smoke 模式仅作 5 秒日志验证，不算温升测试。
+- 0.4.2 降负载试用曾以640×480请求[15,15] FPS。0.5.9发热工程试验版把Preview与ImageAnalysis目标共同降为320×240、共同请求本机前置支持的[10,10] FPS，并把推理间隔从500ms延长到1000ms。每次主动开始后Preview至少真实绑定并展示10秒，倒计时结束才允许手动解绑；解绑后只降低当前工作页窗口亮度至5%，主动暂停、结束或重新校准时恢复系统默认亮度。自动恢复沿用进程内关闭状态，主动暂停后重新开始恢复预览。低负载绑定失败仍回退原配置。配置请求不等于实际帧率或降温证明，须以真机状态核对。
+- camera-status.json 增加 capture_policy、preview_resolution、preview_bound、analysis_width/height、preview_mode、analysis_interval_ms、screen_dimmed、preview_close_remaining_ms；尺寸来自绑定后的 ResolutionInfo 和实际分析帧，preview_bound 才表示 Preview 用例是否仍绑定，mode 只是 PreviewView 请求模式。读取脚本兼容旧版缺少这些字段的快照。帧率结合只读 media.camera 的当前请求/输出状态核对，不能从推理次数反推。
+- [断线测温脚本](scripts/camera-thermal-record.sh)在 ADB shell 中独立运行：armed模式支持600、1200、1800或2400秒，等待拔线及新鲜监测后读取BatteryService同源数据。2400秒工程测试只记录第0、10、20、30、40分钟共5组，并在第20与第40分钟写明确CHECKPOINT；其他既有时长仍按每60秒记录。本地/data/local/tmp保存温度（0.1°C）、电量、充电状态和相机数值诊断，无图像。启动等待最多20分钟；检查点只能证明采样时状态，不能证明两个检查点之间完全无中断。smoke模式仅作5秒日志验证，不算温升测试。
 - 工作页首次由用户主动启动，使用 KEEP_SCREEN_ON；不修改系统自动锁屏设置。暂停、结束、离开前台时解绑相机并释放亮屏标记。临时失焦/后台/锁屏保留内存监测意愿；onResume 刷新、窗口焦点及模型就绪经过同一个 maybeResumeCamera，只有前台可交互、解锁、有权限且用户仍希望监测时恢复。同进程旋转由 RecoveryModel 保留 CameraRecovery。外部应用短暂切换后，进程级 MonitoringReturnTicket 可在 90 秒内被根 MainActivity 一次性消费并转回工作页；它仅交接导航，WorkActivity 仍调用同一恢复门槛。主动暂停、工作页返回或结束清除凭证；进程重启、强停、划掉最近任务和冷启动默认停止。
 - CameraRecovery 区分 IDLE/WAITING/STARTING/MONITORING/FAILED；每次启动或失去新鲜结果 8 秒重试，最多连续 3 次失败，间隔 1/2 秒，连续可用前台的一轮恢复总时限为 30 秒。连续新鲜分析结果 5 秒才清除失败预算，单帧不能无限重置；真实失焦取消本次尝试并在返回时重新给启动时间，保留已发生失败数，不修改账本的首次中断时间。模型准备超过 15 秒、权限缺失、不可恢复相机错误、检测或保存失败直接进入失败出口。无人/多人结果不触发相机重启。
 - WorkActivity 同时观察 CameraX CameraState 与结果新鲜度；释放时先使采集代次失效并移除相机观察者，再解绑。恢复成功仍由 WorkClock 新鲜结果及在场确认驱动计时，绑定成功和 MONITORING 仅表示采集状态，不证明在场。诊断增加 recovery_state、recovery_failures 和 monitoring_wanted，不保存图像。
 - 恢复失败在工作页持续显示原因及继续入口。CuePlayer 的一次短双提示音独立于在场语音；遵循原声音开关和媒体音量，音频模式非正常、正在播放媒体或无法立即取得音频焦点时静默，不排队、不调音量。失焦/暂停释放提示音及焦点，失败提示同一故障只尝试一次；原在场语音也在通话音频模式下抑制。实际可听及系统来电行为仍需真机确认。
-- 初始实验参数：640×480 目标分析尺寸，每 500 ms 最多一次推理，KEEP_ONLY_LATEST 丢弃积压；实际分辨率由 CameraX 与设备协商。监测期间相机持续采集，分析限频不等于硬件每秒只采两帧或间歇关闭相机；每帧处理后关闭 MPImage / ImageProxy 并回收 Bitmap，没有录像编码或图像落盘路径。仅一个可靠人体作为在场线索，连续约 1 秒确认后计时；零人体候选允许 3 秒宽限，超过后暂停；多个可靠人体或仅有低分候选视为不确定，立即暂停。无身份识别，不证明工作行为，不含手机移动/另一部手机检测。
+- 当前发热工程试验参数：320×240目标分析尺寸，每1000ms最多一次推理，KEEP_ONLY_LATEST丢弃积压；实际分辨率由CameraX与设备协商。监测期间相机持续采集，分析限频不等于硬件每秒只采一帧或间歇关闭相机；每帧处理后关闭MPImage / ImageProxy并回收Bitmap，没有录像编码或图像落盘路径。仅一个可靠人体作为在场线索，连续约1秒确认后计时；零人体候选允许3秒宽限，超过后暂停；多个可靠人体或仅有低分候选视为不确定，立即暂停。无身份识别，不证明工作行为，不含手机移动/另一部手机检测。
 - 采集到结果超过 1.5 秒、相邻结果间隔超过 1.5 秒、锁屏、失去焦点或 Activity 暂停均不补计未知区间。仅接收当前采集代次的新结果，旧异步回调无法跨暂停或新会话发放时间；确认窗口不追补。页面定时器只刷新和检查失联，不生成有效时间。
 - totalValidMs 保存历史有效工作；sessionValidMs 为当前轮有效进度，当前轮不足 600000 ms 时应得为零，达到后按 `floor(sessionValidMs / 60000) * 30000` 计算。每次观察仅加入本轮前后应得差额；sessionRewardMs 是本次显式开启期间累计成功奖励，只增不减，重置轮次时保留，用于同快照钱包差额计算。界面“本轮已获得”来自本轮应得值，不把以前轮次奖励算到当前轮。
 - 连续暂停 180000 ms 时仅重置 sessionValidMs（门槛及余量随之重置），保留 totalValidMs、sessionRewardMs 和余额。finish 后 begin 清除本次计数；inactive→active 不产生奖励差额。奖励与工作检查点、已有消费字段一次 commit，成功后再发布内存结果；负奖励差额拒绝，失败暂停相机。

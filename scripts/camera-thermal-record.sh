@@ -6,7 +6,7 @@ out="$1"
 mode="$2"
 duration="$3"
 case "$out" in /data/local/tmp/wts-thermal-*.txt) ;; *) exit 2 ;; esac
-case "$mode:$duration" in armed:600|armed:1800|smoke:5) ;; *) exit 2 ;; esac
+case "$mode:$duration" in armed:600|armed:1200|armed:1800|armed:2400|smoke:5) ;; *) exit 2 ;; esac
 [ ! -e "$out" ] || exit 3
 lock=/data/local/tmp/wts-camera-thermal-record.lock
 mkdir "$lock" 2>/dev/null || exit 4
@@ -36,6 +36,13 @@ sample() {
         printf 'camera_status=%s\n' "$camera"
     } >> "$out"
 }
+checkpoint() {
+    temperature=$(printf '%s\n' "$battery" | sed -n 's/^  temperature: //p' | head -n 1)
+    level=$(printf '%s\n' "$battery" | sed -n 's/^  level: //p' | head -n 1)
+    charge_counter=$(printf '%s\n' "$battery" | sed -n 's/^  Charge counter: //p' | head -n 1)
+    printf 'CHECKPOINT elapsed_s=%s temperature_tenths_c=%s level_percent=%s charge_counter_uah=%s powered=%s fresh_at_sample=%s\n' \
+        "$next" "$temperature" "$level" "$charge_counter" "$powered" "$fresh" >> "$out"
+}
 printf 'mode=%s duration_s=%s source=BatteryService temperature_unit=0.1C charge_counter_unit=uAh voltage_unit=mV\n' "$mode" "$duration" > "$out"
 dumpsys package "$pkg" | grep -E 'versionCode=|versionName=' >> "$out"
 wait_started=$(uptime_s)
@@ -47,7 +54,13 @@ while :; do
 done
 started=$now
 sample
-if [ "$mode" = smoke ]; then interval=5; else interval=60; fi
+if [ "$mode" = smoke ]; then
+    interval=5
+elif [ "$duration" -eq 2400 ]; then
+    interval=600
+else
+    interval=60
+fi
 next=$interval
 while [ "$next" -le "$duration" ]; do
     now=$(uptime_s)
@@ -55,6 +68,7 @@ while [ "$next" -le "$duration" ]; do
     if [ "$delay" -gt 0 ]; then sleep "$delay"; fi
     read_state
     sample
+    if [ "$next" -eq 1200 ] || [ "$next" -eq 2400 ]; then checkpoint; fi
     next=$((next + interval))
 done
 printf '\nCOMPLETE actual_duration_s=%s\n' "$((now - started))" >> "$out"

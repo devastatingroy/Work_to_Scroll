@@ -7,6 +7,7 @@
 - [统一视觉语义与场景映射](design/interface-and-roles.md#visual-language)：印章只代表批准，离开作用于计时器；已统筹工作、奖励、余额与系统状态，具体画面/配色待审阅。旧[离开盖章分镜](design/interface-and-roles.md#presence-theatre)已停用，不得作为实施依据。
 
 - 2026-09-08 Roy 已授权降负载试用：CameraX 预览与分析以 ResolutionSelector 请求 640×480，设备支持时请求 15fps，PERFORMANCE 预览；识别仍约 2Hz，计时/奖励规则不改。理由是减少持续采集、图像转换及显示负载；实测收益未确定。两版各 10 分钟、相近起温及同源测温的对照见[发热任务](../tasks/active/camera-thermal-test.md)，技术实现及回退边界见 [ARCHITECTURE](../ARCHITECTURE.md)。
+- 2026-09-11 Roy 授权将当前可控负载一次性压低后做工程验收：Preview与ImageAnalysis共同请求320×240和固定10fps，人体推理上限降为1Hz；机位校准后解绑Preview并仅降低工作页窗口亮度，不改变检测阈值、计时、奖励、声音或保护规则。基于营销体验，每次主动开始后自拍预览必须至少持续展示10秒，期间不允许关闭；10秒后再由用户手动关闭。实际33分钟观察为34.8→35.3°C，Roy确认触感可接受，约30分钟发热体验基本通过；长期识别体验仍待日常观察。
 - [应用图标与备选归档](design/app-icon-exploration.html)：2026-09-08 Roy 确认先采用 C 标准沙漏修正版，紫底、暖白票券与清晰沙漏；原 C、A/B、C2/C3 保留为备选，不自动切换。图标决定不改变首页猫总或产品规则。
 - [界面与角色设计](design/interface-and-roles.md)：当前采用 C「猫总监工」，A「电脑＋笔记簿 / 小红书」保留为设计参考；猫总首页双状态已选定本轮 A「猫总批假」，其余三组与完整对比图[保留存档](design/interface-and-roles.md#cat-home-states)，带“工作优先／准了”的修正版已安装；旧无字素材有余额首页已有目视证据，修正版手机显示与双向切换待核验。本轮字母与旧主题编号分开理解；图稿、页面分层、素材及交互边界在该文件维护，本文保留总入口与技术路线。
 - [监督角色：已确认方向与待探索细节](design/interface-and-roles.md#role-exploration) · [预制角色皮肤顶层规划草案](design/skin-system-proposal.md)：Roy 已确认预制成品预览与选择、制作端负责 AI 素材质量、共用字效/节奏/功能信息，上传照片生成角色暂缓；具体视觉、价格与实施待审阅。
