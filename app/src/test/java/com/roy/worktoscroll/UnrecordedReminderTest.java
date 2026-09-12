@@ -8,13 +8,13 @@ public class UnrecordedReminderTest {
         return new WorkProgress(0, 0, 0, 1, true, at, at, 1);
     }
 
-    @Test public void startsAtOneMinuteAndRepeatsOncePerMinute() {
+    @Test public void startsAtOneMinuteAndOnlyRemindsOnce() {
         UnrecordedReminder reminder = new UnrecordedReminder();
         WorkProgress work = interruptedAt(1_000);
         assertFalse(reminder.due(work, true, true, true, 60_999));
         assertTrue(reminder.due(work, true, true, true, 61_000));
         assertFalse(reminder.due(work, true, true, true, 61_500));
-        assertTrue(reminder.due(work, true, true, true, 121_000));
+        assertFalse(reminder.due(work, true, true, true, 121_000));
     }
 
     @Test public void neverRemindsWhenUserPausedOrWorkResumes() {
@@ -27,12 +27,19 @@ public class UnrecordedReminderTest {
         assertFalse(reminder.due(resumed, true, true, true, 121_000));
     }
 
-    @Test public void backgroundReturnProducesOnlyOneCurrentReminder() {
+    @Test public void backgroundReturnDefersOneReminderUntilItIsSafeToPlay() {
         UnrecordedReminder reminder = new UnrecordedReminder();
         WorkProgress work = interruptedAt(1_000);
         assertFalse(reminder.due(work, true, false, true, 301_000));
         assertTrue(reminder.due(work, true, true, true, 301_000));
         assertFalse(reminder.due(work, true, true, true, 301_500));
-        assertTrue(reminder.due(work, true, true, true, 361_000));
+        assertFalse(reminder.due(work, true, true, true, 361_000));
+    }
+
+    @Test public void disablingSoundDoesNotReplayTheSameInterruptionWhenReenabled() {
+        UnrecordedReminder reminder = new UnrecordedReminder();
+        WorkProgress work = interruptedAt(1_000);
+        assertFalse(reminder.due(work, true, true, false, 61_000));
+        assertFalse(reminder.due(work, true, true, true, 61_500));
     }
 }

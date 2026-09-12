@@ -137,7 +137,6 @@ public final class WorkActivity extends ComponentActivity {
             maybePlayUnrecordedReminder(now);
             if (available() && recovery.timedOut(now)) retryCamera("持续未收到有效画面，请检查相机后重试。");
             maybeResumeCamera();
-            if (available() && recovery.failed() && recovery.takeAlert() && soundsEnabled) cuePlayer.playFailure();
             render();
             writeDiagnostic(false);
             handler.postDelayed(this, 500);
@@ -208,7 +207,7 @@ public final class WorkActivity extends ComponentActivity {
         soundButton = CatUi.button(this, "", false, true, () -> {
             soundsEnabled = !soundsEnabled;
             getSharedPreferences("ui_preferences", MODE_PRIVATE).edit().putBoolean("presence_sound_enabled", soundsEnabled).apply();
-            detectionCue.reset(); unrecordedReminder.reset(); cuePlayer.stop("sound_setting_changed"); render(); writeDiagnostic(true);
+            detectionCue.reset(); cuePlayer.stop("sound_setting_changed"); render(); writeDiagnostic(true);
         });
         CatUi.add(column, soundButton, -2, 8);
         label(column, "临时切出暂停，回来自动恢复 · 主动暂停需继续", 12);
@@ -247,6 +246,9 @@ public final class WorkActivity extends ComponentActivity {
             && !getSystemService(KeyguardManager.class).isKeyguardLocked();
     }
 
+    /** Explicit pause/end clears recovery intent; automatic camera failure remains eligible for one reminder. */
+    private boolean monitoringExpected() { return recovery.wanted() || recovery.failed(); }
+
     private String unavailableReason() {
         if (destroyed) return "activity_destroyed";
         if (isFinishing()) return "activity_finishing";
@@ -272,6 +274,7 @@ public final class WorkActivity extends ComponentActivity {
             return;
         }
         recoveryModel.previewTrial.resetForManualStart();
+        unrecordedReminder.reset();
         recovery.request();
         maybeResumeCamera();
     }
@@ -304,7 +307,7 @@ public final class WorkActivity extends ComponentActivity {
         if (service != null) service.prepareManualChange();
         else ledger.engine.resetObservation(System.currentTimeMillis());
         clock.interrupt();
-        detectionCue.reset(); unrecordedReminder.reset(); cuePlayer.stop("camera_start"); sampledAt = -1; sequence = 0;
+        detectionCue.reset(); cuePlayer.stop("camera_start"); sampledAt = -1; sequence = 0;
         observation = new PersonObservation(-1, -1, 0);
         capturing = true;
         message = "正在启动前置摄像头…";
@@ -642,7 +645,7 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private void maybePlayUnrecordedReminder(long now) {
-        if (!unrecordedReminder.due(ledger.work, recovery.wanted(), available(), soundsEnabled, now)) return;
+        if (!unrecordedReminder.due(ledger.work, monitoringExpected(), available(), soundsEnabled, now)) return;
         long interruptedAt = ledger.work.interruptedAtElapsedMs();
         long duration = Math.max(0, now - interruptedAt);
         long cycle = unrecordedReminder.cycle(now);
