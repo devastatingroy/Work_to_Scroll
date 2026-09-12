@@ -14,6 +14,14 @@
 
 版本、试用反馈及待验项目统一见[侧后方任务](tasks/active/side-rear-presence-exploration.md)，本节只保留读取方法与判断边界。
 
+## 工作会话调试日志
+
+适用范围：0.5.11 起的主 App 调试构建。工作结束或重新连接手机后，在项目根目录运行 `./scripts/work-session-debug.ps1 -Serial '<设备号>'`，可只读查看最近一次摘要及事件尾部；脚本不打开摄像头、不切换页面、不修改账本。
+
+- `test_valid_ms` 是本次开始后的历史累计增量，跨三分钟轮次重置仍连续；`round_valid_ms` 只代表当前轮，不能代替本次总量。
+- `ROUND_RESET` 记录当前轮因连续中断达到三分钟而归零；`INTERRUPTION_START/END` 记录中断边界；`CLOCK_STATE` 记录有人、宽限、离开等状态变化；`CHECKPOINT` 约每分钟保底记录一次；`WORK_FINISH` 和 latest 的 `outcome=finished` 是正常结束证据。
+- 日志只在调试构建中启用，位于应用私有目录，超过 512 KiB 后保留一份轮转旧文件。没有 `WORK_FINISH` 时仍可用 latest 查看截至最后一次成功写入的累计，但不能把缺失尾段包装成已完整记录。
+
 ## 小米后台冻结导致零余额拦截失效
 
 适用范围：Xiaomi 14 Pro 上的 WorkToScroll，应用 ID `com.roy.worktoscroll.overlaytest`。证据来自2026-09-08、0.2.5-protection-fix及其前一版本的真机排查，不代表所有机型或后续版本已经验证。

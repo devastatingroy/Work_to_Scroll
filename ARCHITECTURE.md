@@ -27,6 +27,7 @@
 | WorkClock.java | 单调时钟和新鲜帧约束下的在场容错计时，不使用系统日期计算奖励 |
 | DailyReset.java | 本地 06:00 截止点、到期判断、时区重排及清零提示状态的纯计算 |
 | WorkProgress.java | 不可变的历史工作、本轮 10/15/20 分钟门槛/分钟奖励、中断期限与恢复计算 |
+| WorkDebugLog.java / WorkDebugMetrics.java | 仅调试版启用的工作会话事件日志与纯计算口径；记录本次有效总量、中断、三分钟轮次重置和结束摘要，不参与账本或奖励计算 |
 | ProtectionPolicy.java | 默认开启/已保存停止的加载规则，按当前时区计算四小时及09:00—21:00提醒边界，可独立测试 |
 | ProtectionRecovery.java | 开机/本包更新后的保护恢复请求、时间/时区变化后的提醒重排、单次非精确提醒及取消；不启动摄像头 |
 
@@ -35,6 +36,8 @@ UsageEvents → 应用前后台/锁屏事件 → BalanceEngine → 实验版本�
 CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 单人/无人/不确定 → WorkClock 有效毫秒增量 → WorkProgress 奖励差额 → LedgerStore 同一次快照写入工作累计与娱乐余额 → 既有消费路径。声音沿原始观察另走 DetectionCue → CuePlayer，不绕过 WorkClock 的确认和宽限。
 
 人体模型在分析线程加载并串行推理，未就绪不允许开始；停止后的旧代次结果不进入账本。人物结果不保存框或图像，只每秒原子覆盖 app 私有 files/camera-status.json 的最新人数/分数/状态/音频指标；[摄像头读取脚本](scripts/camera-health-check.ps1)核对 PID、手机单调时钟和结果年龄后判定读数有效，离开工作页后旧快照不代表监测仍在运行。ui_preferences 保存 presence_sound_enabled（默认开启），不迁移账本；固定使用 DEFAULT_FRONT_CAMERA，不读取临时版本的镜头偏好。
+
+调试构建额外在 app 私有目录维护 `work-session-events.jsonl` 和原子覆盖的 `work-session-latest.json`。用户开始工作时以历史 `totalValidMs` 记精确基线，随后记录工作开始、相机状态、计时状态变化、中断开始/恢复、三分钟轮次重置、约每分钟检查点和结束摘要；“本次有效时间”始终取当前历史总量减本次基线，因此不会因 `sessionValidMs` 重置而丢失。事件日志超过 512 KiB 后只保留一份轮转旧文件；不记录图像、页面正文或完整浏览历史，也不参与账本保存成败与奖励发放。电脑端只读入口为 [工作会话调试脚本](scripts/work-session-debug.ps1)。
 
 ## 独立人体检测实验
 
