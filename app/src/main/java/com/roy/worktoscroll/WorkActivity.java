@@ -79,6 +79,7 @@ public final class WorkActivity extends ComponentActivity {
     private final ExecutorService analyzer = Executors.newSingleThreadExecutor();
     private final WorkClock clock = new WorkClock();
     private LedgerStore ledger;
+    private WorkDebugLog workDebugLog;
     private ObjectDetector detector;
     private boolean modelReady, destroyed;
     private final DetectionCue detectionCue = new DetectionCue();
@@ -124,10 +125,12 @@ public final class WorkActivity extends ComponentActivity {
                 WorkProgress base = staleAt >= 0 ? ledger.work.pause(staleAt, ledger.bootCount) : ledger.work;
                 WorkProgress next = capturing && (clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE)
                     ? base.refresh(now, ledger.bootCount) : base.pause(now, ledger.bootCount);
-                if (next != ledger.work && !ledger.saveWork(next)) {
+                if (next != ledger.work && !saveWorkWithDebug(next, "tick_refresh")) {
                     failCamera("进度保存失败，监测已暂停，请重试。");
                 }
             }
+            if (ledger.work.active()) workDebugLog.recordClockState(clock.state().name(), capturing,
+                observation.candidates, observation.reliable, observation.score, ledger.work);
             if (available() && recovery.timedOut(now)) retryCamera("持续未收到有效画面，请检查相机后重试。");
             maybeResumeCamera();
             if (available() && recovery.failed() && recovery.takeAlert() && soundsEnabled) cuePlayer.playFailure();
@@ -142,6 +145,7 @@ public final class WorkActivity extends ComponentActivity {
         recoveryModel = new ViewModelProvider(this).get(RecoveryModel.class);
         recovery = recoveryModel.recovery;
         ledger = LedgerStore.get(this);
+        workDebugLog = new WorkDebugLog(this);
         if (getIntent().getBooleanExtra(EXTRA_RESUME_SHORT_EXTERNAL_RETURN, false) && ledger.work.active()) {
             recovery.request();
             message = "正在恢复监测，等待工作页可用。";
@@ -266,10 +270,11 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private void startCamera() {
-        if (!ledger.saveWork(ledger.work.begin(System.currentTimeMillis(), SystemClock.elapsedRealtime(), ledger.bootCount))) {
+        if (!saveWorkWithDebug(ledger.work.begin(System.currentTimeMillis(), SystemClock.elapsedRealtime(), ledger.bootCount), "camera_begin")) {
             failCamera("保存失败，尚未开始计时，请稍后重试。");
             return;
         }
+        workDebugLog.recordCameraEvent("CAMERA_START_REQUEST", "front_camera", ledger.work);
         ProtectionService service = ProtectionService.current();
         if (service != null) service.prepareManualChange();
         else ledger.engine.resetObservation(System.currentTimeMillis());
@@ -365,6 +370,7 @@ public final class WorkActivity extends ComponentActivity {
                 failCamera("摄像头发生错误，监测已暂停，请检查相机后重试。");
             else retryCamera("摄像头被占用或暂时不可用，请释放相机后重试。");
         });
+        workDebugLog.recordCameraEvent("CAMERA_BOUND", capturePolicy + "; preview=" + (cameraPreview != null), ledger.work);
     }
 
     private void suppressPreview() {
@@ -379,6 +385,7 @@ public final class WorkActivity extends ComponentActivity {
             preview.setVisibility(View.INVISIBLE);
             setTrialScreenDim(true);
             message = "自拍预览已关闭，人体监测继续。";
+            workDebugLog.recordCameraEvent("PREVIEW_SUPPRESSED", capturePolicy, ledger.work);
             render();
             writeDiagnostic(true);
         } catch (RuntimeException ex) {
@@ -426,7 +433,7 @@ public final class WorkActivity extends ComponentActivity {
                 if (SystemClock.elapsedRealtime() - capturedAt > WorkClock.FRESH_MS) {
                     clock.interrupt();
                     detectionCue.reset(); cuePlayer.stop();
-                    if (!ledger.saveWork(ledger.work.pause(capturedAt + WorkClock.FRESH_MS, ledger.bootCount))) {
+                    if (!saveWorkWithDebug(ledger.work.pause(capturedAt + WorkClock.FRESH_MS, ledger.bootCount), "stale_frame")) {
                         failCamera("保存失败，监测已暂停，请重试。");
                         return;
                     }
@@ -439,10 +446,12 @@ public final class WorkActivity extends ComponentActivity {
                 WorkProgress before = ledger.work;
                 boolean counting = clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE;
                 WorkProgress next = before.observe(delta, counting, SystemClock.elapsedRealtime(), ledger.bootCount);
-                if (next != before && !ledger.saveWork(next)) {
+                if (next != before && !saveWorkWithDebug(next, "person_observation")) {
                     failCamera("保存失败，已暂停；未确认的时间不会发放奖励。");
                     return;
                 }
+                workDebugLog.recordClockState(clock.state().name(), capturing, observed.candidates,
+                    observed.reliable, observed.score, ledger.work);
                 showRewardFeedback(before, ledger.work);
                 if (soundsEnabled) cuePlayer.play(detectionCue.observe(capturedAt, SystemClock.elapsedRealtime(), observed.candidates, observed.reliable));
                 render();
@@ -501,10 +510,11 @@ public final class WorkActivity extends ComponentActivity {
         rewardFeedback.setVisibility(View.INVISIBLE);
         rewardUntilElapsed = 0;
         WorkProgress next = ledger.work.pause(SystemClock.elapsedRealtime(), ledger.bootCount);
-        if (next != ledger.work && !ledger.saveWork(next)) {
+        if (next != ledger.work && !saveWorkWithDebug(next, "camera_release")) {
             reason = "中断状态保存失败，监测已暂停，请重试。";
             recovery.fail(reason);
         }
+        workDebugLog.recordCameraEvent("CAMERA_RELEASE", reason, ledger.work);
         message = reason;
         render();
         writeDiagnostic(true);
@@ -512,7 +522,7 @@ public final class WorkActivity extends ComponentActivity {
 
     private void endWork() {
         pauseCamera("本次工作已结束；下轮累计 " + ledger.work.selectedMinutes() + " 分钟开始获得奖励。");
-        if (!ledger.saveWork(ledger.work.finish())) message = "结束状态保存失败，计时已暂停，请重试结束。";
+        if (!saveWorkWithDebug(ledger.work.finish(), "work_finish")) message = "结束状态保存失败，计时已暂停，请重试结束。";
         render();
     }
 
@@ -594,6 +604,12 @@ public final class WorkActivity extends ComponentActivity {
 
     private static void setTextIfChanged(TextView view, String text) {
         if (!text.contentEquals(view.getText())) view.setText(text);
+    }
+    private boolean saveWorkWithDebug(WorkProgress next, String source) {
+        WorkProgress before = ledger.work;
+        if (!ledger.saveWork(next)) return false;
+        workDebugLog.recordCommit(before, ledger.work, source);
+        return true;
     }
     private void setTrialScreenDim(boolean dimmed) {
         WindowManager.LayoutParams attributes = getWindow().getAttributes();
@@ -679,6 +695,7 @@ public final class WorkActivity extends ComponentActivity {
                 .put("audio_last_cue", cuePlayer.lastCue()).put("audio_status", cuePlayer.status())
                 .put("audio_events", cuePlayer.events()).put("media_volume", cuePlayer.mediaVolume())
                 .put("detail", message);
+            workDebugLog.addStatus(data, ledger.work);
             stream = file.startWrite(); stream.write(data.toString().getBytes(StandardCharsets.UTF_8)); file.finishWrite(stream);
         } catch (Exception ex) { if (stream != null) file.failWrite(stream); }
     }

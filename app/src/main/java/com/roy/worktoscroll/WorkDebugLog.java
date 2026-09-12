@@ -1,0 +1,222 @@
+package com.roy.worktoscroll;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.util.AtomicFile;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.function.LongSupplier;
+import org.json.JSONObject;
+
+/** Bounded debug-only event journal; camera pixels and page content are never recorded. */
+final class WorkDebugLog {
+    static final String EVENTS_FILE = "work-session-events.jsonl";
+    static final String LATEST_FILE = "work-session-latest.json";
+    private static final String STATE_PREFS = "work_debug_state";
+    private static final long CHECKPOINT_MS = 60_000;
+    private static final long MAX_EVENTS_BYTES = 512 * 1024;
+
+    private final File directory;
+    private final SharedPreferences state;
+    private final LongSupplier wallClock;
+    private final LongSupplier elapsedClock;
+    private final boolean enabled;
+    private String lastClockState = "";
+    private int lastCandidates = Integer.MIN_VALUE;
+    private int lastReliable = Integer.MIN_VALUE;
+    private float lastScore;
+    private boolean lastCapturing;
+    private String lastError = "";
+
+    WorkDebugLog(Context context) {
+        Context app = context.getApplicationContext();
+        directory = app.getFilesDir();
+        state = app.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE);
+        wallClock = System::currentTimeMillis;
+        elapsedClock = android.os.SystemClock::elapsedRealtime;
+        enabled = (app.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
+
+    synchronized void recordCommit(WorkProgress before, WorkProgress after, String source) {
+        if (!enabled) return;
+        long wall = wallClock.getAsLong();
+        long elapsed = elapsedClock.getAsLong();
+        try {
+            if (!before.active() && after.active()) {
+                start(after, wall, elapsed, source, false);
+                return;
+            }
+            if (before.active() && !after.active()) {
+                if (!matches(before)) start(before, wall, elapsed, "attach_before_finish", true);
+                JSONObject extra = new JSONObject().put("outcome", "finished");
+                append("WORK_FINISH", after, wall, elapsed, source, extra);
+                writeLatest("finished", after, wall, elapsed);
+                persistActive(false);
+                return;
+            }
+            if (!after.active()) return;
+            if (!matches(after)) start(after, wall, elapsed, "attach_active_session", true);
+
+            boolean changed = false;
+            if (WorkDebugMetrics.roundReset(before, after)) {
+                state.edit().putInt("reset_count", resetCount() + 1).commit();
+                JSONObject extra = new JSONObject()
+                    .put("previous_round_valid_ms", before.sessionValidMs())
+                    .put("new_round_valid_ms", after.sessionValidMs());
+                append("ROUND_RESET", after, wall, elapsed, source, extra);
+                changed = true;
+            }
+            if (WorkDebugMetrics.interruptionStarted(before, after)) {
+                state.edit().putInt("interruption_count", interruptionCount() + 1).commit();
+                append("INTERRUPTION_START", after, wall, elapsed, source, new JSONObject());
+                changed = true;
+            } else if (WorkDebugMetrics.interruptionEnded(before, after)) {
+                JSONObject extra = new JSONObject().put("interruption_duration_ms",
+                    Math.max(0, elapsed - before.interruptedAtElapsedMs()));
+                append("INTERRUPTION_END", after, wall, elapsed, source, extra);
+                changed = true;
+            }
+
+            long lastTotal = state.getLong("last_logged_total_ms", baselineTotal());
+            long lastElapsed = state.getLong("last_checkpoint_elapsed_ms", startedElapsed());
+            if (!changed && (after.totalValidMs() - lastTotal >= CHECKPOINT_MS
+                    || elapsed - lastElapsed >= CHECKPOINT_MS)) {
+                append("CHECKPOINT", after, wall, elapsed, source, new JSONObject());
+                state.edit().putLong("last_logged_total_ms", after.totalValidMs())
+                    .putLong("last_checkpoint_elapsed_ms", elapsed).commit();
+            }
+        } catch (Exception failure) {
+            lastError = failure.getClass().getSimpleName();
+        }
+    }
+
+    synchronized void recordClockState(String clockState, boolean capturing, int candidates,
+                                       int reliable, float score, WorkProgress progress) {
+        if (!enabled || !progress.active() || !matches(progress)) return;
+        lastCapturing = capturing;
+        lastCandidates = candidates;
+        lastReliable = reliable;
+        lastScore = score;
+        if (clockState.equals(lastClockState)) return;
+        lastClockState = clockState;
+        try {
+            JSONObject extra = new JSONObject().put("clock_state", clockState)
+                .put("capturing", capturing).put("person_candidates", candidates)
+                .put("reliable_people", reliable).put("max_score", score);
+            append("CLOCK_STATE", progress, wallClock.getAsLong(), elapsedClock.getAsLong(), "work_clock", extra);
+        } catch (Exception failure) {
+            lastError = failure.getClass().getSimpleName();
+        }
+    }
+
+    synchronized void recordCameraEvent(String event, String detail, WorkProgress progress) {
+        if (!enabled || !progress.active() || !matches(progress)) return;
+        try {
+            append(event, progress, wallClock.getAsLong(), elapsedClock.getAsLong(), "camera",
+                new JSONObject().put("detail", detail));
+        } catch (Exception failure) {
+            lastError = failure.getClass().getSimpleName();
+        }
+    }
+
+    synchronized void addStatus(JSONObject data, WorkProgress progress) {
+        try {
+            boolean active = enabled && matches(progress);
+            data.put("work_debug_enabled", enabled)
+                .put("work_debug_session", active ? sessionId() : "")
+                .put("work_debug_valid_ms", active ? WorkDebugMetrics.validSince(baselineTotal(), progress) : 0)
+                .put("work_debug_reset_count", active ? resetCount() : 0)
+                .put("work_debug_interruption_count", active ? interruptionCount() : 0)
+                .put("work_debug_error", lastError);
+        } catch (Exception ignored) {}
+    }
+
+    private void start(WorkProgress progress, long wall, long elapsed, String source, boolean attached) throws Exception {
+        long baseline = attached ? Math.max(0, progress.totalValidMs() - progress.sessionValidMs()) : progress.totalValidMs();
+        String id = UUID.randomUUID().toString();
+        boolean saved = state.edit().putBoolean("active", true).putString("session_id", id)
+            .putLong("started_wall_ms", progress.startedWallMs() > 0 ? progress.startedWallMs() : wall)
+            .putLong("started_elapsed_ms", elapsed).putLong("baseline_total_ms", baseline)
+            .putLong("last_logged_total_ms", progress.totalValidMs()).putLong("last_checkpoint_elapsed_ms", elapsed)
+            .putInt("reset_count", 0).putInt("interruption_count", 0).commit();
+        if (!saved) throw new IllegalStateException("debug_state_save_failed");
+        JSONObject extra = new JSONObject().put("attached_to_existing", attached)
+            .put("baseline_kind", attached ? "current_round_approximation" : "exact_session_start");
+        append(attached ? "SESSION_ATTACH" : "WORK_BEGIN", progress, wall, elapsed, source, extra);
+        writeLatest("active", progress, wall, elapsed);
+    }
+
+    private boolean matches(WorkProgress progress) {
+        return state.getBoolean("active", false)
+            && state.getLong("started_wall_ms", -1) == progress.startedWallMs();
+    }
+
+    private void append(String event, WorkProgress progress, long wall, long elapsed,
+                        String source, JSONObject extra) throws Exception {
+        rotateIfNeeded();
+        JSONObject data = common(event, progress, wall, elapsed, source);
+        var keys = extra.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            data.put(key, extra.get(key));
+        }
+        byte[] bytes = (data.toString() + "\n").getBytes(StandardCharsets.UTF_8);
+        try (FileOutputStream out = new FileOutputStream(new File(directory, EVENTS_FILE), true)) {
+            out.write(bytes);
+            out.flush();
+        }
+        writeLatest("active", progress, wall, elapsed);
+    }
+
+    private JSONObject common(String event, WorkProgress progress, long wall, long elapsed, String source) throws Exception {
+        return new JSONObject().put("schema", 1).put("event", event).put("session_id", sessionId())
+            .put("wall_ms", wall).put("elapsed_ms", elapsed).put("source", source)
+            .put("started_wall_ms", startedWall()).put("wall_duration_ms", WorkDebugMetrics.wallDuration(startedWall(), wall))
+            .put("baseline_total_ms", baselineTotal()).put("work_total_ms", progress.totalValidMs())
+            .put("test_valid_ms", WorkDebugMetrics.validSince(baselineTotal(), progress))
+            .put("round_valid_ms", progress.sessionValidMs()).put("round_reward_ms", progress.sessionRewardMs())
+            .put("round_minutes", progress.roundMinutes()).put("active", progress.active())
+            .put("interrupted_at_elapsed_ms", progress.interruptedAtElapsedMs())
+            .put("reset_count", resetCount()).put("interruption_count", interruptionCount())
+            .put("last_clock_state", lastClockState).put("capturing", lastCapturing)
+            .put("person_candidates", lastCandidates == Integer.MIN_VALUE ? -1 : lastCandidates)
+            .put("reliable_people", lastReliable == Integer.MIN_VALUE ? -1 : lastReliable)
+            .put("max_score", lastScore);
+    }
+
+    private void writeLatest(String outcome, WorkProgress progress, long wall, long elapsed) throws Exception {
+        JSONObject data = common("SUMMARY", progress, wall, elapsed, "journal")
+            .put("outcome", outcome).put("log_file", EVENTS_FILE);
+        AtomicFile file = new AtomicFile(new File(directory, LATEST_FILE));
+        FileOutputStream out = null;
+        try {
+            out = file.startWrite();
+            out.write(data.toString().getBytes(StandardCharsets.UTF_8));
+            file.finishWrite(out);
+        } catch (Exception failure) {
+            if (out != null) file.failWrite(out);
+            throw failure;
+        }
+    }
+
+    private void rotateIfNeeded() {
+        File events = new File(directory, EVENTS_FILE);
+        if (!events.exists() || events.length() < MAX_EVENTS_BYTES) return;
+        File previous = new File(directory, EVENTS_FILE + ".1");
+        if (previous.exists()) previous.delete();
+        events.renameTo(previous);
+    }
+
+    private void persistActive(boolean active) {
+        state.edit().putBoolean("active", active).commit();
+    }
+    private String sessionId() { return state.getString("session_id", ""); }
+    private long startedWall() { return state.getLong("started_wall_ms", 0); }
+    private long startedElapsed() { return state.getLong("started_elapsed_ms", 0); }
+    private long baselineTotal() { return state.getLong("baseline_total_ms", 0); }
+    private int resetCount() { return state.getInt("reset_count", 0); }
+    private int interruptionCount() { return state.getInt("interruption_count", 0); }
+}
