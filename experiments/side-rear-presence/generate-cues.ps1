@@ -50,7 +50,7 @@ try {
     }
     if ($ReminderOnly -or $TargetRawDirectory) {
         $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'unrecorded_reminder.wav'), $cueFormat)
-        $cueVoice.Speak('目前未有效记录')
+        $cueVoice.Speak('请注意，监控无效，监控无效')
         $cueVoice.SetOutputToNull()
     }
 } finally { $cueVoice.Dispose() }

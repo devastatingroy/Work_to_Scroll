@@ -8,9 +8,9 @@ public class PersonObservationTest {
         assertEquals(1, new PersonObservation(2, 1, .8f).clockSignal());
         assertEquals(1, new PersonObservation(3, 1, .8f).clockSignal());
         assertEquals(0, new PersonObservation(0, 0, 0).clockSignal());
-        assertEquals(WorkClock.WEAK_SINGLE, new PersonObservation(1, 0, .3f).clockSignal());
-        assertEquals(-1, new PersonObservation(2, 0, .3f).clockSignal());
-        assertEquals(-1, new PersonObservation(2, 2, .8f).clockSignal());
+        assertEquals(WorkClock.WEAK_ONLY, new PersonObservation(1, 0, .3f).clockSignal());
+        assertEquals(WorkClock.WEAK_ONLY, new PersonObservation(2, 0, .3f).clockSignal());
+        assertEquals(1, new PersonObservation(2, 2, .8f).clockSignal());
     }
     @Test public void diagnosticKindsExplainWhyTheClockWillNotCount() {
         assertEquals("single_reliable_person", PersonObservation.diagnosticKind(1, 1));

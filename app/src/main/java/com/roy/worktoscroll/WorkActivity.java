@@ -564,15 +564,13 @@ public final class WorkActivity extends ComponentActivity {
         if (capturing) {
             switch (clock.state()) {
                 case PRESENT: status = "观察到在场 · 正在累计"; break;
-                case WEAK_HOLD: status = "检测到单人（信号较弱）· 仍在累计（最多 2 分钟）"; break;
+                case WEAK_HOLD: status = "人体信号较弱 · 仍在累计（最多 2 分钟）"; break;
                 case GRACE: status = "暂未见人物 · 短暂容错中"; break;
                 case AWAY: status = "持续未见人物 · 计时暂停"; break;
                 case CHECKING: status = "正在确认在场 · 尚未计时"; break;
                 case UNCERTAIN:
-                    status = observation.candidates == 1 && observation.reliable == 0
-                        ? "单人信号持续较弱 · 已暂停，请调整机位后重新确认"
-                        : observation.reliable >= 2 ? "检测到多个可靠人体 · 计时暂停"
-                        : observation.candidates > 1 ? "检测到多个弱候选 · 计时暂停"
+                    status = observation.candidates > 0 && observation.reliable == 0
+                        ? "人体信号持续较弱 · 已暂停，请调整机位后重新确认"
                         : "检测结果不一致 · 计时暂停";
                     break;
                 case PAUSED: status = "等待有效新画面 · 计时暂停"; break;
@@ -637,7 +635,7 @@ public final class WorkActivity extends ComponentActivity {
 
     private void showHelp() {
         new AlertDialog.Builder(this).setTitle("让猫总看到你")
-            .setMessage("使用前置摄像头朝向你的肩部和躯干，手机可放在侧后方。无需露出人脸，背影和椅背遮挡效果仍在试用验证。\n\n新结果未见人物时播“滴～暂时离开”，看到可靠人物时播“欢迎归来”；同状态不重复，声音反映检测变化，不等于计时立即暂停或恢复。声音随媒体音量，可在工作页关闭。恰好一个人体达到可靠标准时，即使同时出现额外弱候选也按在场处理。已可靠确认在场后，若只剩一个较弱的人体候选，最多保留 2 分钟计时；超过后必须再次可靠确认。多个可靠人体或其他不确定结果会暂停。\n\n只观察是否在场，不证明正在工作，不识别身份或另一部手机。工作时保持亮屏；来电、电量提醒、切出、锁屏或打开说明会暂停；回到工作页后自动尝试恢复，重新确认在场后计时。主动暂停、返回首页或应用重开需手动继续；恢复失败时显示原因，提示音开启且适合播放时提醒一次。\n\n" + WorkProgress.ruleText(ledger.work.displayedMinutes()) + "连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度。本轮重置不倒扣奖励，历史工作保留。" + ledger.expiryDescription() + "\n\n画面仅在本机处理，不保存、不上传。")
+            .setMessage("使用前置摄像头朝向你的肩部和躯干，手机可放在侧后方。无需露出人脸，背影和椅背遮挡效果仍在试用验证。\n\n新结果未见人物时播“滴～暂时离开”，看到可靠人物时播“欢迎归来”；同状态不重复，声音反映检测变化，不等于计时立即暂停或恢复。声音随媒体音量，可在工作页关闭。只要至少一个人体达到可靠标准就按在场处理；检测器不能区分是不是同一个人。已可靠确认在场后，若只剩一个或多个较弱人体候选，最多保留 2 分钟计时；候选数量变化或偶发一次可靠结果不会延长上限，超过后必须持续可靠确认约 1 秒。\n\n只观察是否在场，不证明正在工作，不识别身份或另一部手机。工作时保持亮屏；来电、电量提醒、切出、锁屏或打开说明会暂停；回到工作页后自动尝试恢复，重新确认在场后计时。主动暂停、返回首页或应用重开需手动继续；恢复失败时显示原因。任何非主动的无效记录持续 1 分钟后，提示音开启且适合播放时播一次“请注意，监控无效，监控无效”。\n\n" + WorkProgress.ruleText(ledger.work.displayedMinutes()) + "连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度。本轮重置不倒扣奖励，历史工作保留。" + ledger.expiryDescription() + "\n\n画面仅在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).show();
     }
 

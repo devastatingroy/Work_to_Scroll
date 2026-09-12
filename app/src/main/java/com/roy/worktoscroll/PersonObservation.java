@@ -18,9 +18,8 @@ public final class PersonObservation {
     public int clockSignal() {
         if (candidates < 0 || reliable < 0 || reliable > candidates) return -1;
         if (candidates == 0) return 0;
-        // A permissive weak detection must not veto one reliably observed person.
-        if (reliable == 1) return 1;
-        if (reliable == 0 && candidates == 1) return WorkClock.WEAK_SINGLE;
-        return -1;
+        // Candidate count does not identify people. Any reliable person is enough evidence of presence.
+        if (reliable >= 1) return 1;
+        return WorkClock.WEAK_ONLY;
     }
 }
