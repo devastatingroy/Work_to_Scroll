@@ -9,9 +9,9 @@ android {
         testInstrumentationRunner 'com.roy.worktoscroll.FeedbackInstrumentation'
         minSdk 29
         targetSdk 36
-        versionCode 37
-        versionName '0.5.15-one-shot-interruption-alert'
-        resValue 'string', 'app_version', '0.5.15-one-shot-interruption-alert'
+        versionCode 38
+        versionName '0.5.16-single-reliable-presence'
+        resValue 'string', 'app_version', '0.5.16-single-reliable-presence'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

@@ -571,7 +571,8 @@ public final class WorkActivity extends ComponentActivity {
                 case UNCERTAIN:
                     status = observation.candidates == 1 && observation.reliable == 0
                         ? "单人信号持续较弱 · 已暂停，请调整机位后重新确认"
-                        : observation.candidates > 1 ? "检测到多个候选 · 计时暂停"
+                        : observation.reliable >= 2 ? "检测到多个可靠人体 · 计时暂停"
+                        : observation.candidates > 1 ? "检测到多个弱候选 · 计时暂停"
                         : "检测结果不一致 · 计时暂停";
                     break;
                 case PAUSED: status = "等待有效新画面 · 计时暂停"; break;
@@ -636,7 +637,7 @@ public final class WorkActivity extends ComponentActivity {
 
     private void showHelp() {
         new AlertDialog.Builder(this).setTitle("让猫总看到你")
-            .setMessage("使用前置摄像头朝向你的肩部和躯干，手机可放在侧后方。无需露出人脸，背影和椅背遮挡效果仍在试用验证。\n\n新结果未见人物时播“滴～暂时离开”，看到可靠人物时播“欢迎归来”；同状态不重复，声音反映检测变化，不等于计时立即暂停或恢复。声音随媒体音量，可在工作页关闭。已可靠确认在场后，若只剩一个较弱的人体候选，最多保留 2 分钟计时；超过后必须再次可靠确认。多人或其他不确定结果会立即暂停。\n\n只观察是否在场，不证明正在工作，不识别身份或另一部手机。工作时保持亮屏；来电、电量提醒、切出、锁屏或打开说明会暂停；回到工作页后自动尝试恢复，重新确认在场后计时。主动暂停、返回首页或应用重开需手动继续；恢复失败时显示原因，提示音开启且适合播放时提醒一次。\n\n" + WorkProgress.ruleText(ledger.work.displayedMinutes()) + "连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度。本轮重置不倒扣奖励，历史工作保留。" + ledger.expiryDescription() + "\n\n画面仅在本机处理，不保存、不上传。")
+            .setMessage("使用前置摄像头朝向你的肩部和躯干，手机可放在侧后方。无需露出人脸，背影和椅背遮挡效果仍在试用验证。\n\n新结果未见人物时播“滴～暂时离开”，看到可靠人物时播“欢迎归来”；同状态不重复，声音反映检测变化，不等于计时立即暂停或恢复。声音随媒体音量，可在工作页关闭。恰好一个人体达到可靠标准时，即使同时出现额外弱候选也按在场处理。已可靠确认在场后，若只剩一个较弱的人体候选，最多保留 2 分钟计时；超过后必须再次可靠确认。多个可靠人体或其他不确定结果会暂停。\n\n只观察是否在场，不证明正在工作，不识别身份或另一部手机。工作时保持亮屏；来电、电量提醒、切出、锁屏或打开说明会暂停；回到工作页后自动尝试恢复，重新确认在场后计时。主动暂停、返回首页或应用重开需手动继续；恢复失败时显示原因，提示音开启且适合播放时提醒一次。\n\n" + WorkProgress.ruleText(ledger.work.displayedMinutes()) + "连续离开或暂停不足 3 分钟可续接；达到 3 分钟重置本轮进度。本轮重置不倒扣奖励，历史工作保留。" + ledger.expiryDescription() + "\n\n画面仅在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).show();
     }
 

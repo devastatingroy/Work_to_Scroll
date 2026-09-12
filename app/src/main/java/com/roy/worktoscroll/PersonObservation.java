@@ -10,16 +10,17 @@ public final class PersonObservation {
     public static String diagnosticKind(int candidates, int reliable) {
         if (candidates < 0 || reliable < 0 || reliable > candidates) return "invalid_observation";
         if (candidates == 0) return "no_person";
-        if (reliable == 0) return "weak_person_candidate";
-        if (candidates == 1) return "single_reliable_person";
-        if (reliable == 1) return "multiple_candidates";
+        if (reliable == 0) return candidates == 1 ? "weak_person_candidate" : "multiple_weak_candidates";
+        if (reliable == 1) return candidates == 1
+            ? "single_reliable_person" : "single_reliable_person_with_weak_candidates";
         return "multiple_reliable_people";
     }
     public int clockSignal() {
         if (candidates < 0 || reliable < 0 || reliable > candidates) return -1;
         if (candidates == 0) return 0;
-        if (candidates == 1 && reliable == 1) return 1;
-        if (candidates == 1) return WorkClock.WEAK_SINGLE;
+        // A permissive weak detection must not veto one reliably observed person.
+        if (reliable == 1) return 1;
+        if (reliable == 0 && candidates == 1) return WorkClock.WEAK_SINGLE;
         return -1;
     }
 }
