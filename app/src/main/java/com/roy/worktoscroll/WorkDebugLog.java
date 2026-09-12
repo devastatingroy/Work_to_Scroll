@@ -43,24 +43,33 @@ final class WorkDebugLog {
     }
 
     synchronized void recordCommit(WorkProgress before, WorkProgress after, String source) {
+        recordCommit(before, after, source, null);
+    }
+
+    synchronized void recordCommit(WorkProgress before, WorkProgress after, String source,
+                                   BatterySnapshot batterySnapshot) {
         if (!enabled) return;
         long wall = wallClock.getAsLong();
         long elapsed = elapsedClock.getAsLong();
         try {
             if (!before.active() && after.active()) {
-                start(after, wall, elapsed, source, false);
+                start(after, wall, elapsed, source, false, batterySnapshot);
                 return;
             }
             if (before.active() && !after.active()) {
-                if (!matches(before)) start(before, wall, elapsed, "attach_before_finish", true);
+                if (!matches(before)) start(before, wall, elapsed, "attach_before_finish", true, null);
+                BatterySnapshot endBattery = batterySnapshot == null
+                    ? BatterySnapshot.unavailable(wall, elapsed, "end_snapshot_not_provided") : batterySnapshot;
                 JSONObject extra = new JSONObject().put("outcome", "finished");
+                addStoredStartBattery(extra);
+                addEndBattery(extra, endBattery);
                 append("WORK_FINISH", after, wall, elapsed, source, extra);
-                writeLatest("finished", after, wall, elapsed);
+                writeLatest("finished", after, wall, elapsed, endBattery);
                 persistActive(false);
                 return;
             }
             if (!after.active()) return;
-            if (!matches(after)) start(after, wall, elapsed, "attach_active_session", true);
+            if (!matches(after)) start(after, wall, elapsed, "attach_active_session", true, batterySnapshot);
 
             boolean changed = false;
             if (WorkDebugMetrics.roundReset(before, after)) {
@@ -168,6 +177,21 @@ final class WorkDebugLog {
         }
     }
 
+    synchronized void recordEndRequested(BatterySnapshot batterySnapshot, WorkProgress progress) {
+        if (!enabled || !progress.active() || !matches(progress)) return;
+        long wall = wallClock.getAsLong();
+        long elapsed = elapsedClock.getAsLong();
+        try {
+            JSONObject extra = new JSONObject().put("outcome", "end_requested");
+            addStoredStartBattery(extra);
+            addEndBattery(extra, batterySnapshot);
+            append("WORK_END_REQUESTED", progress, wall, elapsed, "end_button", extra);
+            writeLatest("end_requested", progress, wall, elapsed, batterySnapshot);
+        } catch (Exception failure) {
+            lastError = failure.getClass().getSimpleName();
+        }
+    }
+
     synchronized void addStatus(JSONObject data, WorkProgress progress) {
         try {
             boolean active = enabled && matches(progress);
@@ -180,13 +204,25 @@ final class WorkDebugLog {
         } catch (Exception ignored) {}
     }
 
-    private void start(WorkProgress progress, long wall, long elapsed, String source, boolean attached) throws Exception {
+    private void start(WorkProgress progress, long wall, long elapsed, String source, boolean attached,
+                       BatterySnapshot batterySnapshot) throws Exception {
         long baseline = attached ? Math.max(0, progress.totalValidMs() - progress.sessionValidMs()) : progress.totalValidMs();
         String id = UUID.randomUUID().toString();
+        BatterySnapshot startBattery = batterySnapshot == null
+            ? BatterySnapshot.unavailable(wall, elapsed, "start_snapshot_not_provided") : batterySnapshot;
         boolean saved = state.edit().putBoolean("active", true).putString("session_id", id)
             .putLong("started_wall_ms", progress.startedWallMs() > 0 ? progress.startedWallMs() : wall)
             .putLong("started_elapsed_ms", elapsed).putLong("baseline_total_ms", baseline)
             .putLong("last_logged_total_ms", progress.totalValidMs()).putLong("last_checkpoint_elapsed_ms", elapsed)
+            .putLong("start_battery_sample_wall_ms", startBattery.wallMs)
+            .putLong("start_battery_sample_elapsed_ms", startBattery.elapsedMs)
+            .putInt("start_battery_temperature_tenths_c", startBattery.temperatureTenthsC)
+            .putInt("start_battery_level_percent", startBattery.levelPercent)
+            .putInt("start_battery_voltage_mv", startBattery.voltageMv)
+            .putInt("start_battery_status", startBattery.status)
+            .putInt("start_battery_plugged", startBattery.plugged)
+            .putString("start_battery_read_error", startBattery.error)
+            .putString("start_battery_sample_kind", attached ? "attached_session" : "work_begin")
             .putInt("reset_count", 0).putInt("interruption_count", 0).commit();
         if (!saved) throw new IllegalStateException("debug_state_save_failed");
         lastClockState = "";
@@ -198,8 +234,10 @@ final class WorkDebugLog {
         lastCapturing = false;
         JSONObject extra = new JSONObject().put("attached_to_existing", attached)
             .put("baseline_kind", attached ? "current_round_approximation" : "exact_session_start");
+        merge(extra, startBattery.json(""));
+        extra.put("battery_sample_stage", attached ? "attached_session" : "work_begin");
         append(attached ? "SESSION_ATTACH" : "WORK_BEGIN", progress, wall, elapsed, source, extra);
-        writeLatest("active", progress, wall, elapsed);
+        writeLatest("active", progress, wall, elapsed, null);
     }
 
     private boolean matches(WorkProgress progress) {
@@ -221,7 +259,7 @@ final class WorkDebugLog {
             out.write(bytes);
             out.flush();
         }
-        writeLatest("active", progress, wall, elapsed);
+        writeLatest("active", progress, wall, elapsed, null);
     }
 
     private JSONObject common(String event, WorkProgress progress, long wall, long elapsed, String source) throws Exception {
@@ -240,9 +278,12 @@ final class WorkDebugLog {
             .put("max_score", lastScore).put("observation_kind", lastObservationKind);
     }
 
-    private void writeLatest(String outcome, WorkProgress progress, long wall, long elapsed) throws Exception {
+    private void writeLatest(String outcome, WorkProgress progress, long wall, long elapsed,
+                             BatterySnapshot endBattery) throws Exception {
         JSONObject data = common("SUMMARY", progress, wall, elapsed, "journal")
             .put("outcome", outcome).put("log_file", EVENTS_FILE);
+        addStoredStartBattery(data);
+        if (endBattery != null) addEndBattery(data, endBattery);
         AtomicFile file = new AtomicFile(new File(directory, LATEST_FILE));
         FileOutputStream out = null;
         try {
@@ -265,6 +306,39 @@ final class WorkDebugLog {
 
     private void persistActive(boolean active) {
         state.edit().putBoolean("active", active).commit();
+    }
+
+    private void addStoredStartBattery(JSONObject data) throws Exception {
+        BatterySnapshot startBattery = storedStartBattery();
+        merge(data, startBattery.json("start_"));
+        data.put("start_battery_sample_kind", state.getString("start_battery_sample_kind", "unknown"));
+    }
+
+    private void addEndBattery(JSONObject data, BatterySnapshot endBattery) throws Exception {
+        BatterySnapshot startBattery = storedStartBattery();
+        merge(data, endBattery.json("end_"));
+        int delta = BatterySnapshot.temperatureDeltaTenths(startBattery, endBattery);
+        data.put("battery_temperature_delta_tenths_c", delta == BatterySnapshot.UNKNOWN ? JSONObject.NULL : delta)
+            .put("battery_temperature_delta_c", delta == BatterySnapshot.UNKNOWN ? JSONObject.NULL : delta / 10.0);
+    }
+
+    private BatterySnapshot storedStartBattery() {
+        return new BatterySnapshot(state.getLong("start_battery_sample_wall_ms", 0),
+            state.getLong("start_battery_sample_elapsed_ms", 0),
+            state.getInt("start_battery_temperature_tenths_c", BatterySnapshot.UNKNOWN),
+            state.getInt("start_battery_level_percent", BatterySnapshot.UNKNOWN),
+            state.getInt("start_battery_voltage_mv", BatterySnapshot.UNKNOWN),
+            state.getInt("start_battery_status", android.os.BatteryManager.BATTERY_STATUS_UNKNOWN),
+            state.getInt("start_battery_plugged", 0),
+            state.getString("start_battery_read_error", "start_snapshot_missing"));
+    }
+
+    private static void merge(JSONObject target, JSONObject source) throws Exception {
+        var keys = source.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            target.put(key, source.get(key));
+        }
     }
     private String sessionId() { return state.getString("session_id", ""); }
     private long startedWall() { return state.getLong("started_wall_ms", 0); }

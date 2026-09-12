@@ -9,9 +9,9 @@ android {
         testInstrumentationRunner 'com.roy.worktoscroll.FeedbackInstrumentation'
         minSdk 29
         targetSdk 36
-        versionCode 39
-        versionName '0.5.17-balanced-presence'
-        resValue 'string', 'app_version', '0.5.17-balanced-presence'
+        versionCode 40
+        versionName '0.5.18-thermal-endpoints'
+        resValue 'string', 'app_version', '0.5.18-thermal-endpoints'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

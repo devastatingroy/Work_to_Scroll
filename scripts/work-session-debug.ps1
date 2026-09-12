@@ -23,7 +23,26 @@ if ($LASTEXITCODE -ne 0 -or $devices -notmatch 'device') {
 Write-Output 'Latest work-session summary:'
 $latest = Read-AppFile 'files/work-session-latest.json'
 if ($latest.Count -eq 0) { Write-Output '(no debug session has been recorded yet)' }
-else { $latest }
+else {
+    $latest
+    try {
+        $summary = ($latest -join "`n") | ConvertFrom-Json
+        if ($null -ne $summary.start_battery_temperature_c -or $null -ne $summary.end_battery_temperature_c) {
+            Write-Output 'Temperature endpoints:'
+            [pscustomobject]@{
+                start_c=$summary.start_battery_temperature_c
+                end_c=$summary.end_battery_temperature_c
+                delta_c=$summary.battery_temperature_delta_c
+                start_power=$summary.start_battery_power_source
+                end_power=$summary.end_battery_power_source
+                start_level_percent=$summary.start_battery_level_percent
+                end_level_percent=$summary.end_battery_level_percent
+                start_error=$summary.start_battery_read_error
+                end_error=$summary.end_battery_read_error
+            } | ConvertTo-Json -Compress
+        }
+    } catch { Write-Output '(latest summary could not be parsed)' }
+}
 
 Write-Output "Recent work-session events (last $Tail):"
 $events = Read-AppFile 'files/work-session-events.jsonl'
@@ -43,7 +62,7 @@ else {
         'AUDIO_UNRECORDED_REMINDER_STOPPED', 'AUDIO_UNRECORDED_REMINDER_SUPPRESSED',
         'AUDIO_UNRECORDED_REMINDER_ERROR',
         'AUDIO_FAILURE_STARTED', 'AUDIO_FAILURE_COMPLETED', 'AUDIO_FAILURE_SUPPRESSED',
-        'AUDIO_FAILURE_ERROR', 'WORK_FINISH')
+        'AUDIO_FAILURE_ERROR', 'WORK_END_REQUESTED', 'WORK_FINISH')
     Write-Output 'Key diagnostic events:'
     $parsedEvents | Where-Object { $_.event -in $important } | Select-Object -Last $Tail | ForEach-Object {
         [pscustomobject]@{

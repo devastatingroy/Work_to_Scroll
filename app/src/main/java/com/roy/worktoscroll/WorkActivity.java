@@ -298,7 +298,9 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private void startCamera() {
-        if (!saveWorkWithDebug(ledger.work.begin(System.currentTimeMillis(), SystemClock.elapsedRealtime(), ledger.bootCount), "camera_begin")) {
+        BatterySnapshot startBattery = BatterySnapshot.capture(this);
+        if (!saveWorkWithDebug(ledger.work.begin(System.currentTimeMillis(), SystemClock.elapsedRealtime(), ledger.bootCount),
+                "camera_begin", startBattery)) {
             failCamera("保存失败，尚未开始计时，请稍后重试。");
             return;
         }
@@ -552,9 +554,12 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private void endWork() {
+        BatterySnapshot endBattery = BatterySnapshot.capture(this);
+        workDebugLog.recordEndRequested(endBattery, ledger.work);
         unrecordedReminder.reset();
         pauseCamera("本次工作已结束；下轮累计 " + ledger.work.selectedMinutes() + " 分钟开始获得奖励。");
-        if (!saveWorkWithDebug(ledger.work.finish(), "work_finish")) message = "结束状态保存失败，计时已暂停，请重试结束。";
+        if (!saveWorkWithDebug(ledger.work.finish(), "work_finish", endBattery))
+            message = "结束状态保存失败，计时已暂停，请重试结束。";
         render();
     }
 
@@ -668,9 +673,13 @@ public final class WorkActivity extends ComponentActivity {
         }
     }
     private boolean saveWorkWithDebug(WorkProgress next, String source) {
+        return saveWorkWithDebug(next, source, null);
+    }
+
+    private boolean saveWorkWithDebug(WorkProgress next, String source, BatterySnapshot batterySnapshot) {
         WorkProgress before = ledger.work;
         if (!ledger.saveWork(next)) return false;
-        workDebugLog.recordCommit(before, ledger.work, source);
+        workDebugLog.recordCommit(before, ledger.work, source, batterySnapshot);
         return true;
     }
     private void setTrialScreenDim(boolean dimmed) {
