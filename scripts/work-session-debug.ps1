@@ -28,4 +28,41 @@ else { $latest }
 Write-Output "Recent work-session events (last $Tail):"
 $events = Read-AppFile 'files/work-session-events.jsonl'
 if ($events.Count -eq 0) { Write-Output '(no event journal found)' }
-else { $events | Select-Object -Last $Tail }
+else {
+    $eventLines = @($events | ForEach-Object { $_ -split "`r?`n" } | Where-Object { $_.Trim() })
+    $parsedEvents = @($eventLines | ForEach-Object {
+        try { $_ | ConvertFrom-Json } catch { }
+    })
+    $important = @('INTERRUPTION_START', 'INTERRUPTION_END', 'ROUND_RESET', 'CLOCK_STATE',
+        'AVAILABILITY_LOST', 'AVAILABILITY_RESTORED', 'CAMERA_RELEASE',
+        'UNRECORDED_REMINDER_DUE', 'UNRECORDED_REMINDER_SUPPRESSED_BUSY',
+        'AUDIO_CUE_REQUESTED', 'AUDIO_CUE_STARTED', 'AUDIO_CUE_COMPLETED',
+        'AUDIO_CUE_CANCELLED', 'AUDIO_CUE_STOPPED', 'AUDIO_CUE_ERROR',
+        'AUDIO_UNRECORDED_REMINDER_REQUESTED', 'AUDIO_UNRECORDED_REMINDER_STARTED',
+        'AUDIO_UNRECORDED_REMINDER_COMPLETED', 'AUDIO_UNRECORDED_REMINDER_CANCELLED',
+        'AUDIO_UNRECORDED_REMINDER_STOPPED', 'AUDIO_UNRECORDED_REMINDER_SUPPRESSED',
+        'AUDIO_UNRECORDED_REMINDER_ERROR',
+        'AUDIO_FAILURE_STARTED', 'AUDIO_FAILURE_COMPLETED', 'AUDIO_FAILURE_SUPPRESSED',
+        'AUDIO_FAILURE_ERROR', 'WORK_FINISH')
+    Write-Output 'Key diagnostic events:'
+    $parsedEvents | Where-Object { $_.event -in $important } | Select-Object -Last $Tail | ForEach-Object {
+        [pscustomobject]@{
+            local_time=[DateTimeOffset]::FromUnixTimeMilliseconds([long]$_.wall_ms).ToLocalTime().ToString('yyyy-MM-dd HH:mm:ss.fff zzz')
+            event=$_.event
+            trigger=$_.trigger
+            clock_state=$_.clock_state
+            observation_kind=$_.observation_kind
+            candidates=$_.person_candidates
+            reliable=$_.reliable_people
+            cue=$_.cue
+            detail=$_.detail
+            cause=$_.cause
+            interruption_duration_ms=$_.interruption_duration_ms
+            reminder_cycle=$_.reminder_cycle
+            test_valid_ms=$_.test_valid_ms
+            round_valid_ms=$_.round_valid_ms
+        } | ConvertTo-Json -Compress
+    }
+    Write-Output 'Raw event tail:'
+    $eventLines | Select-Object -Last $Tail
+}

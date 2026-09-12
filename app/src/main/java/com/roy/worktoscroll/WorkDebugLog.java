@@ -25,6 +25,8 @@ final class WorkDebugLog {
     private final LongSupplier elapsedClock;
     private final boolean enabled;
     private String lastClockState = "";
+    private String lastLoggedClockState = "";
+    private String lastObservationKind = "invalid_observation";
     private int lastCandidates = Integer.MIN_VALUE;
     private int lastReliable = Integer.MIN_VALUE;
     private float lastScore;
@@ -93,19 +95,27 @@ final class WorkDebugLog {
         }
     }
 
-    synchronized void recordClockState(String clockState, boolean capturing, int candidates,
-                                       int reliable, float score, WorkProgress progress) {
-        if (!enabled || !progress.active() || !matches(progress)) return;
+    synchronized void recordObservationContext(String clockState, boolean capturing, int candidates,
+                                               int reliable, float score) {
+        lastClockState = clockState;
         lastCapturing = capturing;
         lastCandidates = candidates;
         lastReliable = reliable;
         lastScore = score;
-        if (clockState.equals(lastClockState)) return;
-        lastClockState = clockState;
+        lastObservationKind = PersonObservation.diagnosticKind(candidates, reliable);
+    }
+
+    synchronized void recordClockState(String clockState, boolean capturing, int candidates,
+                                       int reliable, float score, WorkProgress progress) {
+        if (!enabled || !progress.active() || !matches(progress)) return;
+        recordObservationContext(clockState, capturing, candidates, reliable, score);
+        if (clockState.equals(lastLoggedClockState)) return;
+        lastLoggedClockState = clockState;
         try {
             JSONObject extra = new JSONObject().put("clock_state", clockState)
                 .put("capturing", capturing).put("person_candidates", candidates)
-                .put("reliable_people", reliable).put("max_score", score);
+                .put("reliable_people", reliable).put("max_score", score)
+                .put("observation_kind", lastObservationKind);
             append("CLOCK_STATE", progress, wallClock.getAsLong(), elapsedClock.getAsLong(), "work_clock", extra);
         } catch (Exception failure) {
             lastError = failure.getClass().getSimpleName();
@@ -117,6 +127,42 @@ final class WorkDebugLog {
         try {
             append(event, progress, wallClock.getAsLong(), elapsedClock.getAsLong(), "camera",
                 new JSONObject().put("detail", detail));
+        } catch (Exception failure) {
+            lastError = failure.getClass().getSimpleName();
+        }
+    }
+
+    synchronized void recordAvailabilityEvent(String event, String trigger, boolean resumed,
+                                              boolean focused, boolean interactive, boolean keyguardLocked,
+                                              boolean capturing, WorkProgress progress) {
+        if (!enabled || !progress.active() || !matches(progress)) return;
+        try {
+            JSONObject extra = new JSONObject().put("trigger", trigger).put("resumed", resumed)
+                .put("window_focused", focused).put("interactive", interactive)
+                .put("keyguard_locked", keyguardLocked).put("capturing", capturing);
+            append(event, progress, wallClock.getAsLong(), elapsedClock.getAsLong(), "availability", extra);
+        } catch (Exception failure) {
+            lastError = failure.getClass().getSimpleName();
+        }
+    }
+
+    synchronized void recordAudioEvent(String event, String cue, String detail, WorkProgress progress) {
+        if (!enabled || !progress.active() || !matches(progress)) return;
+        try {
+            append(event, progress, wallClock.getAsLong(), elapsedClock.getAsLong(), "audio",
+                new JSONObject().put("cue", cue).put("detail", detail));
+        } catch (Exception failure) {
+            lastError = failure.getClass().getSimpleName();
+        }
+    }
+
+    synchronized void recordReminderEvent(String event, String cause, long interruptionDurationMs,
+                                          long cycle, WorkProgress progress) {
+        if (!enabled || !progress.active() || !matches(progress)) return;
+        try {
+            JSONObject extra = new JSONObject().put("cause", cause)
+                .put("interruption_duration_ms", interruptionDurationMs).put("reminder_cycle", cycle);
+            append(event, progress, wallClock.getAsLong(), elapsedClock.getAsLong(), "unrecorded_reminder", extra);
         } catch (Exception failure) {
             lastError = failure.getClass().getSimpleName();
         }
@@ -143,6 +189,13 @@ final class WorkDebugLog {
             .putLong("last_logged_total_ms", progress.totalValidMs()).putLong("last_checkpoint_elapsed_ms", elapsed)
             .putInt("reset_count", 0).putInt("interruption_count", 0).commit();
         if (!saved) throw new IllegalStateException("debug_state_save_failed");
+        lastClockState = "";
+        lastLoggedClockState = "";
+        lastObservationKind = "invalid_observation";
+        lastCandidates = Integer.MIN_VALUE;
+        lastReliable = Integer.MIN_VALUE;
+        lastScore = 0;
+        lastCapturing = false;
         JSONObject extra = new JSONObject().put("attached_to_existing", attached)
             .put("baseline_kind", attached ? "current_round_approximation" : "exact_session_start");
         append(attached ? "SESSION_ATTACH" : "WORK_BEGIN", progress, wall, elapsed, source, extra);
@@ -184,7 +237,7 @@ final class WorkDebugLog {
             .put("last_clock_state", lastClockState).put("capturing", lastCapturing)
             .put("person_candidates", lastCandidates == Integer.MIN_VALUE ? -1 : lastCandidates)
             .put("reliable_people", lastReliable == Integer.MIN_VALUE ? -1 : lastReliable)
-            .put("max_score", lastScore);
+            .put("max_score", lastScore).put("observation_kind", lastObservationKind);
     }
 
     private void writeLatest(String outcome, WorkProgress progress, long wall, long elapsed) throws Exception {

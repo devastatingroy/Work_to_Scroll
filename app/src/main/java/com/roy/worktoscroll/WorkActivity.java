@@ -83,6 +83,7 @@ public final class WorkActivity extends ComponentActivity {
     private ObjectDetector detector;
     private boolean modelReady, destroyed;
     private final DetectionCue detectionCue = new DetectionCue();
+    private final UnrecordedReminder unrecordedReminder = new UnrecordedReminder();
     private CuePlayer cuePlayer;
     private boolean soundsEnabled;
     private Button soundButton;
@@ -115,12 +116,12 @@ public final class WorkActivity extends ComponentActivity {
     private String message = "正在准备人体检测模型…";
     private final Runnable tick = new Runnable() {
         @Override public void run() {
-            if (capturing && !available()) suspendCamera();
+            if (capturing && !available()) suspendCamera("tick_" + unavailableReason());
             long now = SystemClock.elapsedRealtime();
             if (recovery.wanted() && !modelReady && now - createdAtElapsed >= 15_000)
                 failCamera("人体模型准备超时，请退出工作页后重试。");
             long staleAt = clock.expire(now);
-            if (staleAt >= 0) { detectionCue.reset(); cuePlayer.stop(); }
+            if (staleAt >= 0) { detectionCue.reset(); cuePlayer.stop("stale_frame"); }
             if (ledger.work.active()) {
                 WorkProgress base = staleAt >= 0 ? ledger.work.pause(staleAt, ledger.bootCount) : ledger.work;
                 WorkProgress next = capturing && (clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE)
@@ -131,6 +132,7 @@ public final class WorkActivity extends ComponentActivity {
             }
             if (ledger.work.active()) workDebugLog.recordClockState(clock.state().name(), capturing,
                 observation.candidates, observation.reliable, observation.score, ledger.work);
+            maybePlayUnrecordedReminder(now);
             if (available() && recovery.timedOut(now)) retryCamera("持续未收到有效画面，请检查相机后重试。");
             maybeResumeCamera();
             if (available() && recovery.failed() && recovery.takeAlert() && soundsEnabled) cuePlayer.playFailure();
@@ -150,7 +152,10 @@ public final class WorkActivity extends ComponentActivity {
             recovery.request();
             message = "正在恢复监测，等待工作页可用。";
         }
-        cuePlayer = new CuePlayer(this);
+        cuePlayer = new CuePlayer(this, (event, cue, detail) -> {
+            if (ledger != null && workDebugLog != null)
+                workDebugLog.recordAudioEvent(event, cue, detail, ledger.work);
+        });
         setVolumeControlStream(android.media.AudioManager.STREAM_MUSIC);
         soundsEnabled = getSharedPreferences("ui_preferences", MODE_PRIVATE).getBoolean("presence_sound_enabled", true);
         LinearLayout column = CatUi.screen(this, true);
@@ -201,7 +206,7 @@ public final class WorkActivity extends ComponentActivity {
         soundButton = CatUi.button(this, "", false, true, () -> {
             soundsEnabled = !soundsEnabled;
             getSharedPreferences("ui_preferences", MODE_PRIVATE).edit().putBoolean("presence_sound_enabled", soundsEnabled).apply();
-            detectionCue.reset(); cuePlayer.stop(); render(); writeDiagnostic(true);
+            detectionCue.reset(); unrecordedReminder.reset(); cuePlayer.stop("sound_setting_changed"); render(); writeDiagnostic(true);
         });
         CatUi.add(column, soundButton, -2, 8);
         label(column, "临时切出暂停，回来自动恢复 · 主动暂停需继续", 12);
@@ -238,6 +243,24 @@ public final class WorkActivity extends ComponentActivity {
         return !destroyed && !isFinishing() && resumed && hasWindowFocus()
             && getSystemService(PowerManager.class).isInteractive()
             && !getSystemService(KeyguardManager.class).isKeyguardLocked();
+    }
+
+    private String unavailableReason() {
+        if (destroyed) return "activity_destroyed";
+        if (isFinishing()) return "activity_finishing";
+        if (!resumed) return "activity_paused";
+        if (!hasWindowFocus()) return "window_focus_lost";
+        if (!getSystemService(PowerManager.class).isInteractive()) return "screen_not_interactive";
+        if (getSystemService(KeyguardManager.class).isKeyguardLocked()) return "keyguard_locked";
+        return "unavailable";
+    }
+
+    private void recordAvailabilityEvent(String event, String trigger) {
+        if (ledger == null || workDebugLog == null || !ledger.work.active()) return;
+        boolean interactive = getSystemService(PowerManager.class).isInteractive();
+        boolean keyguardLocked = getSystemService(KeyguardManager.class).isKeyguardLocked();
+        workDebugLog.recordAvailabilityEvent(event, trigger, resumed, hasWindowFocus(), interactive,
+            keyguardLocked, capturing, ledger.work);
     }
 
     private void requestStart() {
@@ -279,7 +302,7 @@ public final class WorkActivity extends ComponentActivity {
         if (service != null) service.prepareManualChange();
         else ledger.engine.resetObservation(System.currentTimeMillis());
         clock.interrupt();
-        detectionCue.reset(); cuePlayer.stop(); sampledAt = -1; sequence = 0;
+        detectionCue.reset(); unrecordedReminder.reset(); cuePlayer.stop("camera_start"); sampledAt = -1; sequence = 0;
         observation = new PersonObservation(-1, -1, 0);
         capturing = true;
         message = "正在启动前置摄像头…";
@@ -432,7 +455,7 @@ public final class WorkActivity extends ComponentActivity {
                 analysisWidth = width; analysisHeight = height;
                 if (SystemClock.elapsedRealtime() - capturedAt > WorkClock.FRESH_MS) {
                     clock.interrupt();
-                    detectionCue.reset(); cuePlayer.stop();
+                    detectionCue.reset(); cuePlayer.stop("stale_frame");
                     if (!saveWorkWithDebug(ledger.work.pause(capturedAt + WorkClock.FRESH_MS, ledger.bootCount), "stale_frame")) {
                         failCamera("保存失败，监测已暂停，请重试。");
                         return;
@@ -443,6 +466,8 @@ public final class WorkActivity extends ComponentActivity {
                 }
                 recovery.freshFrame(capturedAt);
                 long delta = clock.observe(capturedAt, observed.clockSignal());
+                workDebugLog.recordObservationContext(clock.state().name(), capturing, observed.candidates,
+                    observed.reliable, observed.score);
                 WorkProgress before = ledger.work;
                 boolean counting = clock.state() == WorkClock.State.PRESENT || clock.state() == WorkClock.State.GRACE;
                 WorkProgress next = before.observe(delta, counting, SystemClock.elapsedRealtime(), ledger.bootCount);
@@ -475,8 +500,9 @@ public final class WorkActivity extends ComponentActivity {
         releaseCamera(reason);
     }
 
-    private void suspendCamera() {
+    private void suspendCamera(String trigger) {
         boolean wanted = recovery.wanted();
+        recordAvailabilityEvent("AVAILABILITY_LOST", trigger);
         recovery.suspend();
         releaseCamera(wanted ? "监测暂时中断，回到工作页后自动恢复。" : message);
     }
@@ -496,7 +522,7 @@ public final class WorkActivity extends ComponentActivity {
         capturing = false;
         generation++;
         clock.interrupt();
-        detectionCue.reset(); cuePlayer.stop(); sampledAt = -1;
+        detectionCue.reset(); cuePlayer.stop("camera_released"); sampledAt = -1;
         if (boundCamera != null) {
             boundCamera.getCameraInfo().getCameraState().removeObservers(this);
             boundCamera = null;
@@ -521,6 +547,7 @@ public final class WorkActivity extends ComponentActivity {
     }
 
     private void endWork() {
+        unrecordedReminder.reset();
         pauseCamera("本次工作已结束；下轮累计 " + ledger.work.selectedMinutes() + " 分钟开始获得奖励。");
         if (!saveWorkWithDebug(ledger.work.finish(), "work_finish")) message = "结束状态保存失败，计时已暂停，请重试结束。";
         render();
@@ -550,7 +577,7 @@ public final class WorkActivity extends ComponentActivity {
         setTextIfChanged(counters, "本轮已获得 " + MainActivity.duration(work.earnedThisRound(), false) + " 娱乐");
         setTextIfChanged(start, recovery.wanted() ? "暂停" : work.active() ? "继续监测" : "开始监测");
         start.setEnabled(modelReady);
-        setTextIfChanged(soundButton, soundsEnabled ? "提示音：开" : "提示音：关");
+        setTextIfChanged(soundButton, soundsEnabled ? "提示音已开启 · 点击关闭" : "提示音已关闭 · 点击开启");
         end.setEnabled(work.active());
         if (!capturing) setTextIfChanged(previewHint, "摄像头已关闭");
         else if (recoveryModel.previewTrial.suppressed()) setTextIfChanged(previewHint, "自拍预览已关闭\n人体监测继续");
@@ -605,6 +632,31 @@ public final class WorkActivity extends ComponentActivity {
     private static void setTextIfChanged(TextView view, String text) {
         if (!text.contentEquals(view.getText())) view.setText(text);
     }
+
+    private void maybePlayUnrecordedReminder(long now) {
+        if (!unrecordedReminder.due(ledger.work, recovery.wanted(), available(), soundsEnabled, now)) return;
+        long interruptedAt = ledger.work.interruptedAtElapsedMs();
+        long duration = Math.max(0, now - interruptedAt);
+        long cycle = unrecordedReminder.cycle(now);
+        String cause = unrecordedCause();
+        if (cuePlayer.isBusy()) {
+            workDebugLog.recordReminderEvent("UNRECORDED_REMINDER_SUPPRESSED_BUSY", cause, duration, cycle, ledger.work);
+            return;
+        }
+        workDebugLog.recordReminderEvent("UNRECORDED_REMINDER_DUE", cause, duration, cycle, ledger.work);
+        cuePlayer.playUnrecordedReminder();
+    }
+
+    private String unrecordedCause() {
+        if (!capturing) return recovery.failed() ? "camera_recovery_failed" : "camera_not_capturing";
+        switch (clock.state()) {
+            case AWAY: return "no_person";
+            case UNCERTAIN: return PersonObservation.diagnosticKind(observation.candidates, observation.reliable);
+            case CHECKING: return "presence_confirming";
+            case PAUSED: return "no_fresh_frame";
+            default: return "not_counting";
+        }
+    }
     private boolean saveWorkWithDebug(WorkProgress next, String source) {
         WorkProgress before = ledger.work;
         if (!ledger.saveWork(next)) return false;
@@ -644,15 +696,18 @@ public final class WorkActivity extends ComponentActivity {
     @Override public void onWindowFocusChanged(boolean focus) {
         super.onWindowFocusChanged(focus);
         if (recovery == null) return;
-        if (!focus) suspendCamera();
-        else maybeResumeCamera();
+        if (!focus) suspendCamera("window_focus_lost");
+        else {
+            recordAvailabilityEvent("AVAILABILITY_RESTORED", "window_focus_gained");
+            maybeResumeCamera();
+        }
     }
     @Override protected void onPause() {
         if (recovery != null && recovery.wanted() && ledger != null && ledger.work.active())
             MonitoringReturnTicket.arm(ledger.work.startedWallMs(), SystemClock.elapsedRealtime());
         resumed = false;
         handler.removeCallbacks(tick);
-        suspendCamera();
+        suspendCamera("activity_paused");
         super.onPause();
     }
     @Override protected void onDestroy() {
@@ -660,7 +715,7 @@ public final class WorkActivity extends ComponentActivity {
         handler.removeCallbacks(tick);
         if (isChangingConfigurations()) MonitoringReturnTicket.clear();
         else recovery.stop();
-        cuePlayer.stop();
+        cuePlayer.stop("activity_destroyed");
         analyzer.execute(() -> { if (detector != null) detector.close(); });
         analyzer.shutdown();
         super.onDestroy();
@@ -691,6 +746,7 @@ public final class WorkActivity extends ComponentActivity {
                 .put("scope", "whole_frame_person_trial").put("state", fresh ? clock.state().name() : "NO_FRESH_RESULT")
                 .put("person_candidates", fresh ? observation.candidates : -1)
                 .put("reliable_people", fresh ? observation.reliable : -1).put("max_score", fresh ? observation.score : 0)
+                .put("observation_kind", fresh ? PersonObservation.diagnosticKind(observation.candidates, observation.reliable) : "stale_or_not_running")
                 .put("processing_ms", processingMs).put("sounds_enabled", soundsEnabled)
                 .put("audio_last_cue", cuePlayer.lastCue()).put("audio_status", cuePlayer.status())
                 .put("audio_events", cuePlayer.events()).put("media_volume", cuePlayer.mediaVolume())

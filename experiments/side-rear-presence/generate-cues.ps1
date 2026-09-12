@@ -1,7 +1,12 @@
+param(
+    [string]$TargetRawDirectory = '',
+    [switch]$ReminderOnly
+)
+
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Speech
 $cueRoot = $PSScriptRoot
-$cueRaw = Join-Path $cueRoot 'app\src\main\res\raw'
+$cueRaw = if ($TargetRawDirectory) { $TargetRawDirectory } else { Join-Path $cueRoot 'app\src\main\res\raw' }
 $cueBuild = Join-Path $cueRoot 'build'
 New-Item -ItemType Directory -Force -Path $cueRaw,$cueBuild | Out-Null
 # A short 880 Hz tone with fades, stored only as a build intermediate.
@@ -31,15 +36,22 @@ try {
     $cueFormat = [System.Speech.AudioFormat.SpeechAudioFormatInfo]::new(22050,
         [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen,
         [System.Speech.AudioFormat.AudioChannel]::Mono)
-    $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'person_away.wav'), $cueFormat)
-    $cuePrompt = [System.Speech.Synthesis.PromptBuilder]::new([cultureinfo]'zh-CN')
-    $cuePrompt.AppendAudio($cueBeepPath)
-    $cuePrompt.AppendBreak([timespan]::FromMilliseconds(80))
-    $cuePrompt.AppendText('暂时离开')
-    $cueVoice.Speak($cuePrompt)
-    $cueVoice.SetOutputToNull()
-    $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'person_return.wav'), $cueFormat)
-    $cueVoice.Speak('欢迎归来')
-    $cueVoice.SetOutputToNull()
+    if (-not $ReminderOnly) {
+        $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'person_away.wav'), $cueFormat)
+        $cuePrompt = [System.Speech.Synthesis.PromptBuilder]::new([cultureinfo]'zh-CN')
+        $cuePrompt.AppendAudio($cueBeepPath)
+        $cuePrompt.AppendBreak([timespan]::FromMilliseconds(80))
+        $cuePrompt.AppendText('暂时离开')
+        $cueVoice.Speak($cuePrompt)
+        $cueVoice.SetOutputToNull()
+        $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'person_return.wav'), $cueFormat)
+        $cueVoice.Speak('欢迎归来')
+        $cueVoice.SetOutputToNull()
+    }
+    if ($ReminderOnly -or $TargetRawDirectory) {
+        $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'unrecorded_reminder.wav'), $cueFormat)
+        $cueVoice.Speak('目前未有效记录')
+        $cueVoice.SetOutputToNull()
+    }
 } finally { $cueVoice.Dispose() }
-Get-FileHash -LiteralPath (Join-Path $cueRaw 'person_away.wav'),(Join-Path $cueRaw 'person_return.wav') -Algorithm SHA256
+Get-ChildItem -LiteralPath $cueRaw -Filter '*.wav' | Get-FileHash -Algorithm SHA256

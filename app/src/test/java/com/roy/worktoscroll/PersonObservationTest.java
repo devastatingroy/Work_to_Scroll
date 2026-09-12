@@ -9,6 +9,14 @@ public class PersonObservationTest {
         assertEquals(-1, new PersonObservation(1, 0, .3f).clockSignal());
         assertEquals(-1, new PersonObservation(2, 2, .8f).clockSignal());
     }
+    @Test public void diagnosticKindsExplainWhyTheClockWillNotCount() {
+        assertEquals("single_reliable_person", PersonObservation.diagnosticKind(1, 1));
+        assertEquals("no_person", PersonObservation.diagnosticKind(0, 0));
+        assertEquals("weak_person_candidate", PersonObservation.diagnosticKind(1, 0));
+        assertEquals("multiple_candidates", PersonObservation.diagnosticKind(2, 1));
+        assertEquals("multiple_reliable_people", PersonObservation.diagnosticKind(2, 2));
+        assertEquals("invalid_observation", PersonObservation.diagnosticKind(-1, -1));
+    }
     @Test public void weakObservationStopsWorkWithoutAbsenceGrace() {
         WorkClock clock = new WorkClock();
         clock.observe(0, 1); clock.observe(500, 1); clock.observe(1000, 1);

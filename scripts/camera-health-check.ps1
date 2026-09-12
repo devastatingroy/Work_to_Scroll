@@ -39,6 +39,7 @@ for ($sampleIndex = 0; $sampleIndex -lt $Samples; $sampleIndex++) {
         people=if ($experimentLive) { $experimentStatus.person_candidates } else { $null }
         reliable=if ($experimentLive) { $experimentStatus.reliable_people } else { $null }
         score=if ($experimentLive) { [math]::Round([double]$experimentStatus.max_score,3) } else { $null }
+        observation_kind=if ($experimentLive) { $experimentStatus.observation_kind } else { 'stale_or_not_running' }
         capture_age_ms=$captureAge
         heartbeat_age_ms=$heartbeatAge
         processing_ms=$experimentStatus.processing_ms

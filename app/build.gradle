@@ -9,9 +9,9 @@ android {
         testInstrumentationRunner 'com.roy.worktoscroll.FeedbackInstrumentation'
         minSdk 29
         targetSdk 36
-        versionCode 33
-        versionName '0.5.11-work-debug-log'
-        resValue 'string', 'app_version', '0.5.11-work-debug-log'
+        versionCode 35
+        versionName '0.5.13-unrecorded-reminder'
+        resValue 'string', 'app_version', '0.5.13-unrecorded-reminder'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
