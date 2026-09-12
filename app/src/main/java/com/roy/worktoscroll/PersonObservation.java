@@ -18,6 +18,8 @@ public final class PersonObservation {
     public int clockSignal() {
         if (candidates < 0 || reliable < 0 || reliable > candidates) return -1;
         if (candidates == 0) return 0;
-        return reliable == 1 ? 1 : -1;
+        if (candidates == 1 && reliable == 1) return 1;
+        if (candidates == 1) return WorkClock.WEAK_SINGLE;
+        return -1;
     }
 }

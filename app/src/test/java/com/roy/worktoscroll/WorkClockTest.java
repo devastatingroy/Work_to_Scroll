@@ -66,4 +66,19 @@ public class WorkClockTest {
         assertEquals(WorkClock.State.UNCERTAIN, c.state());
         assertEquals(0, c.observe(2000, 1));
     }
+    @Test public void weakSingleHoldIsBoundedAndNeedsReliableConfirmationAgain() {
+        WorkClock c = present();
+        assertEquals(500, c.observe(1500, WorkClock.WEAK_SINGLE));
+        assertEquals(WorkClock.State.WEAK_HOLD, c.state());
+        long held = 0;
+        for (long t = 2500; t <= 121_500; t += 1000) held += c.observe(t, WorkClock.WEAK_SINGLE);
+        assertEquals(WorkClock.WEAK_HOLD_MS, held);
+        assertEquals(WorkClock.State.WEAK_HOLD, c.state());
+        assertEquals(121_500, c.expireWeakHold(121_501));
+        assertEquals(WorkClock.State.UNCERTAIN, c.state());
+        assertEquals(0, c.observe(122_000, 1));
+        assertEquals(WorkClock.State.CHECKING, c.state());
+        assertEquals(0, c.observe(123_000, 1));
+        assertEquals(WorkClock.State.PRESENT, c.state());
+    }
 }

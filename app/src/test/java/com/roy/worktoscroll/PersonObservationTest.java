@@ -6,7 +6,7 @@ public class PersonObservationTest {
     @Test public void personAndAbsenceAreDistinctFromUncertainty() {
         assertEquals(1, new PersonObservation(1, 1, .8f).clockSignal());
         assertEquals(0, new PersonObservation(0, 0, 0).clockSignal());
-        assertEquals(-1, new PersonObservation(1, 0, .3f).clockSignal());
+        assertEquals(WorkClock.WEAK_SINGLE, new PersonObservation(1, 0, .3f).clockSignal());
         assertEquals(-1, new PersonObservation(2, 2, .8f).clockSignal());
     }
     @Test public void diagnosticKindsExplainWhyTheClockWillNotCount() {
@@ -17,14 +17,15 @@ public class PersonObservationTest {
         assertEquals("multiple_reliable_people", PersonObservation.diagnosticKind(2, 2));
         assertEquals("invalid_observation", PersonObservation.diagnosticKind(-1, -1));
     }
-    @Test public void weakObservationStopsWorkWithoutAbsenceGrace() {
+    @Test public void weakObservationOnlyUsesTheBoundedHoldAfterPresence() {
         WorkClock clock = new WorkClock();
         clock.observe(0, 1); clock.observe(500, 1); clock.observe(1000, 1);
         assertEquals(500, clock.observe(1500, 1));
-        assertEquals(0, clock.observe(2000, new PersonObservation(1, 0, .3f).clockSignal()));
-        assertEquals(WorkClock.State.UNCERTAIN, clock.state());
-        assertEquals(0, clock.observe(2500, 1));
-        assertEquals(WorkClock.State.CHECKING, clock.state());
+        assertEquals(500, clock.observe(2000, new PersonObservation(1, 0, .3f).clockSignal()));
+        assertEquals(WorkClock.State.WEAK_HOLD, clock.state());
+        WorkClock unconfirmed = new WorkClock();
+        assertEquals(0, unconfirmed.observe(0, new PersonObservation(1, 0, .3f).clockSignal()));
+        assertEquals(WorkClock.State.UNCERTAIN, unconfirmed.state());
     }
     @Test public void soundsDoNotBypassWorkConfirmation() {
         WorkClock clock = new WorkClock(); DetectionCue cue = new DetectionCue();
