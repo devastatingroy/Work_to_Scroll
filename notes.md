@@ -45,6 +45,7 @@
 
 - `test_valid_ms` 是本次开始后的历史累计增量，跨三分钟轮次重置仍连续；`round_valid_ms` 只代表当前轮，不能代替本次总量。
 - `ROUND_RESET` 记录当前轮因连续中断达到三分钟而归零；`INTERRUPTION_START/END` 记录中断边界；`CLOCK_STATE` 同时注明 `observation_kind`（无人、弱候选、多候选等）；`AVAILABILITY_LOST/RESTORED` 记录窗口焦点、锁屏、交互状态与触发入口；`UNRECORDED_REMINDER_DUE` 和 `UNRECORDED_REMINDER_SUPPRESSED_BUSY` 记录每分钟提醒的原因、已中断时长和周期；`AUDIO_*` 分别记录声音请求、实际开始、完成、取消、抑制或错误。`CHECKPOINT` 约每分钟保底记录一次；`WORK_FINISH` 和 latest 的 `outcome=finished` 是正常结束证据。
+- 0.5.18 起，latest 和 `WORK_END_REQUESTED` / `WORK_FINISH` 包含 `start_battery_*`、`end_battery_*` 与 `battery_temperature_delta_c`。起点取本轮首次开始监测，暂停后继续不会改写；终点在点击“结束工作”后、释放相机前读取。`*_battery_temperature_available=false` 或 `*_battery_read_error` 表示读取失败，不能据此计算温升。温度是系统电池温度，不是机身表面、CPU 或摄像头芯片温度；充电状态不同的两端不能作为干净的发热比较。
 - 日志只在调试构建中启用，位于应用私有目录，超过 512 KiB 后保留一份轮转旧文件。没有 `WORK_FINISH` 时仍可用 latest 查看截至最后一次成功写入的累计，但不能把缺失尾段包装成已完整记录。
 
 ## 小米后台冻结导致零余额拦截失效
