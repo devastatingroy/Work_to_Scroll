@@ -65,56 +65,53 @@ public class WorkClockTest {
         assertEquals(500, c.observe(1500, 2));
         assertEquals(WorkClock.State.PRESENT, c.state());
     }
-    @Test public void weakOnlyHoldIsBoundedAndNeedsReliableConfirmationAgain() {
+    @Test public void sustainedWeakSignalPausesOnlyAfterThreeSecondsAndNeedsConfirmationAgain() {
         WorkClock c = present();
         assertEquals(500, c.observe(1500, WorkClock.WEAK_ONLY));
-        assertEquals(WorkClock.State.WEAK_HOLD, c.state());
-        long held = 0;
-        for (long t = 2500; t <= 121_500; t += 1000) held += c.observe(t, WorkClock.WEAK_ONLY);
-        assertEquals(WorkClock.WEAK_HOLD_MS, held);
-        assertEquals(WorkClock.State.WEAK_HOLD, c.state());
-        assertEquals(121_500, c.expireWeakHold(121_501));
+        assertEquals(WorkClock.State.WEAK_GRACE, c.state());
+        assertEquals(1000, c.observe(2500, WorkClock.WEAK_ONLY));
+        assertEquals(WorkClock.State.WEAK_GRACE, c.state());
+        assertEquals(1000, c.observe(3500, WorkClock.WEAK_ONLY));
+        assertEquals(WorkClock.State.WEAK_GRACE, c.state());
+        assertEquals(1000, c.observe(4500, WorkClock.WEAK_ONLY));
         assertEquals(WorkClock.State.UNCERTAIN, c.state());
-        assertEquals(0, c.observe(122_000, 1));
+        assertEquals(0, c.observe(5000, 1));
         assertEquals(WorkClock.State.CHECKING, c.state());
-        assertEquals(0, c.observe(123_000, 1));
+        assertEquals(0, c.observe(6000, 1));
+        assertEquals(WorkClock.State.PRESENT, c.state());
+        assertEquals(500, c.observe(6500, 1));
+    }
+    @Test public void briefWeakDipReturnsDirectlyToPresence() {
+        WorkClock c = present();
+        assertEquals(500, c.observe(1500, WorkClock.WEAK_ONLY));
+        assertEquals(1000, c.observe(2500, WorkClock.WEAK_ONLY));
+        assertEquals(500, c.observe(3000, 1));
         assertEquals(WorkClock.State.PRESENT, c.state());
     }
-    @Test public void weakAndZeroFluctuationsCannotRestartWeakBudget() {
+    @Test public void weakSignalCannotEstablishPresenceWithoutReliableConfirmation() {
+        WorkClock c = new WorkClock();
+        assertEquals(0, c.observe(0, WorkClock.WEAK_ONLY));
+        assertEquals(WorkClock.State.UNCERTAIN, c.state());
+        assertEquals(0, c.observe(1000, WorkClock.WEAK_ONLY));
+        assertEquals(WorkClock.State.UNCERTAIN, c.state());
+    }
+    @Test public void weakGraceNeverOutlivesFrameFreshness() {
+        WorkClock c = present();
+        assertEquals(500, c.observe(1500, WorkClock.WEAK_ONLY));
+        assertEquals(3000, c.expire(3001));
+        assertEquals(WorkClock.State.PAUSED, c.state());
+    }
+    @Test public void zeroAndWeakResultsShareOneThreeSecondLossBudget() {
         WorkClock c = present();
         assertEquals(500, c.observe(1500, WorkClock.WEAK_ONLY));
         assertEquals(1000, c.observe(2500, 0));
         assertEquals(1000, c.observe(3500, WorkClock.WEAK_ONLY));
-        long held = 0;
-        for (long t = 4500; t <= 121_500; t += 1000) held += c.observe(t, WorkClock.WEAK_ONLY);
-        assertEquals(118_000, held);
-        assertEquals(0, c.observe(122_000, WorkClock.WEAK_ONLY));
-        assertEquals(WorkClock.State.UNCERTAIN, c.state());
-    }
-    @Test public void isolatedReliableFrameDoesNotRestartWeakBudget() {
-        WorkClock c = present();
-        c.observe(1500, WorkClock.WEAK_ONLY);
-        assertEquals(1000, c.observe(2500, 1));
-        assertEquals(WorkClock.State.WEAK_HOLD, c.state());
-        assertEquals(1000, c.observe(3500, WorkClock.WEAK_ONLY));
-        long held = 0;
-        for (long t = 4500; t <= 121_500; t += 1000) held += c.observe(t, WorkClock.WEAK_ONLY);
-        assertEquals(118_000, held);
-        assertEquals(0, c.observe(122_000, WorkClock.WEAK_ONLY));
-        assertEquals(WorkClock.State.UNCERTAIN, c.state());
-    }
-    @Test public void sustainedReliableEvidenceResetsWeakBudget() {
-        WorkClock c = present();
-        c.observe(1500, WorkClock.WEAK_ONLY);
-        assertEquals(1000, c.observe(2500, 1));
-        assertEquals(1000, c.observe(3500, 1));
-        assertEquals(WorkClock.State.PRESENT, c.state());
         assertEquals(1000, c.observe(4500, WorkClock.WEAK_ONLY));
-        long held = 0;
-        for (long t = 5500; t <= 123_500; t += 1000) held += c.observe(t, WorkClock.WEAK_ONLY);
-        assertEquals(119_000, held);
-        assertEquals(1000, c.observe(124_500, WorkClock.WEAK_ONLY));
-        assertEquals(0, c.observe(125_000, WorkClock.WEAK_ONLY));
+        assertEquals(WorkClock.State.UNCERTAIN, c.state());
+    }
+    @Test public void invalidObservationStillStopsImmediately() {
+        WorkClock c = present();
+        assertEquals(0, c.observe(1500, -1));
         assertEquals(WorkClock.State.UNCERTAIN, c.state());
     }
 }

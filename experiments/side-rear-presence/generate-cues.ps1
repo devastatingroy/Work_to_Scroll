@@ -1,6 +1,7 @@
-param(
+﻿param(
     [string]$TargetRawDirectory = '',
-    [switch]$ReminderOnly
+    [switch]$ReminderOnly,
+    [switch]$ResumeOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,7 +37,7 @@ try {
     $cueFormat = [System.Speech.AudioFormat.SpeechAudioFormatInfo]::new(22050,
         [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen,
         [System.Speech.AudioFormat.AudioChannel]::Mono)
-    if (-not $ReminderOnly) {
+    if (-not $ReminderOnly -and -not $ResumeOnly) {
         $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'person_away.wav'), $cueFormat)
         $cuePrompt = [System.Speech.Synthesis.PromptBuilder]::new([cultureinfo]'zh-CN')
         $cuePrompt.AppendAudio($cueBeepPath)
@@ -48,9 +49,17 @@ try {
         $cueVoice.Speak('欢迎归来')
         $cueVoice.SetOutputToNull()
     }
-    if ($ReminderOnly -or $TargetRawDirectory) {
+    if (($ReminderOnly -or $TargetRawDirectory) -and -not $ResumeOnly) {
         $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'unrecorded_reminder.wav'), $cueFormat)
-        $cueVoice.Speak('请注意，监控无效，监控无效')
+$cueVoice.Speak('未能确认有人，计时暂停，请让身体多露出一些')
+        $cueVoice.SetOutputToNull()
+        $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'monitoring_interrupted.wav'), $cueFormat)
+        $cueVoice.Speak('监控中断，已暂停计时')
+        $cueVoice.SetOutputToNull()
+    }
+    if ($ResumeOnly -or $TargetRawDirectory) {
+        $cueVoice.SetOutputToWaveFile((Join-Path $cueRaw 'counting_resumed.wav'), $cueFormat)
+        $cueVoice.Speak('恢复计时')
         $cueVoice.SetOutputToNull()
     }
 } finally { $cueVoice.Dispose() }

@@ -9,7 +9,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-/** Opaque, separate task: the target really leaves the foreground while this page stays. */
+/** Opaque page in the app task: the target leaves the foreground without creating a second card. */
 public final class BlockerActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     static final String EXTRA_EXHAUSTION = "exhaustion_event";
@@ -19,7 +19,7 @@ public final class BlockerActivity extends Activity {
     private final Runnable check = new Runnable() {
         @Override public void run() {
             // No accounting here. Credit and the persisted opt-out remain authoritative.
-            if (!shouldRemain()) { finishAndRemoveTask(); return; }
+            if (!shouldRemain()) { finish(); return; }
             handler.postDelayed(this, ProtectionService.POLL_MS);
         }
     };
@@ -27,7 +27,7 @@ public final class BlockerActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         ledger = LedgerStore.get(this);
-        if (!shouldRemain()) { finishAndRemoveTask(); return; }
+        if (!shouldRemain()) { finish(); return; }
         ProtectionService service = ProtectionService.current();
         pendingExhaustion = state == null ? getIntent().getStringExtra(EXTRA_EXHAUSTION) : null;
         panel = CatUi.blocker(this,
@@ -102,7 +102,9 @@ public final class BlockerActivity extends Activity {
     private void navigate(Intent destination) {
         try {
             startActivity(destination);
-            finishAndRemoveTask();
+            // The blocker now shares WorkToScroll's task. Remove only this page; removing
+            // the whole task would also discard the main activity and its single recent card.
+            finish();
         } catch (RuntimeException ex) {
             Log.w("WTS_BLOCK_PAGE", "NAVIGATION_FAILED " + ex.getClass().getSimpleName());
             Toast.makeText(this, "请使用系统主页手势返回桌面", Toast.LENGTH_LONG).show();

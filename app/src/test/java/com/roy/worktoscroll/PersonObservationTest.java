@@ -21,12 +21,12 @@ public class PersonObservationTest {
         assertEquals("multiple_reliable_people", PersonObservation.diagnosticKind(2, 2));
         assertEquals("invalid_observation", PersonObservation.diagnosticKind(-1, -1));
     }
-    @Test public void weakObservationOnlyUsesTheBoundedHoldAfterPresence() {
+    @Test public void weakObservationGetsThreeSecondGraceOnlyAfterPresence() {
         WorkClock clock = new WorkClock();
         clock.observe(0, 1); clock.observe(500, 1); clock.observe(1000, 1);
         assertEquals(500, clock.observe(1500, 1));
         assertEquals(500, clock.observe(2000, new PersonObservation(1, 0, .3f).clockSignal()));
-        assertEquals(WorkClock.State.WEAK_HOLD, clock.state());
+        assertEquals(WorkClock.State.WEAK_GRACE, clock.state());
         WorkClock unconfirmed = new WorkClock();
         assertEquals(0, unconfirmed.observe(0, new PersonObservation(1, 0, .3f).clockSignal()));
         assertEquals(WorkClock.State.UNCERTAIN, unconfirmed.state());

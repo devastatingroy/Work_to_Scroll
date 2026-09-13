@@ -25,6 +25,8 @@ final class CuePlayer {
     private String activeCue = "none";
     private String activeEventPrefix = "AUDIO_CUE";
     private boolean activeCueStarted;
+    private final Handler audioHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingResume;
 
     CuePlayer(Context context, EventListener eventsListener) {
         this.context = context;
@@ -39,12 +41,59 @@ final class CuePlayer {
     }
 
     /** A neutral foreground reminder; never interrupts calls or other active media. */
-    void playUnrecordedReminder() {
-        playResource("unrecorded_reminder", R.raw.unrecorded_reminder,
+    void playUnrecordedReminder(boolean cameraFailure) {
+        playResource(cameraFailure ? "monitoring_interrupted" : "unrecorded_reminder",
+            cameraFailure ? R.raw.monitoring_interrupted : R.raw.unrecorded_reminder,
             "AUDIO_UNRECORDED_REMINDER", true);
     }
 
-    boolean isBusy() { return player != null || failureTone != null; }
+    void stopPauseAlert() {
+        if ("AUDIO_UNRECORDED_REMINDER".equals(activeEventPrefix) && player != null)
+            stop("counting_resumed");
+    }
+
+    void playCountingResumed() {
+        boolean releasingOwnAudio = player != null && activeCueStarted;
+        stop("counting_resumed");
+        if (!releasingOwnAudio || !audioManager().isMusicActive()) {
+            playResource("counting_resumed", R.raw.counting_resumed, "AUDIO_COUNTING_RESUMED", true);
+            return;
+        }
+        // MediaPlayer release may briefly leave our own clip marked as active media.
+        // Wait at most 300ms for that tail, still rechecking calls/other media before playback.
+        long deadline = android.os.SystemClock.elapsedRealtime() + 300;
+        long expiresAt = deadline + 700;
+        status = "preparing";
+        report("AUDIO_COUNTING_RESUMED_WAITING_RELEASE", "counting_resumed", "own_audio_release");
+        pendingResume = new Runnable() {
+            @Override public void run() {
+                if (pendingResume != this) return;
+                if (android.os.SystemClock.elapsedRealtime() > expiresAt) {
+                    stop("resume_expired"); // Never replay after the main thread was stalled for seconds.
+                    return;
+                }
+                if (audioManager().getMode() == AudioManager.MODE_NORMAL && audioManager().isMusicActive()
+                        && android.os.SystemClock.elapsedRealtime() < deadline) {
+                    audioHandler.postDelayed(this, 25);
+                    return;
+                }
+                pendingResume = null;
+                playResource("counting_resumed", R.raw.counting_resumed, "AUDIO_COUNTING_RESUMED", true);
+            }
+        };
+        audioHandler.post(pendingResume);
+    }
+
+    void stopCountingResumed() {
+        if (pendingResume != null || ("AUDIO_COUNTING_RESUMED".equals(activeEventPrefix) && player != null))
+            stop("counting_paused");
+    }
+
+    void stopDetectionCue(String reason) {
+        if (!"AUDIO_UNRECORDED_REMINDER".equals(activeEventPrefix) || player == null) stop(reason);
+    }
+
+    boolean isBusy() { return player != null || failureTone != null || pendingResume != null; }
 
     private void playResource(String cueName, int resource, String eventPrefix, boolean suppressActiveMedia) {
         stop("superseded");
@@ -114,6 +163,11 @@ final class CuePlayer {
     }
 
     void stop(String reason) {
+        if (pendingResume != null) {
+            audioHandler.removeCallbacks(pendingResume);
+            pendingResume = null;
+            report("AUDIO_COUNTING_RESUMED_CANCELLED", "counting_resumed", reason);
+        }
         if (failureTone != null) {
             ToneGenerator old = failureTone; failureTone = null; old.release();
         }

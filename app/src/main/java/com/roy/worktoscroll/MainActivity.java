@@ -19,6 +19,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -178,6 +179,10 @@ public final class MainActivity extends Activity {
             settingsDivider(background);
             bootRecoveryState = permissionItem(background, "允许开机自启动", "重启后恢复保护需要小米允许自启动；省电策略和最近任务锁定不能替代它。");
             permissionLink(background, "查看自启动说明  ›", this::showXiaomiAutostartGuide);
+            settingsDivider(background);
+            settingsText(background, "锁定最近任务", 16, CatUi.INK, 16);
+            settingsText(background, "减少清理最近任务时保护被停止的风险。", 14, CatUi.MUTED, 9);
+            permissionLink(background, "查看三步图解  ›", this::showXiaomiRecentsGuide);
         }
         TextView note = paragraph(isXiaomi()
             ? "小米请完成三项设置：省电策略选「无限制」、允许自启动，并锁定最近任务。应用无法自动确认这些厂商设置，当前运行中也不代表已配置。"
@@ -206,6 +211,15 @@ public final class MainActivity extends Activity {
                 Uri.parse("package:" + getPackageName())))).show();
     }
 
+    private void showXiaomiRecentsGuide() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        int padding = CatUi.dp(this, 16);
+        scroll.setPadding(padding, 0, padding, 0);
+        scroll.addView(new RecentsLockGuideView(this), new ScrollView.LayoutParams(-1, -2));
+        new AlertDialog.Builder(this).setTitle("锁定 WorkToScroll")
+            .setView(scroll).setPositiveButton("知道了", null).show();
+    }
 
     private void showXiaomiAutostartGuide() {
         new AlertDialog.Builder(this).setTitle("允许 WorkToScroll 自启动")

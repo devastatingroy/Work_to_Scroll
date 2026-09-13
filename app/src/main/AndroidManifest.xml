@@ -25,8 +25,7 @@
         </activity>
         <activity android:name=".WorkActivity" android:exported="false" android:theme="@style/WorkTheme" />
         <activity android:name=".BlockerActivity" android:exported="false"
-            android:taskAffinity="${applicationId}.blocker" android:launchMode="singleTask"
-            android:excludeFromRecents="true" android:noHistory="true"
+            android:launchMode="singleTop" android:noHistory="true"
             android:enableOnBackInvokedCallback="true" />
         <receiver android:name=".ProtectionRecovery" android:exported="false">
             <intent-filter>

@@ -1,39 +1,59 @@
 package com.roy.worktoscroll;
 
-/** One foreground-safe reminder for each non-manual continuous interruption. */
+/** Immediate first alert, then repeated voice and flash at +30s, +60s, +120s... */
 final class UnrecordedReminder {
-    static final long INTERVAL_MS = 60_000;
+    private static final long FIRST_REPEAT_MS = 30_000;
+    enum Feedback {
+        NONE, VISUAL, VOICE, REPEAT, MUTED_REPEAT;
+        boolean flashes() { return this != NONE; }
+        boolean speaks() { return this == VOICE || this == REPEAT; }
+    }
+    private boolean handled, abnormalPause, hasCounted;
+    private long firstAlertAt, nextOffset;
+    private int ordinal;
 
-    private long interruptionAt = -1;
-    private boolean notified;
-
-    boolean due(WorkProgress progress, boolean monitoringWanted, boolean available,
-                boolean soundsEnabled, long now) {
-        if (!progress.active() || !monitoringWanted || progress.interruptedAtElapsedMs() < 0) {
-            reset();
-            return false;
+    Feedback update(boolean monitoring, boolean available, boolean counting, boolean evaluated,
+                    boolean noPerson, boolean soundsEnabled, long now) {
+        if (!monitoring || !available) {
+            clearPause();
+            return Feedback.NONE;
         }
-        long currentInterruption = progress.interruptedAtElapsedMs();
-        if (currentInterruption != interruptionAt) {
-            interruptionAt = currentInterruption;
-            notified = false;
+        if (counting) {
+            hasCounted = true;
+            clearPause();
+            return Feedback.NONE;
         }
-        // Sound disabled is an explicit choice; do not replay this interruption if it is re-enabled.
-        if (!soundsEnabled) { notified = true; return false; }
-        // While a call, system dialog, lock screen, or other focus loss is active, defer one alert.
-        if (!available || notified) return false;
-        long elapsed = Math.max(0, now - interruptionAt);
-        if (elapsed < INTERVAL_MS) return false;
-        notified = true;
-        return true;
+        // Binding/initial confirmation is not a failure. Wait for an observation or a real error.
+        if (handled) {
+            if (!abnormalPause || nextOffset == Long.MAX_VALUE) return Feedback.NONE;
+            long elapsed = Math.max(0, now - firstAlertAt);
+            if (elapsed < nextOffset) return Feedback.NONE;
+            // Consume every elapsed slot, but emit at most one current reminder. Never queue a burst.
+            do {
+                ordinal++;
+                nextOffset = nextOffset > Long.MAX_VALUE / 2 ? Long.MAX_VALUE : nextOffset * 2;
+            } while (nextOffset <= elapsed && nextOffset != Long.MAX_VALUE);
+            // A now-clear absence keeps the existing away behavior, not an adjustment warning.
+            if (noPerson) return Feedback.NONE;
+            return soundsEnabled ? Feedback.REPEAT : Feedback.MUTED_REPEAT;
+        }
+        if (!evaluated) return Feedback.NONE;
+        handled = true;
+        if (noPerson) return Feedback.NONE;
+        abnormalPause = true;
+        firstAlertAt = now;
+        nextOffset = FIRST_REPEAT_MS;
+        ordinal = 1;
+        return soundsEnabled ? Feedback.VOICE : Feedback.VISUAL;
     }
 
-    void reset() {
-        interruptionAt = -1;
-        notified = false;
+    int ordinal() { return ordinal; }
+    boolean abnormalPause() { return abnormalPause; }
+    boolean showPaused() { return hasCounted || handled; }
+    private void clearPause() {
+        handled = abnormalPause = false;
+        firstAlertAt = nextOffset = 0;
+        ordinal = 0;
     }
-
-    long cycle(long now) {
-        return interruptionAt < 0 || !notified ? 0 : 1;
-    }
+    void reset() { clearPause(); hasCounted = false; }
 }
