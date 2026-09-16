@@ -1,6 +1,6 @@
 # WorkToWatch 产品准备
 
-状态：**当前产品轨道（2026-09-15 路线已确认）**。与 Google Play 流程与合规准备并行，但只负责产品定义、体验、适配和可靠性证据；尚未授权改码。现有 WorkToScroll 小红书产品保留，另行准备独立品牌 WorkToWatch，首发只支持官方 YouTube Android App。创建日期：2026-09-09。
+状态：**当前产品实施轨道（2026-09-16 已授权开始开发）**。与 Google Play 流程与合规准备并行；现有 WorkToScroll 小红书产品保留，另行开发独立品牌 WorkToWatch，首发只支持官方 YouTube Android App。已从当前 v53 基线建立 `codex/worktowatch-android` 分支；首次代码落地前等待确认永久应用 ID。创建日期：2026-09-09。
 
 入口：[任务索引](../README.md)。维护人：实际启动本任务的 agent；进入实施前移入 `active`，并在关键决策、验证或阻塞时维护本文件。
 
@@ -38,9 +38,20 @@
 - [ ] 提供与实际功能一致的 WorkToWatch 文案、截图需求和验收场景；不得沿用“小红书”或中国大陆版已验证范围的陈述，也不得使用 YouTube 商标作为本产品品牌或图标。
 - [ ] 与当前摄像头、奖励、后台保护耐久验收分开记录，并以它们作为产品公开可用性的独立证据；国际目标 App 适配不能替代这些核心可靠性验收。
 
+## 实施启动（2026-09-16）
+
+- [x] Roy 已明确授权开始开发 WorkToWatch。
+- [x] 以当前 v53 `0.5.31-night-relax-preview` 为代码基线建立独立分支 `codex/worktowatch-android`；原 WorkToScroll 分支和安装数据不覆盖。
+- [x] 重新执行 160 项单元测试与 lint：测试 160/160 通过，lint 0 错误、23 个既有警告；Debug 构建通过。
+- [ ] 确认永久应用 ID。当前推荐 `com.roy.worktowatch`；公开 Google Play 精确 ID 检索无结果，直接商品页返回 404，但这只能说明未发现公开商品，不能证明后台未被占用，最终仍以 Play Console 创建商品时的校验为准。
+- [ ] 建立 WorkToScroll / WorkToWatch 双产品构建变体及独立 source set，保持 WorkToScroll 当前 `applicationId`、数据与已安装升级路径不变。
+- [ ] 把目标包、产品名、目标应用名、入口文案、Manifest 查询和平台素材从共用逻辑中分离；WorkToWatch 只配置官方 YouTube Android App。
+- [ ] 为两种构建增加 Manifest、资源、目标包与专属文案隔离检查，并分别执行单元测试、lint 和构建。
+- [ ] 安装 WorkToWatch Debug 构建，验证 YouTube 启动、前台扣减、余额耗尽阻止、返回/桌面、锁屏恢复、音频和分屏/多窗口边界。
+
 ## 当前停点
 
-产品路线已写回 SPEC/DESIGN：WorkToWatch 独立品牌、YouTube 单点首发、应用身份和数据隔离、底层可复用，TikTok/Instagram 未来另行决定。当前仍未修改任何消费、拦截、权限、数据收集、构建或商店配置。下一步先核定首发国家/语言、名称与包名可用性、品牌文案和 YouTube 真机验收矩阵；只有 Roy 另行要求开始实施后才拆分构建变体或适配代码。
+产品路线已写回 SPEC/DESIGN：WorkToWatch 独立品牌、YouTube 单点首发、应用身份和数据隔离、底层可复用，TikTok/Instagram 未来另行决定。Roy 已于 2026-09-16 授权开始开发，v53 基线与独立分支已就绪；当前停在首次代码修改前的永久应用 ID 确认。确认后先建立双产品构建与隔离检查，再接入 YouTube 并进行真机闭环。首发国家/语言、品牌文案和 Google Play 流程仍分别推进，不把代码构建通过表述为可公开发布。
 
 ## 关联资料
 
