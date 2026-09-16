@@ -1,0 +1,173 @@
+{
+  "session": "b898b2f9-3164-4e73-a4a7-a3e8f8f2f4e8",
+  "serial": "35c2f60f",
+  "exported_utc": "2026-09-13T15:33:41.9376563Z",
+  "status": {
+    "id": "b898b2f9-3164-4e73-a4a7-a3e8f8f2f4e8",
+    "group": "B",
+    "status": "complete",
+    "reason": "window_complete",
+    "drained": true,
+    "missing_frames": [],
+    "frames": 9,
+    "images_saved": 9,
+    "images_dropped": 0,
+    "errors": 0,
+    "start_elapsed_ms": 172611505,
+    "last_error": "",
+    "deadline_elapsed_ms": 172621505,
+    "finished_elapsed_ms": 172621506
+  },
+  "files": [
+    {
+      "file": "events.jsonl",
+      "bytes": 5968,
+      "sha256": "B6C3C986740DBBC1FD50A068A8B85E3134A570C93FD55B6EDEE483B4B345AAB1"
+    },
+    {
+      "file": "frame-01.png",
+      "bytes": 436677,
+      "sha256": "2A220D69FA3745FD96BB23EA1DD5F762A0FCE142E7F4CEF567145AE53669B43D"
+    },
+    {
+      "file": "frame-02.png",
+      "bytes": 436850,
+      "sha256": "2267316158E025725017B597E5405BB1BDE33D1BACC614E609D514460A5C5177"
+    },
+    {
+      "file": "frame-03.png",
+      "bytes": 435212,
+      "sha256": "FBD4CF38CE28EE321C3552F131651B2699EC6210E01C852C4244732C7CDE677B"
+    },
+    {
+      "file": "frame-04.png",
+      "bytes": 436790,
+      "sha256": "2483156B8BB846D19A877242F62930494F27BADB784B2F0AAD83F0D906B51DB2"
+    },
+    {
+      "file": "frame-05.png",
+      "bytes": 436859,
+      "sha256": "E0288D67C2B673FFB52843AC8A49813E4BAA909ECD42A8B52868275C49C62583"
+    },
+    {
+      "file": "frame-06.png",
+      "bytes": 437699,
+      "sha256": "953718CA852EFCDFBD470CAEED4863DE8FE971AAD222B5846D77A107136A6431"
+    },
+    {
+      "file": "frame-07.png",
+      "bytes": 437552,
+      "sha256": "0F72B75E53D666C485DE3D02A51694858A22F72AE28B471D6B47A3D02D83A76D"
+    },
+    {
+      "file": "frame-08.png",
+      "bytes": 437694,
+      "sha256": "1E07971586FAEA9518482BE761B0A3214D5CA00307A8F20A531031C9173273E8"
+    },
+    {
+      "file": "frame-09.png",
+      "bytes": 437420,
+      "sha256": "CA6789DCD6AA7369DE810C2ABA75F972A1595F5DFBDFC60B7751022BE9673C4A"
+    },
+    {
+      "file": "frame-1-decision.json",
+      "bytes": 869,
+      "sha256": "91651C1DEA6702D69770F561B45FCAE773669F69771BC0A6CD147149F2308D78"
+    },
+    {
+      "file": "frame-1-input.json",
+      "bytes": 725,
+      "sha256": "19257FD33C7A3B72BE75910760978B4B41A2FB10BA054246C6F797E8C4B4AF9A"
+    },
+    {
+      "file": "frame-2-decision.json",
+      "bytes": 869,
+      "sha256": "DD709D14D281CE8F66A5AAFAEB7605BCCD884856DA27DE5CD546B5EA0735CE35"
+    },
+    {
+      "file": "frame-2-input.json",
+      "bytes": 946,
+      "sha256": "9FC70537F080D361F16EBE0B169C5F2CFB1B06BBB7FC4D1F23D7D9D581EA4C55"
+    },
+    {
+      "file": "frame-3-decision.json",
+      "bytes": 873,
+      "sha256": "3AD9037E0F485D9FE0A6F56603E04DC4A318ED3F1F694E52CD086D64DD7C7AB5"
+    },
+    {
+      "file": "frame-3-input.json",
+      "bytes": 840,
+      "sha256": "02AE4B61229D3DA55C72680FA97AAE4567A2EB648DA82B8622A5288D02D46008"
+    },
+    {
+      "file": "frame-4-decision.json",
+      "bytes": 866,
+      "sha256": "A809FC9A2C0519155EA389EFB87A2435FEB7DA063DF2596B16F54E0FD2B24566"
+    },
+    {
+      "file": "frame-4-input.json",
+      "bytes": 725,
+      "sha256": "AB1D749026BC1CDF92EE9BE89BF7AD045972D6DADEC65BF61A186EBB896BFC39"
+    },
+    {
+      "file": "frame-5-decision.json",
+      "bytes": 866,
+      "sha256": "BA8455116C5BA7004430997569E8DACE8706FB2347400D3C2CE31CAF8F4AEBDC"
+    },
+    {
+      "file": "frame-5-input.json",
+      "bytes": 840,
+      "sha256": "C6D9B35383DD8BE6050B38901736B92302A062C3613EBABDDD682A4671F37497"
+    },
+    {
+      "file": "frame-6-decision.json",
+      "bytes": 866,
+      "sha256": "E6A53AEBA6B2CACF9D9E495ACA2D4D36CF06D63F0ACB86548E3EF9938713F135"
+    },
+    {
+      "file": "frame-6-input.json",
+      "bytes": 725,
+      "sha256": "65F4AE5E3F7135A38FDBA1789D50A5EE382FE4EA5F133774874A7C46EF0E022A"
+    },
+    {
+      "file": "frame-7-decision.json",
+      "bytes": 861,
+      "sha256": "A6A1EB9BC2F5ABB848C27BD0EB01A35CDF49E6F6B5D6EC963FB142C7F1237A4E"
+    },
+    {
+      "file": "frame-7-input.json",
+      "bytes": 725,
+      "sha256": "71588F4936E265FFCB58CA00F96C8910690E7D1A336E208068C6C15AC5C38ED5"
+    },
+    {
+      "file": "frame-8-decision.json",
+      "bytes": 861,
+      "sha256": "D7C87B2748B975FB2B7FAA280FCA12C26E1D37BDB6349A408C496AF13FB2A753"
+    },
+    {
+      "file": "frame-8-input.json",
+      "bytes": 725,
+      "sha256": "B9BC11B4A1E325BDC2C2CC65AFE9093D2284D4C7257F0B635554FA7056046E2D"
+    },
+    {
+      "file": "frame-9-decision.json",
+      "bytes": 861,
+      "sha256": "DC9F4466CF20AAD691D84372F3865ECE7D17F04033911C5CE50BF7AF521F3141"
+    },
+    {
+      "file": "frame-9-input.json",
+      "bytes": 725,
+      "sha256": "C14DDA98AF1B466DA2C19C6A507BA213D49C44872FF4405046F0D2C646FBE605"
+    },
+    {
+      "file": "metadata.json",
+      "bytes": 1290,
+      "sha256": "4501F4F1468C339AC0D7A15A56B5920DE71A2B04A0C15CF28DD0C431733938F0"
+    },
+    {
+      "file": "status.json",
+      "bytes": 306,
+      "sha256": "D3E8B86CE78AE15CB0534A72BBC766F3E2060ADEC0671BF3FAAD22D8DF1DFD6D"
+    }
+  ]
+}

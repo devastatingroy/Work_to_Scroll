@@ -1,0 +1,48 @@
+{
+  "session": "a68204d6-f8de-463b-8426-74e4cdc7a6b8",
+  "serial": "35c2f60f",
+  "exported_utc": "2026-09-13T11:25:14.0641917Z",
+  "status": {
+    "id": "a68204d6-f8de-463b-8426-74e4cdc7a6b8",
+    "group": "A",
+    "status": "complete",
+    "reason": "window_complete",
+    "drained": true,
+    "missing_frames": [],
+    "frames": 1,
+    "images_saved": 1,
+    "images_dropped": 0,
+    "errors": 0,
+    "start_elapsed_ms": 157892003,
+    "last_error": "",
+    "deadline_elapsed_ms": 157902003,
+    "finished_elapsed_ms": 157902013
+  },
+  "files": [
+    {
+      "file": "frame-01.png",
+      "bytes": 111,
+      "sha256": "1295BAD90AD89BCA97540ECE8919D43F2ECAF5581D75604A6C9314D3C1A282FD"
+    },
+    {
+      "file": "frame-1-decision.json",
+      "bytes": 98,
+      "sha256": "98BB8BFD130A19141FD253F7F2DA7EB51AEC58CB5C6EBB60D0BE3067D82409D8"
+    },
+    {
+      "file": "frame-1-input.json",
+      "bytes": 292,
+      "sha256": "30A2CE9BEA247C713547AE63B64548CA3230D038845433169EB847A08341598D"
+    },
+    {
+      "file": "metadata.json",
+      "bytes": 433,
+      "sha256": "63BF95BE9BC645C9FC97CDBF2BE8A01C48E60CFB85110DC697D6C6E03179B45C"
+    },
+    {
+      "file": "status.json",
+      "bytes": 306,
+      "sha256": "766A32602F9830C05C189C322B207826329DED33E0B65FF4D22C2B192C6F34A2"
+    }
+  ]
+}

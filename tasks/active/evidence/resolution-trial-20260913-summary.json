@@ -1,0 +1,658 @@
+{
+  "schema": 1,
+  "kind": "derived_summary",
+  "source": "four exported v52 phone_15s_prepare sessions; original files retained",
+  "limitations": [
+    "Sequential single trial per condition, not simultaneous matched frames.",
+    "High-resolution person sample includes hand-to-face movement.",
+    "Empty scene is dining table and clothing-covered chairs, not the occupied sofa scene.",
+    "Initial clock states differ; frame/tick counts are not duration or independent accuracy estimates.",
+    "Diagnostic PNG writing adds load; no clean heat or power comparison."
+  ],
+  "groups": [
+    {
+      "id": "55f3f158-4431-42e6-8a64-7ac1edee07ac",
+      "profile": "baseline_320x240",
+      "group": "A",
+      "start_local": "2026-09-13T23:23:56.981000+08:00",
+      "status": {
+        "id": "55f3f158-4431-42e6-8a64-7ac1edee07ac",
+        "group": "A",
+        "status": "complete",
+        "reason": "window_complete",
+        "drained": true,
+        "missing_frames": [],
+        "frames": 28,
+        "images_saved": 28,
+        "images_dropped": 0,
+        "errors": 0,
+        "start_elapsed_ms": 172289250,
+        "last_error": "",
+        "deadline_elapsed_ms": 172319250,
+        "finished_elapsed_ms": 172319250
+      },
+      "source_sizes": [
+        [
+          320,
+          240
+        ]
+      ],
+      "input_sizes": [
+        [
+          240,
+          320
+        ]
+      ],
+      "model_sha256": "0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb",
+      "threshold": 0.5,
+      "capture_policy": "requested_baseline_320x240_10_fps",
+      "initial_state": [
+        "PRESENT",
+        true
+      ],
+      "scores": {
+        "min": 0.453125,
+        "max": 0.546875,
+        "mean": 0.49581473214285715,
+        "p50": 0.5,
+        "p95": 0.546875
+      },
+      "reliable_frames": 16,
+      "counting_decisions": 28,
+      "counting_ticks": 59,
+      "ticks": 59,
+      "inference_ms": {
+        "min": 35,
+        "max": 77,
+        "mean": 42.107142857142854,
+        "p50": 41.0,
+        "p95": 44
+      },
+      "conversion_ms": {
+        "min": 1,
+        "max": 15,
+        "mean": 7.071428571428571,
+        "p50": 7.0,
+        "p95": 13
+      },
+      "encode_write_ms": {
+        "min": 28,
+        "max": 57,
+        "mean": 35.714285714285715,
+        "p50": 34.0,
+        "p95": 46
+      },
+      "result_age_ms": {
+        "min": 41,
+        "max": 84,
+        "mean": 49.42857142857143,
+        "p50": 49.5,
+        "p95": 56
+      },
+      "main_queue_ms": {
+        "min": 0,
+        "max": 2,
+        "mean": 0.25,
+        "p50": 0.0,
+        "p95": 1
+      },
+      "analysis_gap_ms": {
+        "min": 1001,
+        "max": 1111,
+        "mean": 1062.7037037037037,
+        "p50": 1090,
+        "p95": 1104
+      },
+      "dispositions": {
+        "accepted": 28
+      },
+      "transitions": [
+        {
+          "frame": 1,
+          "offset_ms": 305,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        },
+        {
+          "frame": 2,
+          "offset_ms": 1414,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 5,
+          "offset_ms": 4615,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        },
+        {
+          "frame": 10,
+          "offset_ms": 10016,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 13,
+          "offset_ms": 13204,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        },
+        {
+          "frame": 14,
+          "offset_ms": 14234,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 16,
+          "offset_ms": 16297,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        },
+        {
+          "frame": 17,
+          "offset_ms": 17394,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 18,
+          "offset_ms": 18390,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        },
+        {
+          "frame": 24,
+          "offset_ms": 24701,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 26,
+          "offset_ms": 26854,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        },
+        {
+          "frame": 27,
+          "offset_ms": 27907,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 28,
+          "offset_ms": 28986,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        }
+      ]
+    },
+    {
+      "id": "95b89654-052a-44b5-b26a-10b79316bb2e",
+      "profile": "high_640x480",
+      "group": "A",
+      "start_local": "2026-09-13T23:26:32.478000+08:00",
+      "status": {
+        "id": "95b89654-052a-44b5-b26a-10b79316bb2e",
+        "group": "A",
+        "status": "complete",
+        "reason": "window_complete",
+        "drained": true,
+        "missing_frames": [],
+        "frames": 28,
+        "images_saved": 28,
+        "images_dropped": 0,
+        "errors": 0,
+        "start_elapsed_ms": 172444754,
+        "last_error": "",
+        "deadline_elapsed_ms": 172474754,
+        "finished_elapsed_ms": 172474755
+      },
+      "source_sizes": [
+        [
+          640,
+          480
+        ]
+      ],
+      "input_sizes": [
+        [
+          480,
+          640
+        ]
+      ],
+      "model_sha256": "0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb",
+      "threshold": 0.5,
+      "capture_policy": "requested_high_640x480_10_fps",
+      "initial_state": [
+        "UNCERTAIN",
+        false
+      ],
+      "scores": {
+        "min": 0.4296875,
+        "max": 0.5703125,
+        "mean": 0.47823660714285715,
+        "p50": 0.4765625,
+        "p95": 0.546875
+      },
+      "reliable_frames": 8,
+      "counting_decisions": 8,
+      "counting_ticks": 17,
+      "ticks": 59,
+      "inference_ms": {
+        "min": 43,
+        "max": 78,
+        "mean": 48.17857142857143,
+        "p50": 44.5,
+        "p95": 76
+      },
+      "conversion_ms": {
+        "min": 4,
+        "max": 24,
+        "mean": 9.5,
+        "p50": 5.0,
+        "p95": 23
+      },
+      "encode_write_ms": {
+        "min": 125,
+        "max": 138,
+        "mean": 134.82142857142858,
+        "p50": 136.0,
+        "p95": 138
+      },
+      "result_age_ms": {
+        "min": 47,
+        "max": 83,
+        "mean": 57.785714285714285,
+        "p50": 51.5,
+        "p95": 81
+      },
+      "main_queue_ms": {
+        "min": 0,
+        "max": 1,
+        "mean": 0.10714285714285714,
+        "p50": 0.0,
+        "p95": 1
+      },
+      "analysis_gap_ms": {
+        "min": 1000,
+        "max": 1109,
+        "mean": 1054.962962962963,
+        "p50": 1084,
+        "p95": 1104
+      },
+      "dispositions": {
+        "accepted": 28
+      },
+      "transitions": [
+        {
+          "frame": 1,
+          "offset_ms": 895,
+          "state": [
+            "UNCERTAIN",
+            false
+          ]
+        },
+        {
+          "frame": 7,
+          "offset_ms": 7272,
+          "state": [
+            "CHECKING",
+            false
+          ]
+        },
+        {
+          "frame": 8,
+          "offset_ms": 8276,
+          "state": [
+            "UNCERTAIN",
+            false
+          ]
+        },
+        {
+          "frame": 12,
+          "offset_ms": 12580,
+          "state": [
+            "CHECKING",
+            false
+          ]
+        },
+        {
+          "frame": 13,
+          "offset_ms": 13600,
+          "state": [
+            "PRESENT",
+            true
+          ]
+        },
+        {
+          "frame": 18,
+          "offset_ms": 18965,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 21,
+          "offset_ms": 22101,
+          "state": [
+            "UNCERTAIN",
+            false
+          ]
+        },
+        {
+          "frame": 28,
+          "offset_ms": 29365,
+          "state": [
+            "CHECKING",
+            false
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b898b2f9-3164-4e73-a4a7-a3e8f8f2f4e8",
+      "profile": "high_640x480",
+      "group": "B",
+      "start_local": "2026-09-13T23:29:19.231000+08:00",
+      "status": {
+        "id": "b898b2f9-3164-4e73-a4a7-a3e8f8f2f4e8",
+        "group": "B",
+        "status": "complete",
+        "reason": "window_complete",
+        "drained": true,
+        "missing_frames": [],
+        "frames": 9,
+        "images_saved": 9,
+        "images_dropped": 0,
+        "errors": 0,
+        "start_elapsed_ms": 172611505,
+        "last_error": "",
+        "deadline_elapsed_ms": 172621505,
+        "finished_elapsed_ms": 172621506
+      },
+      "source_sizes": [
+        [
+          640,
+          480
+        ]
+      ],
+      "input_sizes": [
+        [
+          480,
+          640
+        ]
+      ],
+      "model_sha256": "0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb",
+      "threshold": 0.5,
+      "capture_policy": "requested_high_640x480_10_fps",
+      "initial_state": [
+        "WEAK_GRACE",
+        true
+      ],
+      "scores": {
+        "min": 0,
+        "max": 0.26171875,
+        "mean": 0.0837673611111111,
+        "p50": 0,
+        "p95": 0.26171875
+      },
+      "reliable_frames": 0,
+      "counting_decisions": 2,
+      "counting_ticks": 6,
+      "ticks": 19,
+      "inference_ms": {
+        "min": 43,
+        "max": 82,
+        "mean": 49.55555555555556,
+        "p50": 44,
+        "p95": 82
+      },
+      "conversion_ms": {
+        "min": 5,
+        "max": 12,
+        "mean": 6,
+        "p50": 5,
+        "p95": 12
+      },
+      "encode_write_ms": {
+        "min": 139,
+        "max": 144,
+        "mean": 140.66666666666666,
+        "p50": 140,
+        "p95": 144
+      },
+      "result_age_ms": {
+        "min": 48,
+        "max": 87,
+        "mean": 55.888888888888886,
+        "p50": 50,
+        "p95": 87
+      },
+      "main_queue_ms": {
+        "min": 0,
+        "max": 1,
+        "mean": 0.3333333333333333,
+        "p50": 0,
+        "p95": 1
+      },
+      "analysis_gap_ms": {
+        "min": 1001,
+        "max": 1112,
+        "mean": 1050.375,
+        "p50": 1048.5,
+        "p95": 1112
+      },
+      "dispositions": {
+        "accepted": 9
+      },
+      "transitions": [
+        {
+          "frame": 1,
+          "offset_ms": 960,
+          "state": [
+            "GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 2,
+          "offset_ms": 2014,
+          "state": [
+            "WEAK_GRACE",
+            true
+          ]
+        },
+        {
+          "frame": 3,
+          "offset_ms": 3110,
+          "state": [
+            "UNCERTAIN",
+            false
+          ]
+        },
+        {
+          "frame": 4,
+          "offset_ms": 4081,
+          "state": [
+            "AWAY",
+            false
+          ]
+        },
+        {
+          "frame": 5,
+          "offset_ms": 5081,
+          "state": [
+            "UNCERTAIN",
+            false
+          ]
+        },
+        {
+          "frame": 6,
+          "offset_ms": 6173,
+          "state": [
+            "AWAY",
+            false
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c4e030ec-5a5a-4b45-9d50-91fdc555cd2f",
+      "profile": "baseline_320x240",
+      "group": "B",
+      "start_local": "2026-09-13T23:31:34.589000+08:00",
+      "status": {
+        "id": "c4e030ec-5a5a-4b45-9d50-91fdc555cd2f",
+        "group": "B",
+        "status": "complete",
+        "reason": "window_complete",
+        "drained": true,
+        "missing_frames": [],
+        "frames": 10,
+        "images_saved": 10,
+        "images_dropped": 0,
+        "errors": 0,
+        "start_elapsed_ms": 172746863,
+        "last_error": "",
+        "deadline_elapsed_ms": 172756863,
+        "finished_elapsed_ms": 172756863
+      },
+      "source_sizes": [
+        [
+          320,
+          240
+        ]
+      ],
+      "input_sizes": [
+        [
+          240,
+          320
+        ]
+      ],
+      "model_sha256": "0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb",
+      "threshold": 0.5,
+      "capture_policy": "requested_baseline_320x240_10_fps",
+      "initial_state": [
+        "GRACE",
+        true
+      ],
+      "scores": {
+        "min": 0,
+        "max": 0.34375,
+        "mean": 0.078515625,
+        "p50": 0.0,
+        "p95": 0.34375
+      },
+      "reliable_frames": 0,
+      "counting_decisions": 0,
+      "counting_ticks": 0,
+      "ticks": 19,
+      "inference_ms": {
+        "min": 43,
+        "max": 67,
+        "mean": 46.9,
+        "p50": 44.5,
+        "p95": 67
+      },
+      "conversion_ms": {
+        "min": 1,
+        "max": 12,
+        "mean": 6.4,
+        "p50": 6.0,
+        "p95": 12
+      },
+      "encode_write_ms": {
+        "min": 36,
+        "max": 43,
+        "mean": 38.6,
+        "p50": 38.0,
+        "p95": 43
+      },
+      "result_age_ms": {
+        "min": 44,
+        "max": 76,
+        "mean": 54.1,
+        "p50": 54.0,
+        "p95": 76
+      },
+      "main_queue_ms": {
+        "min": 0,
+        "max": 8,
+        "mean": 0.8,
+        "p50": 0.0,
+        "p95": 8
+      },
+      "analysis_gap_ms": {
+        "min": 1001,
+        "max": 1098,
+        "mean": 1033.3333333333333,
+        "p50": 1005,
+        "p95": 1098
+      },
+      "dispositions": {
+        "accepted": 10
+      },
+      "transitions": [
+        {
+          "frame": 1,
+          "offset_ms": 471,
+          "state": [
+            "UNCERTAIN",
+            false
+          ]
+        },
+        {
+          "frame": 3,
+          "offset_ms": 2435,
+          "state": [
+            "AWAY",
+            false
+          ]
+        },
+        {
+          "frame": 5,
+          "offset_ms": 4536,
+          "state": [
+            "UNCERTAIN",
+            false
+          ]
+        },
+        {
+          "frame": 6,
+          "offset_ms": 5635,
+          "state": [
+            "AWAY",
+            false
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -3,3 +3,8 @@
 **/build/
 local.properties
 *.iml
+
+# v46 diagnostic evidence: keep analyzable records in git, exclude heavy binaries
+# (person-frame PNGs and device-evidence tars stay local only).
+tasks/active/evidence/**/*.png
+tasks/active/evidence/**/*.tar
