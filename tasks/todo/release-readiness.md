@@ -1,6 +1,8 @@
 # 上架/发布准备（国内渠道为主，Google Play 为参照）
 
-状态：Roy 已于 2026-09-10 明确选择小米应用商店作为首发渠道；已开始非技术、非个人信息的流程材料准备。小米当前政策显示新应用不能按个人开发者主体收录，企业主体资料成为下一项外部前置。创建日期：2026-09-09，更新日期：2026-09-10。
+状态：**候选（2026-09-10 晚）** —— Roy 改为主攻 Google Play（海外版、监控 TikTok），国内软件商店降为候选路线；本文件的原"小米/国内首发"内容仅作候选/参考，Google Play 首发另见[当前主任务 google-play-release.md](../active/google-play-release.md)。下方原小米首发的调研、材料矩阵与结论保留为历史参考，不再作为当前首发口径。
+
+（历史）Roy 曾于 2026-09-10 上午明确选择小米应用商店作为首发渠道；已开始非技术、非个人信息的流程材料准备。小米当前政策显示新应用不能按个人开发者主体收录，企业主体资料成为下一项外部前置。创建日期：2026-09-09，更新日期：2026-09-10。
 
 入口：[任务索引](../README.md) · [产品要求](../../docs/SPEC.md)。
 
@@ -14,7 +16,7 @@
 
 1. Google Play 的可分发地区列表不含中国大陆；即使能注册开发者/商户账号，也不构成面向大陆用户的主渠道——首发应转向国内商店（小米/华为/OPPO/vivo 待选）。
 2. 可靠性阻塞与流程性阻塞是两类不同问题，不能互相替代或掩盖：
-   - **可靠性阻塞（P0，真正卡公开发布）**：核心闭环（工作换时长→消费→归零拦截）、后台保护（Xiaomi 曾出现系统冻结致零余额放行）、摄像头中断恢复的多场景验证（来电/低电量/锁屏/相机抢占）、跨机型兼容性（当前证据主要来自 Xiaomi 14 Pro）目前只有短时或单机证据。见 [camera-rewards.md](camera-rewards.md)、[background-protection.md](background-protection.md)、[camera-thermal-test.md](camera-thermal-test.md)。
+   - **可靠性阻塞（P0，真正卡公开发布）**：核心闭环（工作换时长→消费→归零拦截）、后台保护（Xiaomi 曾出现系统冻结致零余额放行）、摄像头中断恢复的多场景验证（来电/低电量/锁屏/相机抢占）、跨机型兼容性（当前证据主要来自 Xiaomi 14 Pro）目前只有短时或单机证据。见 [camera-rewards.md](../active/camera-rewards.md)、[background-protection.md](../active/background-protection.md)、[camera-thermal-test.md](../active/camera-thermal-test.md)。
    - **流程性阻塞**：软著/APP 电子版权证明、备案口径（当前 App 已在 Manifest 移除 INTERNET 权限，但仍需向首发商店确认是否要求备案材料）、隐私政策与敏感权限逐项说明（摄像头/使用情况访问/悬浮窗/通知/开机恢复）、正式签名发布包（当前包名含 `.overlaytest`，且只有 debug APK）。
 3. 2026-09-10 复核后更正此前关于个人主体的结论：小米的《应用商店个人开发者升级公告》写明“暂停收录个人开发者账号发布的 APP”。因此不能把“免费、离线、无广告”视为个人首发的豁免条件；当前应按**企业开发者主体**准备。公告未给出本项目的替代主体，不能据此自行指定公司、借用主体或填写实名资料。
 4. Google Play 侧的流程细节（前台服务声明+演示视频、Data Safety 表、个人开发者账号需 12 人连续 14 天封测、targetSdk 36 已满足）已核实，但仅在“未来仍要做海外版”时才适用，不是当前国内首发的门槛。
@@ -28,10 +30,11 @@
 - [x] Roy 选择小米应用商店为首发渠道。
 - [x] 复核小米现行上架、资质、隐私、名称与备案规则，并纠正个人开发者主体判断。
 - [x] 从当前工程提取流程性差距：显示名为 WorkToScroll，当前 applicationId 为 `com.roy.worktoscroll.overlaytest`，仅有 debug 构建；现有应用内“隐私说明”是自用测试版静态说明，尚不是首次运行前的可同意/拒绝隐私政策。
+- [x] 将主体资格、版权证明、APP 备案与正式提审材料拆为独立支线：[小米首发资质与备案准备](xiaomi-publishing-credentials.md)；2026-09-10 已启动登记主体与应用名称确认，尚未开始任何申报。
 - [ ] 整理不含身份信息的提交材料清单与名称一致性矩阵。
 - [ ] Roy 提供或确认可用企业主体后，再进行企业账号认证、软著或 APP 电子版权认证、APP 备案与联系人信息填写；三者的主体、应用名称和最终包名必须保持一致。
 - [ ] 锁定正式包名与签名证书，摆脱 `.overlaytest` 与 debug APK 身份，建立可追溯版本升级规则。
-- [ ] 待 [camera-rewards.md](camera-rewards.md)、[background-protection.md](background-protection.md)、[camera-thermal-test.md](camera-thermal-test.md) 等可靠性验收完成，才可视为达到公开发布门槛；流程材料齐备不能替代这些验收。
+- [ ] 待 [camera-rewards.md](../active/camera-rewards.md)、[background-protection.md](../active/background-protection.md)、[camera-thermal-test.md](../active/camera-thermal-test.md) 等可靠性验收完成，才可视为达到公开发布门槛；流程材料齐备不能替代这些验收。
 
 ## 当前停点与下一步
 
@@ -55,4 +58,4 @@
 
 这张矩阵只用于消除流程等待，不把未完成的产品可靠性、隐私交互和正式包工作伪装为“已具备上架资格”。
 
-依赖：产品可靠性验收见 [camera-rewards.md](camera-rewards.md)、[background-protection.md](background-protection.md)、[camera-thermal-test.md](camera-thermal-test.md)；海外/Google Play 候选路线见 [overseas-target-apps.md](../todo/overseas-target-apps.md)，二者互不替代。
+依赖：产品可靠性验收见 [camera-rewards.md](../active/camera-rewards.md)、[background-protection.md](../active/background-protection.md)、[camera-thermal-test.md](../active/camera-thermal-test.md)；当前海外产品轨道见 [overseas-target-apps.md](../active/overseas-target-apps.md)，二者互不替代。

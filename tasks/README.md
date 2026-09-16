@@ -1,6 +1,10 @@
 # 任务索引
 
-这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主任务为[摄像头计时与每轮奖励验收](active/camera-rewards.md)，接续临时中断自动恢复后的具体场景验收。此前[设置页重新设计](active/settings-redesign.md)，0.5.1 已安装并完成页面及启停检查，正在核实后台待核对提示的误导问题。[每日清零与兑换比例](active/entertainment-rules.md)此前 0.5.0 已覆盖安装、79 项测试通过，余额和历史保留；等待真实新增档位奖励与自然跨夜验收。此前[猫总监工界面验收](active/cat-ui.md)，0.4.4 已安装“猫总批假”双状态图（零余额“工作优先”桌牌／有余额“准了”红章）并提交 `7ce99bb`，下一步是解锁手机核对实机显示、零余额画面及余额双向切换。[摄像头监控发热对照测试](active/camera-thermal-test.md)短测三轮已完成、支持低负载版本明显减轻发热，长期耐久与量化识别表现仍未验收。[侧后方在场观察](active/side-rear-presence-exploration.md)及[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
+2026-09-16 当前操作：[v46回退与温度任务](active/camera-thermal-test.md)已恢复app源码至`294fa0f`，v49–v52实验代码完整保存在stash `c61d048`，原实验资料保留；当前v46源码重新构建、lint及147项单元测试均通过。手机已重新连接并确认仍为v52。昨晚21:12–21:55一轮预览持续开启：有效37分07秒，电池端点34.7→32.9°C（−1.8°C，起止均未接电）；起点满电且此前供电、环境与机位未知，不能解释为监控降温。期间两次失焦使相机约12秒及26秒未绑定，非严格连续。尚未安装v46；若继续回退，先备份最新账本并尝试保留数据的原v46降级覆盖。
+
+这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主线为 Google Play 首发，明确分为两条独立轨道：[WorkToWatch 产品准备](active/overseas-target-apps.md)负责独立 YouTube 产品的定义、体验、适配和可靠性验收；[Google Play 流程与合规准备](active/google-play-release.md)负责账号、测试轨道、隐私和商店审核材料。2026-09-15 已确认保留现有 WorkToScroll 小红书产品，另做独立品牌 WorkToWatch；首发只支持整个官方 YouTube Android App，底层可复用但应用身份、数据和平台内容隔离，尚未授权改码。两条轨道相互依赖，但任何一条的完成都不代表另一条完成；国内软件商店仅保留为候选路线。此前[设置页重新设计](active/settings-redesign.md)，0.5.7 已安装小米“锁定最近任务”三步图解，待解锁核对真机排版；“待核对”状态映射仍是独立未决问题。[每日清零与兑换比例](active/entertainment-rules.md)此前 0.5.0 已覆盖安装、79 项测试通过，余额和历史保留；等待真实新增档位奖励与自然跨夜验收。此前[猫总监工界面验收](active/cat-ui.md)，0.4.4 已安装“猫总批假”双状态图（零余额“工作优先”桌牌／有余额“准了”红章）并提交 `7ce99bb`，下一步是解锁手机核对实机显示、零余额画面及余额双向切换。[摄像头监控发热对照测试](active/camera-thermal-test.md)短测三轮已完成、支持低负载版本明显减轻发热，长期耐久与量化识别表现仍未验收。[侧后方在场观察](completed/side-rear-presence-exploration.md)已结项并保留历史证据；[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
+
+2026-09-13 结项：[侧后方人体识别探索](completed/side-rear-presence-exploration.md)已按Roy要求结束。本次真实640×480未显示识别收益，保持默认320×240/0.50；证据完整保留，不再等待补采或下一轮实验。未完的识别可靠性、计时及发热验收已交由现有对应任务保留，本轮未commit，既有分支/stash/未提交改动保留。
 
 ## 目录与状态规则
 
@@ -29,26 +33,30 @@
 | [状态变化的戏剧化 UI 反馈设计](active/state-feedback-design.md) | 猫总耗尽单幕 0.5.4 已覆盖安装、103 项单测通过；零余额静态页已核对，接续动效与消费验收 |
 | [设置页重新设计](active/settings-redesign.md) | 0.5.10 已安装；允许自启动后的正常重启已实测恢复小红书封禁，待核对新增引导的排版/返回与省电“待核对”映射 |
 | [每日清零与兑换比例](active/entertainment-rules.md) | 已安装；接续真实 15/20 分钟奖励、自然跨夜清零及后台到期验证 |
-| [侧后方无脸在场检测探索](active/side-rear-presence-exploration.md) | 接续主 App 前置人体检测与声音的日常使用观察，核对误报、漏报及耐久；关联摄像头及发热验收 |
-| [摄像头监控发热对照测试](active/camera-thermal-test.md) | 0.5.11/v33 已安装跨重置会话日志；下一轮先验有效总量/重置事件，再接续规范温度记录与日常识别观察 |
+| [摄像头监控发热对照测试](active/camera-thermal-test.md) | v52第七轮预览持续开启、有效37分07秒端点为−1.8°C；高起温及条件不明，严格同条件耐久仍待验 |
 | [零余额阻止页音频处理](active/audio-blocking.md) | 处理阻止后继续出声，保留共享音频焦点的确认与真机验收边界 |
-| [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 0.5.5 已安装；新增微信后经桌面图标返回的 90 秒同进程恢复，待真机路径及来电、电量弹窗、锁屏、相机占用和声音验收 |
+| [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 当前源码为v46；v49–v52诊断已结项，继续验收日常计时、奖励和中断恢复 |
 | [猫总监工界面验收](active/cat-ui.md) | 0.5.2 已安装阻止页 A 到期假条图，待解锁验收；接续首页双状态、引导、返回路径及工作反馈验收 |
-| [上架/发布准备（国内渠道为主）](active/release-readiness.md) | 已拆分"产品可靠性待验收"与"上架流程性事项"两张简报；等待 Roy 决定首发商店（小米/华为/OPPO·vivo）后接续资质准备 |
-| [后台冻结与消费拦截耐久验收](active/background-protection.md) | 验证真实后台保护、消费、耗尽阻止和退出路径 |
+| [WorkToWatch 产品准备](active/overseas-target-apps.md) | **当前产品轨道**：独立 YouTube 产品路线已确认；首发单点、品牌/应用身份/数据隔离，尚未获准改码 |
+| [Google Play 流程与合规准备](active/google-play-release.md) | **当前流程与合规轨道**：账号、测试轨道、Data safety、隐私与商店审核材料；未注册/未付款/未提交 |
+| [后台冻结与消费拦截耐久验收](active/background-protection.md) | 0.5.6 已实测单任务、单最近任务计数及目标 STOPPED；0.5.7 加入锁定图解并保留修复，待完成最新版本视觉、停声和退出回归 |
 | [默认保护与提醒验收](active/default-protection.md) | 已通过一次允许自启动后的正常重启拦截；接续系统回收、手动停止和四小时实际提醒 |
 
 ## todo
 
 | 任务 | 目标与依赖 |
 | --- | --- |
-| [海外版目标娱乐应用适配准备](todo/overseas-target-apps.md) | 为 Google Play 后续版本探索 TikTok、Facebook、Instagram 的首批适配；先定首发市场和目标应用，不改变当前小红书原型 |
+| [监控时的手机摆放提醒](todo/camera-placement-reminder.md) | 提醒避免笔记本电脑等物体遮挡，建议手机放在侧面、侧后方或背后，距离不超过 0.6 米；已记录，尚未实施 |
+| [Android 多目标娱乐应用监控准备](todo/target-app-selection.md) | 为小红书、抖音、红果等已支持 App 的单选/多选监控准备范围、边界和逐项真机验收；不改变当前固定小红书原型 |
+| [国内软件商店候选准备](todo/release-readiness.md) | 国内小米/华为等商店改为候选路线；保留既有调研和材料矩阵，不启动账号、资质或备案流程 |
+| [小米商店资质与备案候选准备](todo/xiaomi-publishing-credentials.md) | 国内候选的具体资质入口；小米注册未提交，恢复时先重新核对主体与平台规则 |
 | [iPhone 核心原型开发准备](todo/ios-prototype.md) | 暂缓方向；恢复时核实 Mac、Xcode、设备、账号与签名 |
 
 ## completed
 
 | 任务或历史档案 | 结果范围与接续 |
 | --- | --- |
+| [侧后方无脸在场检测探索](completed/side-rear-presence-exploration.md) | 已结项：640未显示收益，保持320/0.50；原始证据保留，长期识别/计时/发热验收已转交现有任务 |
 | [应用图标采用与备选归档](completed/app-icon-design.md) | 标准沙漏已安装，其他候选备选归档；桌面裁切与辨识交由猫总界面验收 |
 | [任务目录与恢复入口迁移](completed/task-organization.md) | 唯一入口、分类与引用迁移已完成 |
 | [应用显示名称修改](completed/app-rename.md) | 名称修改已完成；当前整体界面由猫总 UI 任务验收 |

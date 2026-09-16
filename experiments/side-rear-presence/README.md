@@ -1,6 +1,6 @@
 # 人体识别实验（全画面初筛）
 
-独立 Android debug 应用，唯一任务入口：[侧后方探索](../../tasks/active/side-rear-presence-exploration.md)。这里只维护实验运行方式与实际边界，不复制任务进度。
+独立 Android debug 应用，唯一任务入口：[侧后方探索](../../tasks/completed/side-rear-presence-exploration.md)。这里只维护实验运行方式与实际边界，不复制任务进度。
 
 - 包名 `com.roy.worktoscroll.presenceexperiment`；显示名“人体识别实验”。不覆盖原应用，不包含保护服务、真实/模拟账本、奖励、联网、录像或图片保存功能。
 - CameraX 1.4.2 后置相机，分析线程每约 500 ms 处理一次最新帧；ImageProxy.toBitmap 处理格式，按帧方向旋转后交给 MediaPipe Tasks Vision 1.0.0（CPU，IMAGE 同步模式）。模型未加载完成不能启动。

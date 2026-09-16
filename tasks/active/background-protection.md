@@ -1,6 +1,6 @@
 # 后台冻结与消费拦截耐久验收
 
-状态：修复；短时恢复已有证据，长期验收未完成。迁移日期：2026-09-08。
+状态：0.5.7-xiaomi-recents-guide/versionCode 29 已覆盖安装并保留 0.5.6 的单任务修复；0.5.6 真机系统证据已通过单任务、单最近任务计数及目标 STOPPED，待在 0.5.7 完成视觉、停声和退出回归。迁移日期：2026-09-08。
 
 入口：[任务索引](../README.md)。维护人：接续本任务的 agent；关键步骤、阻塞、验证或完成时更新本文件，状态迁移同步索引。
 
@@ -16,6 +16,22 @@
 旧版未完验收从[悬浮窗阶段历史](../completed/android-overlay-history.md)接续，仅在当前实现上验证；声音问题单列[音频处理](audio-blocking.md)。
 
 ## 已有记录与证据
+
+## 2026-09-11 零余额持续漏拦：上滑清理将应用强制停止
+
+- [x] Roy 报告当前可用娱乐时间为 0，但打开小红书持续没有拦截；在未先打开主应用的现场读取到：`balance_ms=0`、`enabled=true`、小红书前台、阻止窗口/阻止页均不存在，监测点已落后约 146—152 秒，WorkToScroll 进程和前台服务完全不存在。余额和权限并非本次直接原因。
+- [x] 系统退出记录确认最近一次退出发生于 2026-09-11 08:56:54：`reason=USER REQUESTED`、`subreason=FORCE STOP`，说明为 `due to SwipeUpClean`；包状态同时为 `stopped=true`。因此这次不是旧的“进程仍在但被冻结”，而是小米上滑清理把应用置为强制停止，系统禁止 `START_STICKY` 服务自行重启。
+- [x] 只启动 WorkToScroll 主页面恢复保护，未改余额、累计消费、保护开关或权限。恢复后包状态 `stopped=false`，ProtectionService 为前台服务，进程 PID 8613 未冻结，监测点连续保持新鲜；`balance_ms=0`、`consumed_ms=4980000` 保持不变。
+- [~] 随后从电脑启动一次小红书，连续三次采样均由 WorkToScroll 的全屏阻止页保持前台，小红书未成为前台；Roy 随后确认手机上已经出现阻止画面，零余额视觉阻止链路恢复。触摸阻止和用户主动再次打开小红书仍未单独验收。
+- [x] Roy 打开最近任务后截图显示两个 WorkToScroll 卡片：下方为主页任务，上方为“暂无可用时间”阻止页任务；截图中的主页小锁是 Roy 在本次漏拦恢复后刚添加，不能倒推 08:56 漏拦发生时主页已锁。代码事实与截图一致：BlockerActivity 使用独立 `taskAffinity` 和 `singleTask`；虽然声明了 `excludeFromRecents/noHistory`，HyperOS 仍会把当前活跃的阻止任务临时显示为第二张卡片。
+- [~] 最近退出记录 `SwipeUpClean → FORCE STOP` 已证明本次漏拦由上滑清理强停引起；但由于主页小锁是事后添加，现有证据不能证明重复的阻止页卡片造成了 08:56 这一次强停。两个同名卡片仍会让用户误判哪个任务应保留，并增加未来清理错卡导致保护失效的风险，属于发布前必须解决的核心体验与可靠性缺陷。
+- [x] Roy 明确要求先好好设计再实施。采用最小结构修正：保留全屏 Activity、旧浮层、音频焦点、结算和耗尽动效，只移除阻止页的独立taskAffinity/excludeFromRecents，将singleTask改为singleTop；服务的NEW_TASK请求因默认亲和性复用WorkToScroll任务。同步把阻止页所有finishAndRemoveTask改为finish，防止合并后退出时连主页任务一起删除。未采用“只保留浮层”，因为既有真机证据表明目标不退后台时不能可靠停声；也未把“让用户识别并锁两个卡片”当产品修复。
+- [x] 0.5.6-single-task-blocker/versionCode 28 已完成107项单元测试、debug APK与androidTest APK构建、lint（0错误/15警告）；最终合并清单确认BlockerActivity只有singleTop/noHistory，没有独立taskAffinity或excludeFromRecents。androidTest新增两次阻止页与主页taskId一致的断言，但尚未安装运行测试组件。
+- [x] debug APK SHA-256为`A6A88BB5726AA73F1A23F8256B9475CE7642B62D4F7FCBF7DDEA3509652BDCF4`，APK v2签名验证通过；手机35c2f60f保留数据覆盖安装成功，读回0.5.6/versionCode28。安装前设备APK备份为`app/build/device-before-single-task-blocker.apk`，SHA-256为`EBA7F17C8E3B9351F259BFC1838205DC6F174BF4F84AC8F4ADB2355EB5958EC7`。
+- [x] 安装前后账本快照为`app/build/ledger-before-single-task-blocker.xml`与`app/build/ledger-after-single-task-blocker-install.xml`；balance_ms=0、consumed_ms=4980000、work_total_ms=13109463、work_session_ms=2138、work_reward_ms=0、work_upgrade_credit_ms=180000、enabled=true、work_active=false及15分钟档位均一致。
+- [~] 0.5.6 真机回归：首次尝试时设备已Dozing且锁屏，NotificationShade持有当前窗口，不能作为失败证据。Roy解锁后，从WorkToScroll切入小红书，阻止页连续三次采样均focused/visible；WorkToScroll任务592同时包含MainActivity根页和BlockerActivity顶页，系统最近任务计数为1，小红书Activity为STOPPED且不可见。进入最近任务后BlockerActivity按noHistory退出，任务592仅保留MainActivity，最近任务计数仍为1。系统结构证据通过；停声、返回WorkToScroll、回桌面、系统返回、重复进入和上滑清理仍待验收。
+- [x] Roy 要求在设置的后台保障区补充锁定最近任务提醒，并进一步要求把“打开最近任务”拆成三步配图操作。0.5.7 保留 0.5.6 单任务修复，新增原生图解；107 项单测、debug/androidTest 构建与 lint 通过，覆盖安装及账本保留通过。该引导降低再次 SwipeUpClean 的误操作风险，但不能替代单任务结构修复，也不能保证系统不强停应用。
+- 当前停点：0.5.7 已安装且数据保留，本地实现闭环；待设备解锁后核对图解排版，并在当前安装版本复测零余额阻止、最近任务实际单卡片、停声与退出路径。发布前必修问题尚未完成全部真机验收。
 
 ## 当前修复：后台冻结导致零余额放行（2026-09-08）
 
