@@ -11,7 +11,7 @@
 | 文件 | 职责 |
 |---|---|
 | app/build.gradle | 定义双产品应用 ID、版本、目标包和目标名称；保留既有聚合构建命令，并提供 APK 隔离检查入口 |
-| app/src/workToScroll、app/src/workToWatch | 保存构建专属产品名与返回文案；共用代码不硬编码某一目标应用 |
+| app/src/workToScroll、app/src/workToWatch | 保存构建专属产品名与返回文案；WorkToWatch 还用同名 `drawable-nodpi/app_icon_hourglass.png` 覆盖 launcher drawable，WorkToScroll 继续读取 main 中的紫底沙漏；共用代码与 Manifest 不硬编码某一目标应用或图标文件路径 |
 | MainActivity.java | 猫总首页，以及用 page 参数区分的设置/权限详情/开发工具页面实例；保留授权、保护启停与测试动作，前台时按已保存开关恢复服务 |
 | ProtectionUiState.java | 纯展示状态优先级：停止意愿、必要授权缺失、运行中断、服务异常、后台受限、运行中；不写账本或启动服务 |
 | CatUi.java | 原生页面宽度/系统边距、纸色与黑色样式、控件与图片解码；blocker 创建共享原生 BlockerView，不写入业务状态 |

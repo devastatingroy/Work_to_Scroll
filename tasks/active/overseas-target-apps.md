@@ -48,6 +48,7 @@
 - [x] 把目标包、产品名、目标应用名、入口文案和 Manifest 查询从共用逻辑中分离；WorkToWatch 只配置官方 YouTube Android App `com.google.android.youtube`，WorkToScroll 继续只配置 `com.xingin.xhs`。
 - [x] 增加两种构建各自的产品身份单测和 `verifyDebugProductIsolation` APK 检查。两边各 161 项单测通过，lint 均为 0 错误、23 个既有警告；两个 Debug APK 与各自 AndroidTest APK 构建通过，应用 ID、产品名、BuildConfig 目标、内部 action 前缀和 Manifest 查询隔离检查通过。
 - [x] 在小米 14 Pro / HyperOS 3.0 独立安装 WorkToWatch Debug 构建，核对官方 YouTube 包、独立应用 ID/数据目录、必要授权、保护服务、零余额启动阻止及返回桌面。
+- [x] 将 Roy 指定的 1254×1254 透明 PNG 作为 WorkToWatch 独立 launcher drawable；源文件与 flavor 资源 SHA-256 均为 `F4536A30E6681AA9DF1D96E64E012852DA379569A06D597C0511370A2D2AB55A`。双产品构建与隔离检查通过，WorkToScroll 打包资源及 APK 哈希未改变；WorkToWatch 已覆盖安装且账本、使用情况访问、悬浮窗和受限设置授权保留。
 - [ ] 继续验证正数余额前台扣减与耗尽转换、锁屏恢复、音频、分屏/多窗口和长期后台边界；单机零余额首验不能替代完整矩阵。
 
 ## 首轮真机证据（2026-09-16）
@@ -56,7 +57,8 @@
 - 安装：`com.roy.worktowatch`、versionCode 1、`0.1.0-dev`，数据目录 `/data/user/0/com.roy.worktowatch`；原 WorkToScroll 仍为 `com.roy.worktoscroll.overlaytest`、v53、独立数据目录。安装前后原账本的余额 0、累计工作 `52532063 ms`、阻止计数 199 均未改变，只有正常监测游标前进。
 - 小米增强防护：经文件管理器安装的新包被标记为未知来源受限，`ACCESS_RESTRICTED_SETTINGS=ignore`，导致“使用情况访问”开关受限；旧 WorkToScroll 的安装来源为 `com.android.shell`，没有该附加限制。经 Roy 要求协助解决后，只把 WorkToWatch 的 `ACCESS_RESTRICTED_SETTINGS` 改为 `allow`，再由 Roy 在系统页亲自开启“使用情况访问”；悬浮窗同样由 Roy 手动授权。最终 `GET_USAGE_STATS=allow`、`SYSTEM_ALERT_WINDOW=allow`。未授予截图中被小米拒绝的“获取应用列表”，本产品合并 Manifest 也未请求 `QUERY_ALL_PACKAGES`。
 - 运行：`ProtectionService` 以前台服务运行；WorkToWatch 初始账本为零，不继承 WorkToScroll。零余额启动 YouTube 后，前台切至 `com.roy.worktowatch/com.roy.worktoscroll.BlockerActivity`，阻止计数从 0 增至 1，随后回到桌面，YouTube 不再保持前台。
-- 边界：本轮证明单台小米设备上的独立安装、权限、官方 YouTube 识别、零余额阻止和回桌面路径；未证明有余额扣减、耗尽转换、锁屏/恢复、音频、分屏/多窗口、其他厂商或长期后台可靠性。
+- 图标：覆盖安装后在 HyperOS 桌面目视确认，透明底图形由 launcher 呈现在白色圆角方形底上，白橙进度环和橙色播放键完整、无裁切，并与 WorkToScroll 紫底沙漏明显区分；保护服务已在更新后重新启动并保持前台运行。
+- 边界：本轮证明单台小米设备上的独立安装、权限、官方 YouTube 识别、零余额阻止、回桌面路径及桌面图标裁切；未证明有余额扣减、耗尽转换、锁屏/恢复、音频、分屏/多窗口、其他厂商或长期后台可靠性。
 
 ## 当前停点
 
