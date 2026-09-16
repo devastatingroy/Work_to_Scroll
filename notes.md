@@ -47,6 +47,16 @@
 
 小米14 Pro / HyperOS 3 的实测边界（2026-09-14，v52）：全机自动亮度开启时，`WorkActivity`的窗口`screenBrightness=0.05`能够实际触发系统`OverrideBrightnessStrategy`，系统记录约72.7 nit降至26.5 nit，同时自动亮度模式保持开启；结束工作撤销覆盖后重新由环境光自动调整。系统亮度滑块或`screen_brightness`设置值不会等比例反映窗口覆盖，更不能当作实际面板亮度。开/关预览对照会同时改变Preview绑定和工作页亮度，若要区分二者贡献，必须另做固定亮度的单变量试验。
 
+## 小米增强防护限制侧载 App 的特殊权限
+
+适用范围：小米 14 Pro / HyperOS 3.0 上经文件管理器安装的 WorkToWatch Debug 包；这是安装来源差异，不代表代码请求了完整应用列表，也不代表所有小米版本一致。
+
+- 症状：安装器安全检测通过并完成安装后，“使用情况访问”页显示“由受限设置控制”，AppOps 为 `ACCESS_RESTRICTED_SETTINGS: ignore`、`GET_USAGE_STATS: ignore`；小米权限页还可能对“获取应用列表”弹出“未知来源应用，系统已拒绝此应用获取敏感权限”。后者不是本项目的必要授权，不能看到该提示就扩大授权范围。
+- 先核对安装来源与实际声明：`dumpsys package <包名>` 查看 `installerPackageName` / `initiatingPackageName` / `originatingPackageName` 和 requested permissions；再用 `cmd appops get <包名> ACCESS_RESTRICTED_SETTINGS` 区分受限设置与实际使用情况授权。WorkToWatch 的合并 Manifest 只查询官方 YouTube 单包，不声明 `QUERY_ALL_PACKAGES`；保护链路需要的是 `PACKAGE_USAGE_STATS` 和 `SYSTEM_ALERT_WINDOW`。
+- 本机差异：WorkToWatch 经文件管理器和 `com.miui.packageinstaller` 安装后被加受限标记；既有 WorkToScroll 由 `com.android.shell` 安装，未出现同一标记。不能据此推断商店正式安装也会受限。
+- 处理：在 Roy 明确要求协助解除后，仅对目标包执行 `cmd appops set com.roy.worktowatch ACCESS_RESTRICTED_SETTINGS allow`，只恢复系统“使用情况访问”开关的可操作性；随后仍由 Roy 在可见系统页亲自打开使用情况访问。悬浮窗也走可见系统页手动授权。不要顺手授予 `GET_USAGE_STATS`、完整应用列表或其他敏感权限。
+- 验证：分别读回 `ACCESS_RESTRICTED_SETTINGS=allow`、`GET_USAGE_STATS=allow`、`SYSTEM_ALERT_WINDOW=allow`，再以真实目标 App 前台事件和阻止窗口验证；设置值存在不等于运行行为闭环。
+
 ## 小米后台冻结导致零余额拦截失效
 
 适用范围：Xiaomi 14 Pro 上的 WorkToScroll，应用 ID `com.roy.worktoscroll.overlaytest`。证据来自2026-09-08、0.2.5-protection-fix及其前一版本的真机排查，不代表所有机型或后续版本已经验证。

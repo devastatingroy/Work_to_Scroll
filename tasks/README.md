@@ -1,6 +1,6 @@
 # 任务索引
 
-2026-09-16 当前操作：[WorkToWatch 产品实施](active/overseas-target-apps.md)已完成首轮代码落地。以当前 v53 为共用基线建立 `workToScroll` / `workToWatch` 双产品构建：前者保持 `com.roy.worktoscroll.overlaytest` 和小红书目标，后者使用已确认的永久应用 ID `com.roy.worktowatch`、开发版本 `0.1.0-dev` 和官方 YouTube 目标 `com.google.android.youtube`；数据沙箱天然隔离。两边各 161 项单元测试通过，lint 均为 0 错误、23 个既有警告，两个 Debug APK 构建及 APK 级应用 ID、产品名、目标包、Manifest 查询隔离检查通过。当前没有 ADB 设备连接，WorkToWatch 尚未安装或完成真实 YouTube 扣减/耗尽阻止验收。原[摄像头监控发热对照测试](active/camera-thermal-test.md)现场保持不变，后续从其任务文件继续。
+2026-09-16 当前操作：[WorkToWatch 产品实施](active/overseas-target-apps.md)已完成首轮代码与小米真机零余额链路。以当前 v53 为共用基线建立 `workToScroll` / `workToWatch` 双产品构建：前者保持 `com.roy.worktoscroll.overlaytest` 和小红书目标，后者使用永久应用 ID `com.roy.worktowatch`、开发版本 `0.1.0-dev` 和官方 YouTube 目标 `com.google.android.youtube`；两边各 161 项单测通过，lint 0 错误，APK 级隔离检查通过。WorkToWatch 已在小米 14 Pro 独立安装，必要权限和前台保护服务已核实；零余额启动官方 YouTube 后阻止页接管、阻止计数 0→1 并回桌面，原 WorkToScroll 身份和账本未改变。下一步验证正数余额扣减与耗尽转换，再继续锁屏/恢复、音频、分屏和长期后台矩阵。原[摄像头监控发热对照测试](active/camera-thermal-test.md)现场保持不变，后续从其任务文件继续。
 
 这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主线为 Google Play 首发，明确分为两条独立轨道：[WorkToWatch 产品实施](active/overseas-target-apps.md)负责独立 YouTube 产品的定义、开发、适配和可靠性验收；[Google Play 流程与合规准备](active/google-play-release.md)负责账号、测试轨道、隐私和商店审核材料。2026-09-15 已确认保留现有 WorkToScroll 小红书产品，另做独立品牌 WorkToWatch；首发只支持整个官方 YouTube Android App，底层可复用但应用身份、数据和平台内容隔离；2026-09-16 已授权开始开发。两条轨道相互依赖，但任何一条的完成都不代表另一条完成；国内软件商店仅保留为候选路线。此前[设置页重新设计](active/settings-redesign.md)，0.5.7 已安装小米“锁定最近任务”三步图解，待解锁核对真机排版；“待核对”状态映射仍是独立未决问题。[每日清零与兑换比例](active/entertainment-rules.md)此前 0.5.0 已覆盖安装、79 项测试通过，余额和历史保留；等待真实新增档位奖励与自然跨夜验收。此前[猫总监工界面验收](active/cat-ui.md)，0.4.4 已安装“猫总批假”双状态图（零余额“工作优先”桌牌／有余额“准了”红章）并提交 `7ce99bb`，下一步是解锁手机核对实机显示、零余额画面及余额双向切换。[摄像头监控发热对照测试](active/camera-thermal-test.md)短测三轮已完成、支持低负载版本明显减轻发热，长期耐久与量化识别表现仍未验收。[侧后方在场观察](completed/side-rear-presence-exploration.md)已结项并保留历史证据；[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
 
@@ -37,7 +37,7 @@
 | [零余额阻止页音频处理](active/audio-blocking.md) | 处理阻止后继续出声，保留共享音频焦点的确认与真机验收边界 |
 | [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 当前源码为v46；v49–v52诊断已结项，继续验收日常计时、奖励和中断恢复 |
 | [猫总监工界面验收](active/cat-ui.md) | 0.5.2 已安装阻止页 A 到期假条图，待解锁验收；接续首页双状态、引导、返回路径及工作反馈验收 |
-| [WorkToWatch 产品准备](active/overseas-target-apps.md) | **当前产品轨道**：独立 YouTube 产品路线已确认；首发单点、品牌/应用身份/数据隔离，尚未获准改码 |
+| [WorkToWatch 产品实施](active/overseas-target-apps.md) | **当前产品轨道**：双产品构建与小米真机零余额 YouTube 阻止首验已完成；继续正数余额扣减、恢复、音频、多窗口和跨机型验收 |
 | [Google Play 流程与合规准备](active/google-play-release.md) | **当前流程与合规轨道**：账号、测试轨道、Data safety、隐私与商店审核材料；未注册/未付款/未提交 |
 | [后台冻结与消费拦截耐久验收](active/background-protection.md) | 0.5.6 已实测单任务、单最近任务计数及目标 STOPPED；0.5.7 加入锁定图解并保留修复，待完成最新版本视觉、停声和退出回归 |
 | [默认保护与提醒验收](active/default-protection.md) | 已通过一次允许自启动后的正常重启拦截；接续系统回收、手动停止和四小时实际提醒 |
