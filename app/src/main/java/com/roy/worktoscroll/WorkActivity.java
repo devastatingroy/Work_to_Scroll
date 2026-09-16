@@ -142,6 +142,8 @@ public final class WorkActivity extends ComponentActivity {
                 observation.candidates, observation.reliable, observation.score, ledger.work);
             updatePauseFeedback(now);
             if (available() && recovery.timedOut(now)) retryCamera("持续未收到有效画面，请检查相机后重试。");
+            if (capturing && cameraPreview != null && recoveryModel.previewTrial.canSuppress(now))
+                suppressPreview();
             maybeResumeCamera();
             render();
             writeDiagnostic(false);
@@ -208,7 +210,7 @@ public final class WorkActivity extends ComponentActivity {
         previewParams.gravity = Gravity.CENTER_HORIZONTAL;
         previewParams.topMargin = dp(4);
         column.addView(previewFrame, previewParams);
-        previewButton = CatUi.button(this, "机位调好，关闭预览（试验）", false, true, this::suppressPreview);
+        previewButton = CatUi.button(this, "预览正在启动…", false, true, this::reopenPreview);
         CatUi.add(column, previewButton, -2, 8);
         LinearLayout actions = new LinearLayout(this);
         start = CatUi.button(this, "开始监测", false, true, this::requestStart);
@@ -430,12 +432,49 @@ public final class WorkActivity extends ComponentActivity {
             if (!capturePolicy.startsWith("analysis_only_")) capturePolicy = "analysis_only_" + capturePolicy;
             preview.setVisibility(View.INVISIBLE);
             setTrialScreenDim(true);
-            message = "自拍预览已关闭，人体监测继续。";
-            workDebugLog.recordCameraEvent("PREVIEW_SUPPRESSED", capturePolicy, ledger.work);
+            message = "预览已收起，人体监测继续。";
+            workDebugLog.recordCameraEvent("PREVIEW_AUTO_SUPPRESSED", capturePolicy, ledger.work);
             render();
             writeDiagnostic(true);
         } catch (RuntimeException ex) {
             message = "关闭自拍预览失败，仍按原方式监测。";
+            render();
+            writeDiagnostic(true);
+        }
+    }
+
+    /** Rebind only Preview; ImageAnalysis and all work/reward state remain in place. */
+    private void reopenPreview() {
+        if (!capturing || provider == null || !recoveryModel.previewTrial.reopen()) return;
+        try {
+            Preview.Builder builder = new Preview.Builder();
+            boolean lowLoad = capturePolicy.contains("requested_10_fps")
+                || capturePolicy.contains("low_resolution_default_fps");
+            if (lowLoad) {
+                builder.setResolutionSelector(new ResolutionSelector.Builder()
+                    .setResolutionStrategy(new ResolutionStrategy(THERMAL_STREAM_SIZE,
+                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build());
+                if (capturePolicy.contains("requested_10_fps")) builder.setTargetFrameRate(THERMAL_FRAME_RATE);
+            }
+            cameraPreview = builder.build();
+            cameraPreview.setSurfaceProvider(preview.getSurfaceProvider());
+            boundCamera = provider.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, cameraPreview);
+            recoveryModel.previewTrial.previewBound(SystemClock.elapsedRealtime());
+            if (capturePolicy.startsWith("analysis_only_"))
+                capturePolicy = capturePolicy.substring("analysis_only_".length());
+            var resolution = cameraPreview.getResolutionInfo();
+            previewResolution = resolution == null ? "unknown" : resolution.getResolution().toString();
+            preview.setVisibility(View.VISIBLE);
+            setTrialScreenDim(false);
+            message = "正在查看机位，预览将在 10 秒后自动收起。";
+            workDebugLog.recordCameraEvent("PREVIEW_REOPENED", capturePolicy, ledger.work);
+            render();
+            writeDiagnostic(true);
+        } catch (RuntimeException ex) {
+            if (cameraPreview != null) provider.unbind(cameraPreview);
+            cameraPreview = null;
+            recoveryModel.previewTrial.cancelReopen();
+            message = "重新打开预览失败，人体监测继续。";
             render();
             writeDiagnostic(true);
         }
@@ -650,14 +689,15 @@ public final class WorkActivity extends ComponentActivity {
         setTextIfChanged(soundButton, soundsEnabled ? "提示音已开启 · 点击关闭" : "提示音已关闭 · 点击开启");
         end.setEnabled(work.active());
         if (!capturing) setTextIfChanged(previewHint, "摄像头已关闭");
-        else if (recoveryModel.previewTrial.suppressed()) setTextIfChanged(previewHint, "自拍预览已关闭\n人体监测继续");
+        else if (recoveryModel.previewTrial.suppressed()) setTextIfChanged(previewHint, "预览已收起\n人体监测继续");
         previewHint.setVisibility(capturing && !recoveryModel.previewTrial.suppressed() ? View.GONE : View.VISIBLE);
         previewButton.setVisibility(capturing ? View.VISIBLE : View.GONE);
         long previewWait = recoveryModel.previewTrial.closeRemainingMs(SystemClock.elapsedRealtime());
-        previewButton.setEnabled(capturing && cameraPreview != null && recoveryModel.previewTrial.canSuppress(SystemClock.elapsedRealtime()));
-        setTextIfChanged(previewButton, recoveryModel.previewTrial.suppressed() ? "预览已关闭 · 监测继续"
-            : previewWait > 0 ? "预览展示中 · " + ((previewWait + 999) / 1000) + "秒后可关闭"
-            : cameraPreview == null ? "预览正在启动…" : "机位调好，关闭预览（试验）");
+        previewButton.setEnabled(capturing && recoveryModel.previewTrial.suppressed());
+        setTextIfChanged(previewButton, recoveryModel.previewTrial.suppressed()
+            ? "预览已收起，监测继续 · 查看机位"
+            : previewWait > 0 ? "预览展示中 · " + ((previewWait + 999) / 1000) + "秒后自动收起"
+            : "预览正在启动…");
         int pose = capturing && clock.state() == WorkClock.State.AWAY ? R.drawable.cat_away
             : capturing && SystemClock.elapsedRealtime() < rewardUntilElapsed ? R.drawable.cat_reward : R.drawable.cat_work;
         setMascot(pose);

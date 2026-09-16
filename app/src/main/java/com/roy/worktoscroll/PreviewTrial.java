@@ -1,6 +1,6 @@
 package com.roy.worktoscroll;
 
-/** In-memory state for the analysis-only camera trial. */
+/** In-memory state for each temporary calibration preview. */
 final class PreviewTrial {
     static final long MINIMUM_VISIBLE_MS = 10_000;
     private boolean suppressed;
@@ -14,6 +14,20 @@ final class PreviewTrial {
         if (!canSuppress(elapsed)) return false;
         suppressed = true;
         return true;
+    }
+
+    /** Starts a new temporary preview after the previous one was automatically hidden. */
+    boolean reopen() {
+        if (!suppressed) return false;
+        suppressed = false;
+        closeAllowedAtElapsed = -1;
+        return true;
+    }
+
+    /** Restores the hidden state if CameraX cannot bind a requested preview. */
+    void cancelReopen() {
+        suppressed = true;
+        closeAllowedAtElapsed = -1;
     }
 
     boolean canSuppress(long elapsed) {

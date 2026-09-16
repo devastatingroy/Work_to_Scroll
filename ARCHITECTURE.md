@@ -22,7 +22,7 @@
 | BalanceEngine.java | 原版复用的纯余额算法，按使用区间扣减，仅显式奖励能增加余额 |
 | LedgerStore.java | 实验版同进程单例与 SharedPreferences 快照，原版私有数据不读取、不迁移 |
 | WorkActivity.java | 前置预览、离线人体检测、显式开始/暂停/继续/结束、试验性预览解绑、声音开关、在场与奖励展示；帧仅在内存存在 |
-| PreviewTrial.java | 当前工作页进程内的预览关闭状态和至少10秒展示门槛；自动恢复保持关闭，用户主动暂停后重新开始则恢复校准预览 |
+| PreviewTrial.java | 当前工作页进程内的临时预览状态和10秒展示门槛；到期自动收起，用户可重新打开一段新的10秒预览；自动恢复保持收起，主动暂停后重新开始则恢复校准预览 |
 | CameraRecovery.java | 内存中的监测意愿、临时中断、采集健康度与有限重试；WorkActivity 的 ViewModel 仅跨同进程配置重建保留，不从账本恢复开相机意愿 |
 | MonitoringReturnTicket.java | 进程级、一次性、90 秒的外部应用返回交接；只允许根首页回到工作页，不持久化且不启动相机 |
 | PersonObservation.java | 无图像的人体候选/可靠数量及分数；至少一个可靠候选转为在场，纯弱候选转为不确定，零候选转为无人 |
@@ -72,7 +72,7 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 可靠在
 
 - CountingResumeCue与暂停提醒同属RecoveryModel，基于已提交账本的active/计时状态和明确暂停事件判定一次恢复，不使用原始人体分数播“恢复计时”。初始等待不触发，真实暂停后持续约1秒可靠确认恢复时触发，结束工作清除；重新打开已中断工作由账本中断字段初始化。恢复路径抑制DetectionCue的提前RETURN，首次正常进入的欢迎语及零候选离开仍保留。CuePlayer使用本地counting_resumed.wav；COUNTING_RESUMED_DUE/MUTED及AUDIO_COUNTING_RESUMED_*写入既有事件日志。恢复先停暂停音频；刚释放自有音频时最多300ms等待媒体活跃尾部消退，仍按通话/其他媒体/音量安全检查播放，超过1秒未调度或状态已改变则取消，不是可跨后台积压的语音队列。
 
-- 0.4.2 降负载试用曾以640×480请求[15,15] FPS。0.5.9发热工程试验版把Preview与ImageAnalysis目标共同降为320×240、共同请求本机前置支持的[10,10] FPS，并把推理间隔从500ms延长到1000ms。每次主动开始后Preview至少真实绑定并展示10秒，倒计时结束才允许手动解绑；解绑后把当前工作页窗口的`screenBrightness`覆盖值设为0.05，这不是把面板实际亮度固定为5%；主动暂停、结束或重新校准时撤销覆盖并交回系统亮度策略。自动恢复沿用进程内关闭状态，主动暂停后重新开始恢复预览。低负载绑定失败仍回退原配置。配置请求不等于实际帧率或降温证明，须以真机状态核对。
+- 0.4.2 降负载试用曾以640×480请求[15,15] FPS。0.5.9发热工程试验版把Preview与ImageAnalysis目标共同降为320×240、共同请求本机前置支持的[10,10] FPS，并把推理间隔从500ms延长到1000ms。每次主动开始或点击“查看机位”后，Preview真实绑定并展示10秒，随后自动解绑；解绑后把当前工作页窗口的`screenBrightness`覆盖值设为0.05，这不是把面板实际亮度固定为5%。再次查看机位只重新绑定Preview，不解绑或重建ImageAnalysis、不触碰WorkClock、WorkProgress或奖励结算；重新显示时撤销亮度覆盖，到期收起时重新应用。主动暂停、结束或离开工作页撤销覆盖并释放相机；自动恢复沿用进程内收起状态，主动暂停后重新开始恢复预览。低负载绑定失败仍回退原配置。配置请求不等于实际帧率或降温证明，须以真机状态核对。
 - camera-status.json 增加 capture_policy、preview_resolution、preview_bound、analysis_width/height、preview_mode、analysis_interval_ms、screen_dimmed、preview_close_remaining_ms；尺寸来自绑定后的 ResolutionInfo 和实际分析帧，preview_bound 才表示 Preview 用例是否仍绑定，mode 只是 PreviewView 请求模式。读取脚本兼容旧版缺少这些字段的快照。帧率结合只读 media.camera 的当前请求/输出状态核对，不能从推理次数反推。
 - [断线测温脚本](scripts/camera-thermal-record.sh)在 ADB shell 中独立运行：armed模式支持600、1200、1800或2400秒，等待拔线及新鲜监测后读取BatteryService同源数据。2400秒工程测试只记录第0、10、20、30、40分钟共5组，并在第20与第40分钟写明确CHECKPOINT；其他既有时长仍按每60秒记录。本地/data/local/tmp保存温度（0.1°C）、电量、充电状态和相机数值诊断，无图像。启动等待最多20分钟；检查点只能证明采样时状态，不能证明两个检查点之间完全无中断。smoke模式仅作5秒日志验证，不算温升测试。
 - 工作页首次由用户主动启动，使用 KEEP_SCREEN_ON；不修改系统自动锁屏设置。暂停、结束、离开前台时解绑相机并释放亮屏标记。临时失焦/后台/锁屏保留内存监测意愿；onResume 刷新、窗口焦点及模型就绪经过同一个 maybeResumeCamera，只有前台可交互、解锁、有权限且用户仍希望监测时恢复。同进程旋转由 RecoveryModel 保留 CameraRecovery。外部应用短暂切换后，进程级 MonitoringReturnTicket 可在 90 秒内被根 MainActivity 一次性消费并转回工作页；它仅交接导航，WorkActivity 仍调用同一恢复门槛。主动暂停、工作页返回或结束清除凭证；进程重启、强停、划掉最近任务和冷启动默认停止。

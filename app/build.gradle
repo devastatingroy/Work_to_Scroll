@@ -9,9 +9,9 @@ android {
         testInstrumentationRunner 'com.roy.worktoscroll.FeedbackInstrumentation'
         minSdk 29
         targetSdk 36
-        versionCode 46
-        versionName '0.5.24-clear-pause-wording'
-        resValue 'string', 'app_version', '0.5.24-clear-pause-wording'
+        versionCode 53
+        versionName '0.5.31-night-relax-preview'
+        resValue 'string', 'app_version', '0.5.31-night-relax-preview'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

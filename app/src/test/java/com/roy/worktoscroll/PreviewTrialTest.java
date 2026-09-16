@@ -4,7 +4,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class PreviewTrialTest {
-    @Test public void suppressionIsOneWayDuringAutomaticRecovery() {
+    @Test public void autoSuppressionWaitsForTheFullTemporaryPreview() {
         PreviewTrial trial = new PreviewTrial();
         trial.previewBound(1_000);
         assertFalse(trial.suppress(10_999));
@@ -12,6 +12,28 @@ public class PreviewTrialTest {
         assertTrue(trial.suppressed());
         assertFalse(trial.suppress(20_000));
         assertTrue(trial.suppressed());
+    }
+
+    @Test public void reopeningStartsASeparateTenSecondTemporaryPreview() {
+        PreviewTrial trial = new PreviewTrial();
+        trial.previewBound(0);
+        assertTrue(trial.suppress(10_000));
+        assertTrue(trial.reopen());
+        assertFalse(trial.canSuppress(20_000)); // Binding, not click time, starts the next ten seconds.
+        trial.previewBound(20_000);
+        assertFalse(trial.canSuppress(29_999));
+        assertTrue(trial.canSuppress(30_000));
+        assertTrue(trial.suppress(30_000));
+    }
+
+    @Test public void failedReopenReturnsToTheAnalysisOnlyState() {
+        PreviewTrial trial = new PreviewTrial();
+        trial.previewBound(0);
+        trial.suppress(10_000);
+        assertTrue(trial.reopen());
+        trial.cancelReopen();
+        assertTrue(trial.suppressed());
+        assertFalse(trial.canSuppress(30_000));
     }
 
     @Test public void manualRestartRestoresCalibrationPreview() {
