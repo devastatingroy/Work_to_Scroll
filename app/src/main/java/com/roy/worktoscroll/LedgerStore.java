@@ -10,7 +10,7 @@ import java.util.function.LongConsumer;
 
 /** MainActivity and service run in the same process and share one ledger on the main thread. */
 final class LedgerStore {
-    static final String TARGET = "com.xingin.xhs";
+    static final String TARGET = BuildConfig.TARGET_PACKAGE;
     private static LedgerStore instance;
     final SharedPreferences prefs;
     final BalanceEngine engine;

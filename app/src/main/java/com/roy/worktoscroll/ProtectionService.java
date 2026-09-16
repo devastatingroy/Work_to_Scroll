@@ -34,7 +34,7 @@ import java.lang.ref.WeakReference;
 
 public final class ProtectionService extends Service {
     private static final String CHANNEL = "overlay_protection";
-    private static final String ACTION_STOP = "com.roy.worktoscroll.overlaytest.STOP";
+    private static final String ACTION_STOP = BuildConfig.APPLICATION_ID + ".STOP";
     private static final int NOTIFICATION_ID = 1;
     // Initial experiment values, not an accuracy promise. Leave time for UsageEvents delivery.
     static final long POLL_MS = 500;

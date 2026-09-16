@@ -1,11 +1,12 @@
 param(
     [string]$Serial = '35c2f60f',
+    [ValidateSet('WorkToScroll', 'WorkToWatch')][string]$Product = 'WorkToScroll',
     [ValidateRange(1,60)][int]$Samples = 1,
     [ValidateRange(1,5)][int]$IntervalSeconds = 1
 )
 $ErrorActionPreference = 'Stop'
 $experimentAdb = 'D:\AndroidSDK\platform-tools\adb.exe'
-$experimentPackage = 'com.roy.worktoscroll.overlaytest'
+$experimentPackage = if ($Product -eq 'WorkToWatch') { 'com.roy.worktowatch' } else { 'com.roy.worktoscroll.overlaytest' }
 for ($sampleIndex = 0; $sampleIndex -lt $Samples; $sampleIndex++) {
     if ($sampleIndex -gt 0) { Start-Sleep -Seconds $IntervalSeconds }
     $experimentProcess = (& $experimentAdb -s $Serial shell pidof $experimentPackage 2>$null) -join ''

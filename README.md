@@ -6,13 +6,13 @@ WorkToScroll 帮助用户通过工作或学习攒取娱乐时间，在额度耗�
 
 ## 当前实现范围
 
-当前 Android 路线已由 Roy 选择为“使用情况访问 + 普通悬浮窗”，新增最小摄像头在场计时与工作奖励。名称为 **WorkToScroll**（由“WorkToEarn 悬浮窗测试”更名），应用 ID 仍为 `com.roy.worktoscroll.overlaytest`，当前代码版本 `0.5.24-clear-pause-wording`（v46，提交`294fa0f`）（实际安装与验收见[任务索引](tasks/README.md)），保留猫总界面、现有余额、权限和保护设置。Roy 的旧版已停用、保留数据；旧源码保存在标签 `checkpoint/gate1-before-overlay-20260907`。实现范围不等于完整 MVP 或公开发布验收通过。
+当前 Android 路线已由 Roy 选择为“使用情况访问 + 普通悬浮窗”，新增最小摄像头在场计时与工作奖励。**WorkToScroll** 构建仍使用应用 ID `com.roy.worktoscroll.overlaytest`，当前代码基线为 v53 `0.5.31-night-relax-preview`（实际安装与验收见[任务索引](tasks/README.md)），保留猫总界面、现有余额、权限和保护设置。Roy 的旧版已停用、保留数据；旧源码保存在标签 `checkpoint/gate1-before-overlay-20260907`。实现范围不等于完整 MVP 或公开发布验收通过。
 
-当前源码已按Roy要求恢复v46，默认请求320×240并使用统一0.50可靠门槛；如果低负载流组合无法绑定，CameraX会回退原640×480分析配置，但没有用户可见的分辨率切换入口。当前源码不含实验采样。v49–v52实验代码完整保存在stash `c61d048`，实验记录和图片保留在[结项任务](tasks/completed/side-rear-presence-exploration.md)。手机回退尚待连接后备份、安装与核验，不能仅凭源码版本认定手机已回退。
+当前源码沿用 v46 的 320×240、统一 0.50 可靠门槛和低负载回退边界，并在其上加入夜间放松额度与自动临时预览，形成 v53；当前源码不含 v49–v52 的分辨率对照实验采样。实验记录和图片保留在[结项任务](tasks/completed/side-rear-presence-exploration.md)。源码、构建、安装与真机体验仍分别记录，不能相互替代。
 
 ## 独立的 WorkToWatch 路线
 
-2026-09-15 Roy 已确认另行准备面向 Google Play 的独立 YouTube 产品 **WorkToWatch**。它保留并不覆盖当前 WorkToScroll，小红书版与 YouTube 版只复用平台无关的底层能力，品牌、商店商品、应用身份、数据、目标配置、文案和素材相互隔离。WorkToWatch 首发只支持整个官方 YouTube Android App，不是通用多 App 管理器；当前仅完成产品与实现边界确认，尚未修改代码、建立发布包或完成真机验收。详情见[产品要求](docs/SPEC.md#独立产品路线worktowatch2026-09-15roy-确认)和[WorkToWatch 产品任务](tasks/active/overseas-target-apps.md)。
+2026-09-15 Roy 已确认另行准备面向 Google Play 的独立 YouTube 产品 **WorkToWatch**，并于 2026-09-16 授权开始开发。它保留并不覆盖当前 WorkToScroll；同一 `:app` 模块现在通过 `workToScroll` / `workToWatch` 产品变体复用平台无关底层能力，同时隔离应用 ID、数据沙箱、目标包和产品名，并为后续平台专属文案与素材保留独立 source set。WorkToWatch 使用永久应用 ID `com.roy.worktowatch`，当前开发版本 `0.1.0-dev`，只配置官方 YouTube Android App `com.google.android.youtube`；Debug APK 已构建并通过静态隔离检查，但尚未安装或完成真机 YouTube 验收，正式语言、文案和品牌素材也尚未定稿。详情见[产品要求](docs/SPEC.md#独立产品路线worktowatch2026-09-15roy-确认)和[WorkToWatch 产品任务](tasks/active/overseas-target-apps.md)。
 
 ## 猫总首页
 
@@ -79,6 +79,13 @@ JDK 17、SDK 36、Build Tools 36.1.0，配置本地 `local.properties` 后：
 .\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-安装包位于 `app/build/outputs/apk/debug/app-debug.apk`。不使用旧版安装包路径。
+该命令会同时构建并测试两个产品变体。安装包分别位于：
+
+- WorkToScroll：`app/build/outputs/apk/workToScroll/debug/app-workToScroll-debug.apk`
+- WorkToWatch：`app/build/outputs/apk/workToWatch/debug/app-workToWatch-debug.apk`
+
+为兼容既有本机脚本，`assembleDebug` 仍会把最新 WorkToScroll APK 同步到 `app/build/outputs/apk/debug/app-debug.apk`。执行 `.\gradlew.bat :app:verifyDebugProductIsolation` 可重复检查两个 APK 的应用 ID、目标包、产品名和 Manifest 查询隔离。
+
+连接测试手机后，`protection-health-check.ps1`、`camera-health-check.ps1` 与 `work-session-debug.ps1` 均可传入 `-Product WorkToWatch`，只读访问 `com.roy.worktowatch` 的独立状态；默认仍检查 WorkToScroll。
 
 第一阶段接受后，可用 `.\scripts\gate1-device-check.ps1 -Serial '<设备号>' -FirstStageAccepted` 做五分钟分段检查。脚本只读实验版账本，并要求原版保护已停止；需要 `adb` 在 PATH 中。它临时修改锁屏超时并在 finally 恢复，若断线或中断须按日志中的原始值另行核对。脚本 PASS 不能替代实际阻止画面的验收。

@@ -41,7 +41,7 @@ public final class FeedbackInstrumentation extends Instrumentation {
             require(service != null && service.healthy, "Protection service unavailable");
             blocker = startActivitySync(new Intent(getTargetContext(), BlockerActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             waitForIdleSync(); SystemClock.sleep(350);
-            require(blocker.getTaskId() == main.getTaskId(), "Blocker must share the WorkToScroll task");
+            require(blocker.getTaskId() == main.getTaskId(), "Blocker must share the product app task");
             require(findText(blocker.getWindow().getDecorView(), "暂无可用时间") != null, "Initial zero must stay neutral");
             snapshot("feedback-initial-zero.png");
             runOnMainSync(() -> blocker.finish());
@@ -53,7 +53,7 @@ public final class FeedbackInstrumentation extends Instrumentation {
             blocker = startActivitySync(new Intent(getTargetContext(), BlockerActivity.class)
                 .putExtra(BlockerActivity.EXTRA_EXHAUSTION, id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             waitForIdleSync(); SystemClock.sleep(300);
-            require(blocker.getTaskId() == main.getTaskId(), "Repeated blocker must reuse the WorkToScroll task");
+            require(blocker.getTaskId() == main.getTaskId(), "Repeated blocker must reuse the product app task");
             TextView title = findText(blocker.getWindow().getDecorView(), "时间到了！");
             require(title != null, "Exhaustion title missing");
             require(title.getScaleX() > .9f, "Entry animation did not start");
@@ -89,7 +89,7 @@ public final class FeedbackInstrumentation extends Instrumentation {
             require(!original.active(), "Requires an ended work session");
             ActivityMonitor homeMonitor = addMonitor(MainActivity.class.getName(), null, false);
             try (android.os.ParcelFileDescriptor descriptor = getUiAutomation().executeShellCommand(
-                    "am start -n com.roy.worktoscroll.overlaytest/com.roy.worktoscroll.MainActivity");
+                    "am start -n " + getTargetContext().getPackageName() + "/com.roy.worktoscroll.MainActivity");
                     java.io.InputStream input = new android.os.ParcelFileDescriptor.AutoCloseInputStream(descriptor)) {
                 byte[] buffer = new byte[1024];
                 while (input.read(buffer) != -1) { /* Drain the normal launcher result. */ }

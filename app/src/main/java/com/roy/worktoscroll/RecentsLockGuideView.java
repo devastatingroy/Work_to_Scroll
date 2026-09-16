@@ -19,13 +19,14 @@ final class RecentsLockGuideView extends LinearLayout {
 
     RecentsLockGuideView(Context context) {
         super(context);
+        String appName = context.getString(R.string.app_name);
         setOrientation(VERTICAL);
         int edge = CatUi.dp(context, 4);
         setPadding(edge, 0, edge, CatUi.dp(context, 8));
         addStep(1, "打开最近任务", "从屏幕底部向上滑并停住，直到看到所有当前应用的卡片。",
             "示意图：从屏幕底部向上滑动并停住，打开最近任务");
-        addStep(2, "找到并长按卡片", "找到 WorkToScroll，按住卡片中间约 1 秒，不要上滑清除。",
-            "示意图：找到 WorkToScroll 卡片并长按");
+        addStep(2, "找到并长按卡片", "找到 " + appName + "，按住卡片中间约 1 秒，不要上滑清除。",
+            "示意图：找到 " + appName + " 卡片并长按");
         addStep(3, "点击小锁", "点击锁形图标；回到卡片列表后，标题旁出现小锁才算完成。",
             "示意图：点击锁形图标并确认卡片标题旁出现小锁");
         TextView note = text("不同小米系统版本的图标位置可能略有差异。应用无法自动确认是否已锁定。", 13, CatUi.MUTED, false);
@@ -60,7 +61,7 @@ final class RecentsLockGuideView extends LinearLayout {
         bodyParams.topMargin = CatUi.dp(context, 8);
         block.addView(body, bodyParams);
 
-        Illustration illustration = new Illustration(context, step);
+        Illustration illustration = new Illustration(context, step, context.getString(R.string.app_name));
         illustration.setContentDescription(description);
         LayoutParams imageParams = new LayoutParams(-1, CatUi.dp(context, 112));
         imageParams.topMargin = CatUi.dp(context, 10);
@@ -79,12 +80,14 @@ final class RecentsLockGuideView extends LinearLayout {
 
     private static final class Illustration extends View {
         private final int step;
+        private final String appName;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path = new Path();
 
-        Illustration(Context context, int step) {
+        Illustration(Context context, int step, String appName) {
             super(context);
             this.step = step;
+            this.appName = appName;
             setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
         }
 
@@ -141,7 +144,7 @@ final class RecentsLockGuideView extends LinearLayout {
             paint.setColor(0xFF6D3BE8);
             canvas.drawRoundRect(left + dp(10), top + dp(9), left + dp(28), top + dp(27), dp(5), dp(5), paint);
             paint.setColor(CatUi.INK); paint.setTextSize(dp(12)); paint.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
-            canvas.drawText("WorkToScroll", left + dp(35), top + dp(23), paint);
+            canvas.drawText(appName, left + dp(35), top + dp(23), paint);
             if (locked) drawLock(canvas, right - dp(16), top + dp(18), CatUi.MUTED, dp(1.2f));
             paint.setColor(0xFFF8F1E5);
             canvas.drawRoundRect(left + dp(10), top + dp(36), right - dp(10), bottom - dp(10), dp(7), dp(7), paint);

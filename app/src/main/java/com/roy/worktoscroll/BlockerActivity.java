@@ -102,7 +102,7 @@ public final class BlockerActivity extends Activity {
     private void navigate(Intent destination) {
         try {
             startActivity(destination);
-            // The blocker now shares WorkToScroll's task. Remove only this page; removing
+            // The blocker shares the product app's task. Remove only this page; removing
             // the whole task would also discard the main activity and its single recent card.
             finish();
         } catch (RuntimeException ex) {

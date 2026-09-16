@@ -1,10 +1,19 @@
 param(
     [string]$Serial = '35c2f60f',
+    [ValidateSet('WorkToScroll', 'WorkToWatch')][string]$Product = 'WorkToScroll',
     [ValidateRange(1, 120)][int]$Samples = 1,
     [ValidateRange(1, 60)][int]$IntervalSeconds = 5
 )
 $ErrorActionPreference = 'Stop'
-$repairPackage = 'com.roy.worktoscroll.overlaytest'
+$productConfig = if ($Product -eq 'WorkToWatch') {
+    @{ AppPackage = 'com.roy.worktowatch'; TargetPackage = 'com.google.android.youtube'; AppName = 'WorkToWatch' }
+} else {
+    @{ AppPackage = 'com.roy.worktoscroll.overlaytest'; TargetPackage = 'com.xingin.xhs'; AppName = 'WorkToScroll' }
+}
+$repairPackage = $productConfig.AppPackage
+$targetPattern = [regex]::Escape($productConfig.TargetPackage)
+$blockerTitlePattern = [regex]::Escape($productConfig.AppName + ' blocker')
+$blockerPagePattern = [regex]::Escape($repairPackage + '/com.roy.worktoscroll.BlockerActivity')
 
 # Read-only: does not launch/unfreeze the app, change credit, or collect page contents.
 function Read-Adb([string[]]$Arguments, [switch]$Optional) {
@@ -61,21 +70,24 @@ for ($sampleIndex = 0; $sampleIndex -lt $Samples; $sampleIndex++) {
     }
     $displays = Read-Adb @('shell', 'dumpsys', 'window', 'displays')
     $windows = Read-Adb @('shell', 'dumpsys', 'window', 'windows')
-    $targetForeground = $displays -match 'mCurrentFocus=[^\r\n]*com\.xingin\.xhs/'
-    $blockerListed = $windows -match 'Window\{[^\r\n]*WorkToScroll blocker'
+    $targetForeground = $displays -match "mCurrentFocus=[^\r\n]*${targetPattern}/"
+    $blockerListed = $windows -match "Window\{[^\r\n]*${blockerTitlePattern}"
     $blockerVisible = $false
-    $blockerMatch = [regex]::Match($windows, '(?ms)^\s*Window #\d+ Window\{[^\r\n]*WorkToScroll blocker[^\r\n]*\r?\n(?<body>.*?)(?=^\s*Window #\d+ |\z)')
+    $blockerMatch = [regex]::Match($windows, "(?ms)^\s*Window #\d+ Window\{[^\r\n]*${blockerTitlePattern}[^\r\n]*\r?\n(?<body>.*?)(?=^\s*Window #\d+ |\z)")
     if ($blockerMatch.Success) {
         $blockerBody = $blockerMatch.Groups['body'].Value
         $blockerVisible = $blockerBody -match 'isVisible=true' -and $blockerBody -match 'Surface: shown=true'
     }
-    $blockerPageFocused = $displays -match 'mCurrentFocus=[^\r\n]*com\.roy\.worktoscroll\.overlaytest/com\.roy\.worktoscroll\.BlockerActivity'
-    $pageMatch = [regex]::Match($windows, '(?ms)^\s*Window #\d+ Window\{[^\r\n]*com\.roy\.worktoscroll\.overlaytest/com\.roy\.worktoscroll\.BlockerActivity[^\r\n]*\r?\n(?<body>.*?)(?=^\s*Window #\d+ |\z)')
+    $blockerPageFocused = $displays -match "mCurrentFocus=[^\r\n]*${blockerPagePattern}"
+    $pageMatch = [regex]::Match($windows, "(?ms)^\s*Window #\d+ Window\{[^\r\n]*${blockerPagePattern}[^\r\n]*\r?\n(?<body>.*?)(?=^\s*Window #\d+ |\z)")
     $blockerPageVisible = $pageMatch.Success -and $pageMatch.Groups['body'].Value -match 'isVisible=true' -and
         $pageMatch.Groups['body'].Value -match 'Surface: shown=true'
     $ageMs = $deviceMs - [long]$fields.cursor_ms
     [ordered]@{
         time = [DateTimeOffset]::Now.ToString('o')
+        product = $Product
+        app_package = $repairPackage
+        target_package = $productConfig.TargetPackage
         balance_ms = [long]$fields.balance_ms
         consumed_ms = [long]$fields.consumed_ms
         enabled = $fields.enabled -eq 'true'

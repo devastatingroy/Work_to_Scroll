@@ -102,22 +102,22 @@ public final class MainActivity extends Activity {
         worked.getLayoutParams().width = -2;
         workButton = CatUi.button(this, "▶  开始工作", true, false, this::openWork);
         CatUi.add(content, workButton, -2, 20);
-        entertainment = CatUi.button(this, "去小红书  ›", false, false, this::openXiaohongshu);
+        entertainment = CatUi.button(this, "去" + BuildConfig.TARGET_NAME + "  ›", false, false, this::openTargetApp);
         try {
             android.graphics.drawable.Drawable icon = getPackageManager().getApplicationIcon(LedgerStore.TARGET);
             icon.setBounds(0, 0, CatUi.dp(this, 24), CatUi.dp(this, 24));
-            android.text.SpannableString label = new android.text.SpannableString("  去小红书  ›");
+            android.text.SpannableString label = new android.text.SpannableString("  去" + BuildConfig.TARGET_NAME + "  ›");
             label.setSpan(new android.text.style.ImageSpan(icon, android.text.style.ImageSpan.ALIGN_BOTTOM), 0, 1, 0);
             entertainment.setText(label);
         } catch (android.content.pm.PackageManager.NameNotFoundException ignored) { /* Text remains usable without the target app. */ }
-        entertainment.setContentDescription("去小红书");
+        entertainment.setContentDescription("去" + BuildConfig.TARGET_NAME);
         CatUi.add(content, entertainment, -2, 10);
     }
 
     private void buildSettings() {
         settingsHeader("设置");
         LinearLayout protection = settingsCard(14);
-        settingsText(protection, "小红书保护", 12, CatUi.MUTED, 0);
+        settingsText(protection, BuildConfig.TARGET_NAME + "保护", 12, CatUi.MUTED, 0);
         status = settingsText(protection, "正在检查保护…", 24, GOOD, 10);
         protectionDetail = settingsText(protection, "", 14, CatUi.MUTED, 10);
         LinearLayout actions = new LinearLayout(this);
@@ -172,7 +172,7 @@ public final class MainActivity extends Activity {
         settingsNavigation(help, "隐私说明", this::showPrivacy);
         settingsDivider(help);
         settingsNavigation(help, "开发工具", () -> openPage("tools"));
-        TextView footer = paragraph("WorkToScroll · 自用测试版");
+        TextView footer = paragraph(getString(R.string.app_name) + " · 自用测试版");
         footer.setGravity(Gravity.CENTER); footer.setTextSize(12);
     }
 
@@ -181,7 +181,7 @@ public final class MainActivity extends Activity {
         paragraph("先完成必需授权，再核对后台设置，让保护在离开应用后也能持续。");
         permissionHeading("必需", "缺少任意一项，无法正常保护", CatUi.RED);
         LinearLayout required = settingsCard(10);
-        usageState = permissionItem(required, "使用情况访问", "识别何时使用小红书，按实际用时扣减余额。");
+        usageState = permissionItem(required, "使用情况访问", "识别何时使用" + BuildConfig.TARGET_NAME + "，按实际用时扣减余额。");
         usagePermission = permissionLink(required, "查看系统设置  ›", () -> openSettings(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
             Uri.parse("package:" + getPackageName()))));
         settingsDivider(required);
@@ -233,13 +233,13 @@ public final class MainActivity extends Activity {
         int padding = CatUi.dp(this, 16);
         scroll.setPadding(padding, 0, padding, 0);
         scroll.addView(new RecentsLockGuideView(this), new ScrollView.LayoutParams(-1, -2));
-        new AlertDialog.Builder(this).setTitle("锁定 WorkToScroll")
+        new AlertDialog.Builder(this).setTitle("锁定 " + getString(R.string.app_name))
             .setView(scroll).setPositiveButton("知道了", null).show();
     }
 
     private void showXiaomiAutostartGuide() {
-        new AlertDialog.Builder(this).setTitle("允许 WorkToScroll 自启动")
-            .setMessage("手机重启后，保护需要由系统开机广播重新启动。小米默认可能阻止自启动，即使省电策略已经设为「无限制」。\n\n请打开系统设置，搜索「自启动」，找到 WorkToScroll 后允许。不同 HyperOS 版本的入口可能不同；若搜索不到，可在系统安全中心或应用管理中查找「自启动」。\n\n应用无法代为开启或可靠读取这项厂商设置。完成后请回到这里点「我已允许」，它只记录你的确认，不会伪装成系统已检测通过。")
+        new AlertDialog.Builder(this).setTitle("允许 " + getString(R.string.app_name) + " 自启动")
+            .setMessage("手机重启后，保护需要由系统开机广播重新启动。小米默认可能阻止自启动，即使省电策略已经设为「无限制」。\n\n请打开系统设置，搜索「自启动」，找到 " + getString(R.string.app_name) + " 后允许。不同 HyperOS 版本的入口可能不同；若搜索不到，可在系统安全中心或应用管理中查找「自启动」。\n\n应用无法代为开启或可靠读取这项厂商设置。完成后请回到这里点「我已允许」，它只记录你的确认，不会伪装成系统已检测通过。")
             .setNegativeButton("稍后", null)
             .setNeutralButton("我已允许", (dialog, which) -> {
                 uiPreferences().edit().putBoolean("xiaomi_autostart_confirmed", true).apply();
@@ -327,8 +327,8 @@ public final class MainActivity extends Activity {
 
     private void requestProtectionChange() {
         if (!ledger.enabled) { toggleProtection(); return; }
-        new AlertDialog.Builder(this).setTitle("停止小红书保护？")
-            .setMessage("停止后，不再扣减娱乐时间，也不再阻止小红书。已有余额保留。").setNegativeButton("取消", null)
+        new AlertDialog.Builder(this).setTitle("停止" + BuildConfig.TARGET_NAME + "保护？")
+            .setMessage("停止后，不再扣减娱乐时间，也不再阻止" + BuildConfig.TARGET_NAME + "。已有余额保留。").setNegativeButton("取消", null)
             .setPositiveButton("停止保护", (d, w) -> { if (ledger.enabled) toggleProtection(); }).show();
     }
 
@@ -377,7 +377,7 @@ public final class MainActivity extends Activity {
                 render();
             }).show());
         section("测试说明");
-        paragraph("先确认保护实际运行，再验证小红书消费与零余额阻止。\n手动停止后保持停止；白天每 4 小时最多静默提醒一次，系统可能延迟。\n系统中断会尝试恢复；强行停止或厂商冻结时仍可能失效。\n不要同时运行旧版 WorkToEarn 的保护，两版账本独立。");
+        paragraph("先确认保护实际运行，再验证" + BuildConfig.TARGET_NAME + "消费与零余额阻止。\n手动停止后保持停止；白天每 4 小时最多静默提醒一次，系统可能延迟。\n系统中断会尝试恢复；强行停止或厂商冻结时仍可能失效。\n不要同时运行旧版 WorkToEarn 的保护，两版账本独立。");
     }
 
     private Button row(String label, Runnable action) {
@@ -401,7 +401,7 @@ public final class MainActivity extends Activity {
     private void showGuide(boolean first) {
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("先工作，再安心刷一会儿")
-            .setMessage("① 开始工作\n固定手机，让前置摄像头朝向你的肩部和躯干；可放在侧后方，无需露出人脸。在工作页手动开启监测，背影效果仍在试用验证。\n\n② 攒娱乐时间\n" + WorkProgress.ruleText(ledger.work.selectedMinutes()) + "连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。本轮重置不倒扣奖励，历史工作保留；主动结束后重新开始一轮。" + ledger.expiryDescription() + "修改比例从下一轮生效。\n\n③ 去小红书\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
+            .setMessage("① 开始工作\n固定手机，让前置摄像头朝向你的肩部和躯干；可放在侧后方，无需露出人脸。在工作页手动开启监测，背影效果仍在试用验证。\n\n② 攒娱乐时间\n" + WorkProgress.ruleText(ledger.work.selectedMinutes()) + "连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。本轮重置不倒扣奖励，历史工作保留；主动结束后重新开始一轮。" + ledger.expiryDescription() + "修改比例从下一轮生效。\n\n③ 去" + BuildConfig.TARGET_NAME + "\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).create();
         if (first) dialog.setOnDismissListener(d -> uiPreferences().edit().putBoolean("cat_intro_seen_v3", true).apply());
         dialog.show();
@@ -411,7 +411,7 @@ public final class MainActivity extends Activity {
             .setMessage("摄像头仅在工作页手动开始后运行，不保存照片或录像、不上传画面。基础在场观察不能证明正在工作。\n\n使用情况访问用于判断应用切换和用时；悬浮窗用于显示阻止页。不读取页面正文、输入内容或截图。\n\n余额与状态保存在本机，没有网络权限。这是可关闭、可绕过的自用测试版。")
             .setPositiveButton("知道了", null).show();
     }
-    private void openXiaohongshu() {
+    private void openTargetApp() {
         if (!ledger.refreshDailyReset()) {
             Toast.makeText(this, "余额保存失败，请稍后重试", Toast.LENGTH_LONG).show(); return;
         }
@@ -420,7 +420,7 @@ public final class MainActivity extends Activity {
         }
         Intent launch = getPackageManager().getLaunchIntentForPackage(LedgerStore.TARGET);
         if (launch != null) startActivity(launch);
-        else Toast.makeText(this, "未找到小红书，请确认已安装标准版", Toast.LENGTH_LONG).show();
+        else Toast.makeText(this, BuildConfig.TARGET_MISSING_MESSAGE, Toast.LENGTH_LONG).show();
     }
     private void prepareChange() {
         ledger.refreshDailyReset();
@@ -497,7 +497,7 @@ public final class MainActivity extends Activity {
         else if (!running) state = "保护中断 · 点此检查运行设置";
         else if (!service.healthy) state = service.failure;
         else if (restricted) state = "后台运行受限 · 点此检查";
-        else { state = "● 小红书保护运行中"; healthy = true; }
+        else { state = "● " + BuildConfig.TARGET_NAME + "保护运行中"; healthy = true; }
         if (status != null && "home".equals(page)) {
             CatUi.setText(status, state); status.setTextColor(healthy ? 0xFF456447 : CatUi.RED);
             if ("home".equals(page)) {
@@ -564,7 +564,7 @@ public final class MainActivity extends Activity {
         switch (state) {
             case STOPPED:
                 title = "保护已停止"; color = CatUi.MUTED;
-                detail = "当前不扣减娱乐时间，也不阻止小红书。已有余额保留。"; break;
+                detail = "当前不扣减娱乐时间，也不阻止" + BuildConfig.TARGET_NAME + "。已有余额保留。"; break;
             case MISSING_PERMISSION:
                 title = "保护未生效"; action = "补齐必要授权";
                 detail = !usage && !overlay ? "缺少使用情况访问和悬浮窗授权，无法正常保护。"
@@ -578,7 +578,7 @@ public final class MainActivity extends Activity {
                 title = "后台运行受限"; detail = "系统已限制后台运行，持续保护可能中断。";
                 action = "检查后台设置"; color = WARNING; break;
             default:
-                title = "● 保护运行中"; detail = "使用小红书时扣减娱乐时间，余额用完后阻止继续使用。"; color = GOOD;
+                title = "● 保护运行中"; detail = "使用" + BuildConfig.TARGET_NAME + "时扣减娱乐时间，余额用完后阻止继续使用。"; color = GOOD;
         }
         CatUi.setText(status, title); status.setTextColor(color); CatUi.setText(protectionDetail, detail);
         repair.setVisibility(action.isEmpty() ? View.GONE : View.VISIBLE); CatUi.setText(repair, action);

@@ -1,6 +1,6 @@
 # Google Play 首发（WorkToWatch）流程与合规准备
 
-状态：**当前流程与合规轨道（2026-09-10）**。Google Play 为首发第一顺位；国内小米/华为等商店降为候选路线（见[国内软件商店候选准备](../todo/release-readiness.md)、[小米商店资质与备案候选准备](../todo/xiaomi-publishing-credentials.md)）。本任务只处理平台流程和合规，**尚未**开始账号注册、付款、代码修改或审核提交。创建日期：2026-09-10。
+状态：**当前流程与合规轨道（2026-09-10）**。Google Play 为首发第一顺位；国内小米/华为等商店降为候选路线（见[国内软件商店候选准备](../todo/release-readiness.md)、[小米商店资质与备案候选准备](../todo/xiaomi-publishing-credentials.md)）。本任务只处理平台流程和合规，**尚未**开始账号注册、付款或审核提交；产品代码已由独立的 WorkToWatch 产品实施轨道启动。创建日期：2026-09-10。
 
 入口：[任务索引](../README.md) · [产品要求 SPEC](../../docs/SPEC.md) · [WorkToWatch 产品准备](overseas-target-apps.md)。维护人：接续本任务的 agent；关键决策/验证/阻塞/状态变化时同步更新本文件与索引。
 
@@ -8,7 +8,7 @@
 
 - 2026-09-10 Roy 明确：首发从小米/国内商店转为**主攻 Google Play**，小米/华为国内商店往后放。
 - Google Play 面向的是海外用户，与现有 WorkToScroll 小红书产品并行而不是替代；2026-09-15 Roy 已确认新产品采用独立品牌 **WorkToWatch**，不以可见系列关系绑定两个产品。
-- **关键产品变更（Roy 明确）：WorkToWatch 首发只支持整个官方 YouTube Android App。** 当前原型固定监控小红书；YouTube 适配涉及独立应用身份与数据、目标应用事件、界面/素材/文案和真机验证，须走 SPEC/DESIGN 与适配验收，**不在本任务内直接改代码**。现由[WorkToWatch 产品准备](overseas-target-apps.md)作为独立产品轨道接续。
+- **关键产品变更（Roy 明确）：WorkToWatch 首发只支持整个官方 YouTube Android App。** 当前代码已形成与 WorkToScroll 隔离的 WorkToWatch 构建和 YouTube 目标配置；目标应用事件、界面/素材/文案和真机验证继续走 SPEC/DESIGN 与适配验收，**不在本任务内直接改代码**。现由[WorkToWatch 产品实施](overseas-target-apps.md)作为独立产品轨道接续。
 
 ## 目标、范围与授权边界
 
@@ -57,7 +57,7 @@
 
 ## 当前停点与下一步
 
-已完成流程和当前工程差距核查，WorkToWatch 的独立产品方向已经确认，尚未启动任何注册、付款、代码改动或商店提交。下一步仍等待 Roy 决定账号主体和首发国家/语言；同时由[WorkToWatch 产品准备](overseas-target-apps.md)完成名称/包名核查、产品文案和适配验收输入。产品可靠性未通过时，本任务不得把流程材料齐备表述为“可公开发布”。
+已完成流程和当前工程差距核查，WorkToWatch 的独立产品方向、永久应用 ID 与首轮双产品构建已经落地；尚未启动任何账号注册、付款或商店提交。下一步仍等待 Roy 决定账号主体和首发国家/语言；同时由[WorkToWatch 产品实施](overseas-target-apps.md)完成正式名称可用性、产品文案和真机适配验收。产品可靠性未通过时，本任务不得把流程材料齐备表述为“可公开发布”。
 
 ## 关联资料
 

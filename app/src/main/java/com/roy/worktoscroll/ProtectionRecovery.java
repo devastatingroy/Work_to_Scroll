@@ -13,8 +13,8 @@ import java.time.ZoneId;
 
 /** No camera access. Reminders use one inexact alarm; only system recovery events start protection. */
 public final class ProtectionRecovery extends BroadcastReceiver {
-    private static final String REMIND = "com.roy.worktoscroll.overlaytest.REMIND_UNPROTECTED";
-    static final String EXTRA_BOOT_RECOVERY = "com.roy.worktoscroll.overlaytest.BOOT_RECOVERY";
+    private static final String REMIND = BuildConfig.APPLICATION_ID + ".REMIND_UNPROTECTED";
+    static final String EXTRA_BOOT_RECOVERY = BuildConfig.APPLICATION_ID + ".BOOT_RECOVERY";
     private static final String CHANNEL = "unprotected_reminder";
     private static final int NOTICE = 2;
 
@@ -112,7 +112,7 @@ public final class ProtectionRecovery extends BroadcastReceiver {
                         manager.notify(NOTICE, new Notification.Builder(context, CHANNEL)
                             .setSmallIcon(R.drawable.ic_launcher)
                             .setContentTitle("目前未开启保护")
-                            .setContentText("小红书用时不会扣减，建议回到 " + context.getString(R.string.app_name) + " 开启保护。")
+                            .setContentText(BuildConfig.TARGET_NAME + "用时不会扣减，建议回到 " + context.getString(R.string.app_name) + " 开启保护。")
                             .setContentIntent(open).setAutoCancel(true).setOnlyAlertOnce(true).build());
                     }
                 }

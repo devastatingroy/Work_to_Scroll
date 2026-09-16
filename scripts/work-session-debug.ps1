@@ -1,11 +1,12 @@
 [CmdletBinding()]
 param(
     [string]$Serial = "",
+    [ValidateSet('WorkToScroll', 'WorkToWatch')][string]$Product = 'WorkToScroll',
     [ValidateRange(1, 1000)][int]$Tail = 120
 )
 
 $ErrorActionPreference = 'Stop'
-$packageName = 'com.roy.worktoscroll.overlaytest'
+$packageName = if ($Product -eq 'WorkToWatch') { 'com.roy.worktowatch' } else { 'com.roy.worktoscroll.overlaytest' }
 $adbArgs = @()
 if ($Serial) { $adbArgs += @('-s', $Serial) }
 

@@ -1,15 +1,17 @@
-# WorkToScroll 实际结构
+# WorkToScroll / WorkToWatch 实际结构
 
-当前app源码已恢复v46基线`294fa0f`，`WorkActivity`默认以320×240为Preview与ImageAnalysis的目标分辨率，并在该组合绑定被CameraX拒绝时回退原640×480分析配置；它没有用户可见的分辨率切换入口。分数≥0.50计为可靠人体，候选下限0.20、约1秒确认和3秒弱结果缓冲保持原版。v49–v52的诊断模块、手机准备入口和分辨率切换不在当前源码中；其历史实现和证据见[已结项侧后方探索](tasks/completed/side-rear-presence-exploration.md)。手机安装状态以[任务索引](tasks/README.md)为准。
+当前 app 以 v53 `0.5.31-night-relax-preview` 为双产品代码基线；`WorkActivity` 默认以320×240为Preview与ImageAnalysis的目标分辨率，并在该组合绑定被CameraX拒绝时回退原640×480分析配置；它没有用户可见的分辨率切换入口。分数≥0.50计为可靠人体，候选下限0.20、约1秒确认和3秒弱结果缓冲保持原版。v49–v52的诊断模块、手机准备入口和分辨率切换不在当前源码中；其历史实现和证据见[已结项侧后方探索](tasks/completed/side-rear-presence-exploration.md)。手机安装状态以[任务索引](tasks/README.md)为准。
 
 当前采用的 Android 路线为普通悬浮窗，由 Roy 在对照两版后明确选择；原版的无障碍结构保存在提交 `8a98c84` 和标签 `checkpoint/gate1-before-overlay-20260907`。完整产品要求见 docs/SPEC.md。本文件描述已实现机制，不把路线选择当作全部真机验收通过。
 
 ## 模块与数据流
 
-单个原生 Java app 模块，摄像头阶段接入 AndroidX Activity 1.10.1、CameraX 1.4.2 与 MediaPipe Tasks Vision 1.0.0 / bundled EfficientDet-Lite0 int8，取代此前 ML Kit 人脸模型。应用 ID `com.roy.worktoscroll.overlaytest`，Java namespace 保留 `com.roy.worktoscroll`；沿用新版私有余额，和旧无障碍原版沙箱隔离。
+单个原生 Java `:app` 模块通过 `workToScroll` / `workToWatch` product flavor 生成两个独立应用。WorkToScroll 保持应用 ID `com.roy.worktoscroll.overlaytest`、版本和既有数据升级路径，目标为 `com.xingin.xhs`；WorkToWatch 使用永久应用 ID `com.roy.worktowatch`、独立数据沙箱和开发版本 `0.1.0-dev`，目标为 `com.google.android.youtube`。两者共享 Java namespace `com.roy.worktoscroll` 与平台无关实现；namespace 只是内部代码位置，不是安装身份或数据沙箱。摄像头能力使用 AndroidX Activity 1.10.1、CameraX 1.4.2 与 MediaPipe Tasks Vision 1.0.0 / bundled EfficientDet-Lite0 int8。
 
 | 文件 | 职责 |
 |---|---|
+| app/build.gradle | 定义双产品应用 ID、版本、目标包和目标名称；保留既有聚合构建命令，并提供 APK 隔离检查入口 |
+| app/src/workToScroll、app/src/workToWatch | 保存构建专属产品名与返回文案；共用代码不硬编码某一目标应用 |
 | MainActivity.java | 猫总首页，以及用 page 参数区分的设置/权限详情/开发工具页面实例；保留授权、保护启停与测试动作，前台时按已保存开关恢复服务 |
 | ProtectionUiState.java | 纯展示状态优先级：停止意愿、必要授权缺失、运行中断、服务异常、后台受限、运行中；不写账本或启动服务 |
 | CatUi.java | 原生页面宽度/系统边距、纸色与黑色样式、控件与图片解码；blocker 创建共享原生 BlockerView，不写入业务状态 |
@@ -17,10 +19,10 @@
 | ExhaustionFeedback.java | 进程内一次性消费耗尽事件；核对扣费前后数值、短时有效令牌与一次领取，不写账本 |
 | Permissions.java | 查询使用情况访问和 Settings.canDrawOverlays，不查询或申请无障碍 |
 | ProtectionService.java | 普通 Service，使用 specialUse 前台服务运行监测；通知提供回首页和停止操作；显示 TYPE_APPLICATION_OVERLAY |
-| BlockerActivity.java | 非导出的不透明全屏阻止页；与主页共用 WorkToScroll 任务、位于栈顶时复用、离开不保留历史；真正让目标退后台，返回工具/桌面及系统返回不重新露出目标 |
+| BlockerActivity.java | 非导出的不透明全屏阻止页；与对应产品主页共用任务、位于栈顶时复用、离开不保留历史；真正让目标退后台，返回工具/桌面及系统返回不重新露出目标 |
 | RecentsLockGuideView.java | 小米“锁定最近任务”的三步原生图文示意；不读取最近任务、权限或厂商设置状态 |
 | BalanceEngine.java | 原版复用的纯余额算法，按使用区间扣减，仅显式奖励能增加余额 |
-| LedgerStore.java | 实验版同进程单例与 SharedPreferences 快照，原版私有数据不读取、不迁移 |
+| LedgerStore.java | 同进程单例与 SharedPreferences 快照；目标包来自当前变体的 BuildConfig，两个应用 ID 的私有数据互不读取或迁移 |
 | WorkActivity.java | 前置预览、离线人体检测、显式开始/暂停/继续/结束、试验性预览解绑、声音开关、在场与奖励展示；帧仅在内存存在 |
 | PreviewTrial.java | 当前工作页进程内的临时预览状态和10秒展示门槛；到期自动收起，用户可重新打开一段新的10秒预览；自动恢复保持收起，主动暂停后重新开始则恢复校准预览 |
 | CameraRecovery.java | 内存中的监测意愿、临时中断、采集健康度与有限重试；WorkActivity 的 ViewModel 仅跨同进程配置重建保留，不从账本恢复开相机意愿 |
@@ -116,7 +118,7 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 可靠在
 - 账本保存 observation_gaps 与 last_observation_gap_ms，开发工具展示中断次数和最近时长；包括休眠等停顿，不能直接解释成冻结次数。首页查询系统 isBackgroundRestricted 并提示异常，设置页提供本应用后台设置入口；小米额外提示省电策略。系统未报告受限或当前心跳正常均不代表厂商不会冻结后台。
 - 普通全屏浮层使用 FLAG_NOT_FOCUSABLE，并接收浮层范围内触摸；意图是避免浮层夺取焦点生成目标 Activity 暂停事件，导致拦截反复显隐。焦点/触摸行为仍待真机验证。
 - 0.3.4新增BlockerActivity；0.3.5每次新浮层首次onDraw后等待250ms再请求启动一次，不在每轮轮询重试。原因是本机addView/post会早于系统认定窗口可见，出现SAW-only路径被拒而visible-window路径放行的差异；等待不能替代真机验收。启动抛错或2秒后浮层仍在时写WTS_BLOCK_PAGE诊断，保留视觉覆盖。只有PAGE_VISIBLE窗口焦点回调才主动撤浮层；正常检测到离开/锁屏等路径仍可撤浮层。全屏页独立于target_active保持，避免目标暂停导致阻止页自动消失；500ms只核对开启意愿、余额和权限，不写账本。停止保护、余额到账或授权失效后结束自己的任务。
-- 0.5.6起阻止页使用应用默认taskAffinity、singleTop与noHistory：服务仍以NEW_TASK请求全屏页，但优先复用WorkToScroll现有任务，避免HyperOS把阻止页和主页同时展示成两个最近任务卡片；重复请求在页已位于栈顶时交给onNewIntent。阻止页失效、返回工具或回桌面时只finish自身，不再finishAndRemoveTask删除整个应用任务。API33+注册系统返回回调，旧系统覆盖onBackPressed，统一回桌面。采用现有悬浮窗授权的后台启动例外，不增权限；厂商仍可能拒绝启动，PAGE_REQUESTED不能替代PAGE_VISIBLE、单卡片及目标STOPPED实测。诊断脚本分别显示blocker_page_focused/visible与旧浮层可见性。
+- 0.5.6起阻止页使用应用默认taskAffinity、singleTop与noHistory：服务仍以NEW_TASK请求全屏页，但优先复用当前产品现有任务，避免HyperOS把阻止页和主页同时展示成两个最近任务卡片；重复请求在页已位于栈顶时交给onNewIntent。阻止页失效、返回工具或回桌面时只finish自身，不再finishAndRemoveTask删除整个应用任务。API33+注册系统返回回调，旧系统覆盖onBackPressed，统一回桌面。采用现有悬浮窗授权的后台启动例外，不增权限；厂商仍可能拒绝启动，PAGE_REQUESTED不能替代PAGE_VISIBLE、单卡片及目标STOPPED实测。诊断脚本分别显示blocker_page_focused/visible与旧浮层可见性。
 - 音频焦点作为浮层阶段的辅助：每次新阻止层请求一次USAGE_MEDIA / AUDIOFOCUS_GAIN，不接受延迟获焦；移除浮层时释放，不发播放键、不调系统音量、不循环争抢。Roy已接受可能打断其他后台媒体的取舍，但真机证明0.3.2单靠焦点仍持续出声，0.3.4主路径改为真实页面切换，不能将焦点获准视为成功停声。异常仅写WTS_AUDIO，不撤视觉覆盖或中断结算。[官方焦点说明](https://developer.android.com/media/optimize/audio-focus)描述的是有条件的播放方响应，不是按包强制暂停。
 - 返回测试版/桌面使用普通 Intent，不调用无障碍全局动作。导航短暂抑制过期事件的重拦截；仍需真实手势、按钮和后台启动兼容性验证。
 - `protection_policy_version=1` 首次迁移时默认 enabled=true（Roy 已明确要求启用新默认），后续 enabled 为持久化的用户意愿；手动停止保存 false，重新进入或升级不得重置。首页展示实际服务心跳、权限及健康度，不以 enabled 代替运行证据。首页移除有效工作余量数字，仅保留可用娱乐余额；内部余量按本轮门槛与中断规则维护。
@@ -130,7 +132,7 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 可靠在
 
 默认保护阶段新增 RECEIVE_BOOT_COMPLETED 用于系统重启后按已保存意愿恢复；不增加网络、精确闹钟、麦克风或摄像头后台采集权限。
 
-在已有 PACKAGE_USAGE_STATS、SYSTEM_ALERT_WINDOW、FOREGROUND_SERVICE、FOREGROUND_SERVICE_SPECIAL_USE、POST_NOTIFICATIONS 上增加 CAMERA；无无障碍服务、麦克风和存储权限，关闭应用备份。显式移除第三方依赖可能合入的 INTERNET 与 ACCESS_NETWORK_STATE 权限，离线模型随 APK 打包。只声明可查询小红书，使用事件中其他包名仅用于判断目标离开，不保留完整应用历史或读取页面内容。合并 manifest 及 APK 权限必须在构建后检查。
+在已有 PACKAGE_USAGE_STATS、SYSTEM_ALERT_WINDOW、FOREGROUND_SERVICE、FOREGROUND_SERVICE_SPECIAL_USE、POST_NOTIFICATIONS 上增加 CAMERA；无无障碍服务、麦克风和存储权限，关闭应用备份。显式移除第三方依赖可能合入的 INTERNET 与 ACCESS_NETWORK_STATE 权限，离线模型随 APK 打包。每个产品只在合并 Manifest 中声明自己的单一目标包：WorkToScroll 查询小红书，WorkToWatch 查询官方 YouTube；使用事件中其他包名仅用于判断目标离开，不保留完整应用历史或读取页面内容。`verifyDebugProductIsolation` 在 APK 层检查应用 ID、产品名、BuildConfig 目标与 Manifest 查询，不能替代权限、运行行为和真机体验验收。
 
 普通浮层在系统关键窗口之下；目标应用可拒绝覆盖，系统可调整可见性。浮层添加成功、账本记录计数不等于用户看到有效阻止页。省电、系统回收、锁屏恢复、延迟、音频及不同设备的行为必须分别验证。Google Play 对 specialUse 的审核不由构建通过替代。
 

@@ -5,14 +5,38 @@ android {
     compileSdk 36
     buildToolsVersion '36.1.0'
     defaultConfig {
-        applicationId 'com.roy.worktoscroll.overlaytest'
         testInstrumentationRunner 'com.roy.worktoscroll.FeedbackInstrumentation'
         minSdk 29
         targetSdk 36
-        versionCode 53
-        versionName '0.5.31-night-relax-preview'
-        resValue 'string', 'app_version', '0.5.31-night-relax-preview'
     }
+    flavorDimensions 'product'
+    productFlavors {
+        workToScroll {
+            dimension 'product'
+            applicationId 'com.roy.worktoscroll.overlaytest'
+            versionCode 53
+            versionName '0.5.31-night-relax-preview'
+            manifestPlaceholders = [targetPackage: 'com.xingin.xhs']
+            buildConfigField 'String', 'PRODUCT_NAME', '"WorkToScroll"'
+            buildConfigField 'String', 'TARGET_PACKAGE', '"com.xingin.xhs"'
+            buildConfigField 'String', 'TARGET_NAME', '"小红书"'
+            buildConfigField 'String', 'TARGET_MISSING_MESSAGE', '"未找到小红书，请确认已安装标准版"'
+            resValue 'string', 'app_version', '0.5.31-night-relax-preview'
+        }
+        workToWatch {
+            dimension 'product'
+            applicationId 'com.roy.worktowatch'
+            versionCode 1
+            versionName '0.1.0-dev'
+            manifestPlaceholders = [targetPackage: 'com.google.android.youtube']
+            buildConfigField 'String', 'PRODUCT_NAME', '"WorkToWatch"'
+            buildConfigField 'String', 'TARGET_PACKAGE', '"com.google.android.youtube"'
+            buildConfigField 'String', 'TARGET_NAME', '"YouTube"'
+            buildConfigField 'String', 'TARGET_MISSING_MESSAGE', '"未找到YouTube，请确认已安装官方 Android App"'
+            resValue 'string', 'app_version', '0.1.0-dev'
+        }
+    }
+    buildFeatures { buildConfig true }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -27,4 +51,35 @@ dependencies {
     implementation 'androidx.camera:camera-view:1.4.2'
     implementation 'com.google.mediapipe:tasks-vision:1.0.0'
     testImplementation 'junit:junit:4.13.2'
+}
+
+tasks.register('testDebugUnitTest') {
+    group = 'verification'
+    description = 'Runs debug unit tests for both product variants.'
+    dependsOn 'testWorkToScrollDebugUnitTest', 'testWorkToWatchDebugUnitTest'
+}
+
+tasks.register('lintDebug') {
+    group = 'verification'
+    description = 'Runs debug lint for both product variants.'
+    dependsOn 'lintWorkToScrollDebug', 'lintWorkToWatchDebug'
+}
+
+def syncLegacyWorkToScrollDebugApk = tasks.register('syncLegacyWorkToScrollDebugApk', Copy) {
+    from layout.buildDirectory.file('outputs/apk/workToScroll/debug/app-workToScroll-debug.apk')
+    into layout.buildDirectory.dir('outputs/apk/debug')
+    rename { 'app-debug.apk' }
+}
+
+tasks.matching { it.name == 'assembleDebug' }.configureEach {
+    finalizedBy syncLegacyWorkToScrollDebugApk
+}
+
+tasks.register('verifyDebugProductIsolation', Exec) {
+    group = 'verification'
+    description = 'Verifies application IDs, target packages, and product names in both debug APKs.'
+    dependsOn 'assembleDebug'
+    workingDir rootProject.projectDir
+    commandLine 'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+        rootProject.file('scripts/verify-product-isolation.ps1')
 }
