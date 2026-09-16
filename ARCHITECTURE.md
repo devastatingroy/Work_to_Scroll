@@ -101,7 +101,7 @@ CameraX 前置图像 → MediaPipe person 检测 → PersonObservation 可靠在
 
 ## 夜间放松额度
 
-- `NightRelax` 是与 `DailyReset` 同构的纯 record（enabled/startMin/endMin/allowanceMs/remainingMs/windowStartMs/zone），只用本地墙钟：`active` 判定跨零点时间窗（默认 22:00–08:30），`windowStartKey` 给出当前这一晚的 22:00 时间戳做 refill 去重键，`nextEdge` 返回下一条边界用于分段结算，`refreshed` 仅在进入新的一晚时把 remaining 刷回 allowance、跨时区更新 zone、半夜重启保留剩余，`withEnabled(true)` 把 windowStartMs 归零强制下次进窗刷新。字段随账本快照持久化，缺字段时按默认（45 分钟、22:00–08:30、开启）初始化，不触发既有迁移。
+- `NightRelax` 是与 `DailyReset` 同构的纯 record（enabled/startMin/endMin/allowanceMs/remainingMs/windowStartMs/zone），只用本地墙钟：`active` 判定跨零点时间窗（默认 22:00–08:30），`windowStartKey` 给出当前这一晚的 22:00 时间戳做 refill 去重键，`nextEdge` 返回下一条边界用于分段结算，`refreshed` 仅在进入新的一晚时把 remaining 刷回 allowance、跨时区更新 zone、半夜重启保留剩余，`withEnabled(true)` 把 windowStartMs 归零强制下次进窗刷新。字段随账本快照持久化，缺字段时按默认（45 分钟、22:00–08:30、开启）初始化，不触发既有迁移。首页将当前处于窗口内的 `remainingMs` 与攒得余额合并为“当前可用娱乐”，并列出两项来源和窗口结束时间；目标入口、猫总状态与主数字都复用这一口径，避免赠送时间可用却显示零余额。
 - `BalanceEngine.chargeTo` 增加一份可选 relax budget：置位时 `targetActive` 时间先扣该额度、扣完溢出再扣 `balanceMs`，额度部分不计入 `consumedMs`；budget 为 -1 时完全按原逻辑。budget 是逐段的瞬态量，段边界处恒为 -1，不进入 `Checkpoint`。
 - `ProtectionService.settleUntil` 按 `NightRelax.nextEdge` 把 `[cursor, end]` 切成单一窗口态的段（复用既有在 `daily.nextMs()` 边界切分的写法）：窗口内 `relaxBudget(remaining)` → settle → `setNightRemaining(relaxRemaining())` 回写并 `clearRelaxBudget`（`finally` 保证异常路径也清），窗口外走原路。因此赚来的余额在窗口内天然被冻结，直到额度耗尽溢出。
 - 拦截判定改为：窗口内 `remainingMs==0 && balanceMs==0` 才 `showBlocker`，窗口外仍是 `balanceMs==0`。窗口结束靠下一次心跳/前台事件重新评估，不依赖精确闹钟；本功能只“少拦”，不新增必须可靠触发的恢复动作，保护开关 `enabled` 全程不写，08:30 自动回到 22:00 前状态。

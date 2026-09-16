@@ -12,7 +12,7 @@ WorkToScroll 帮助用户通过工作或学习攒取娱乐时间，在额度耗�
 
 ## 独立的 WorkToWatch 路线
 
-2026-09-15 Roy 已确认另行准备面向 Google Play 的独立 YouTube 产品 **WorkToWatch**，并于 2026-09-16 授权开始开发。它保留并不覆盖当前 WorkToScroll；同一 `:app` 模块现在通过 `workToScroll` / `workToWatch` 产品变体复用平台无关底层能力，同时隔离应用 ID、数据沙箱、目标包和产品名，并为后续平台专属文案与素材保留独立 source set。WorkToWatch 使用永久应用 ID `com.roy.worktowatch`，当前开发版本 `0.1.0-dev`，只配置官方 YouTube Android App `com.google.android.youtube`，并采用独立的透明底白橙进度环与橙色播放键桌面图标；WorkToScroll 继续使用原紫底沙漏图标。Debug APK 已通过静态隔离检查，并在小米 14 Pro / HyperOS 3.0 完成独立安装、必要授权、前台保护服务和零余额启动 YouTube 后阻止并回桌面的首验；正数余额扣减与耗尽转换、锁屏/恢复、音频、多窗口、长期后台和跨机型仍待验证，正式语言、文案和其余品牌素材也尚未定稿。小米侧载包的“受限设置”处理及不需要“获取完整应用列表”的边界见[调试经验](notes.md#小米增强防护限制侧载-app-的特殊权限)，详细证据见[WorkToWatch 产品实施](tasks/active/overseas-target-apps.md)。
+2026-09-15 Roy 已确认另行准备面向 Google Play 的独立 YouTube 产品 **WorkToWatch**，并于 2026-09-16 授权开始开发。它保留并不覆盖当前 WorkToScroll；同一 `:app` 模块现在通过 `workToScroll` / `workToWatch` 产品变体复用平台无关底层能力，同时隔离应用 ID、数据沙箱、目标包和产品名，并为后续平台专属文案与素材保留独立 source set。WorkToWatch 使用永久应用 ID `com.roy.worktowatch`，当前开发版本 `0.1.0-dev`，只配置官方 YouTube Android App `com.google.android.youtube`，并采用独立的透明底白橙进度环与橙色播放键桌面图标；WorkToScroll 继续使用原紫底沙漏图标。夜间赠送生效时，WorkToWatch 首页将攒得时间和赠送时间合计显示为“当前可用娱乐”，并标出各自时间及赠送截止点，避免零攒得余额被误读为保护异常。Debug APK 已通过静态隔离检查，并在小米 14 Pro / HyperOS 3.0 完成独立安装、必要授权、前台保护服务和零余额启动 YouTube 后阻止并回桌面的首验；正数余额扣减与耗尽转换、锁屏/恢复、音频、多窗口、长期后台和跨机型仍待验证，正式语言、文案和其余品牌素材也尚未定稿。小米侧载包的“受限设置”处理及不需要“获取完整应用列表”的边界见[调试经验](notes.md#小米增强防护限制侧载-app-的特殊权限)，详细证据见[WorkToWatch 产品实施](tasks/active/overseas-target-apps.md)。
 
 ## 猫总首页
 

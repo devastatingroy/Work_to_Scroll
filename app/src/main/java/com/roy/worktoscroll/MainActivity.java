@@ -28,7 +28,7 @@ public final class MainActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private LedgerStore ledger;
     private LinearLayout content;
-    private TextView balance, status, diagnostics, worked, speech, seal;
+    private TextView balance, availableDetail, status, diagnostics, worked, speech, seal;
     private Button workButton, toggle, usagePermission, overlayPermission, entertainment, repair;
     private TextView expiry, ratio, ratioDetail, protectionDetail, permissionSummary, backgroundSummary;
     private TextView usageState, overlayState, notificationState, backgroundState, bootRecoveryState, dailyDetail;
@@ -85,11 +85,14 @@ public final class MainActivity extends Activity {
         ticket.setGravity(Gravity.CENTER);
         ticket.setPadding(CatUi.dp(this, 16), CatUi.dp(this, 14), CatUi.dp(this, 16), CatUi.dp(this, 12));
         ticket.setBackground(CatUi.shape(this, 0xFFFFF9EF, 12, 0xFFDAB997));
-        CatUi.add(ticket, CatUi.text(this, "可用娱乐", 16, CatUi.INK, false), -2, 0);
+        CatUi.add(ticket, CatUi.text(this, "当前可用娱乐", 16, CatUi.INK, false), -2, 0);
         balance = CatUi.text(this, "0 分 00 秒", 44, CatUi.RED, true);
         balance.setMaxLines(1);
         balance.setAutoSizeTextTypeUniformWithConfiguration(24, 44, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
         CatUi.add(ticket, balance, 58, 4);
+        availableDetail = CatUi.text(this, "", 12, CatUi.MUTED, false);
+        availableDetail.setGravity(Gravity.CENTER);
+        CatUi.add(ticket, availableDetail, -2, 0);
         seal = CatUi.text(this, "先攒时间", 14, CatUi.RED, true);
         CatUi.add(ticket, seal, -2, 0);
         expiry = CatUi.text(this, "", 12, CatUi.MUTED, false);
@@ -415,7 +418,7 @@ public final class MainActivity extends Activity {
         if (!ledger.refreshDailyReset()) {
             Toast.makeText(this, "余额保存失败，请稍后重试", Toast.LENGTH_LONG).show(); return;
         }
-        if (ledger.engine.balanceMs <= 0) {
+        if (availableEntertainmentMs() <= 0) {
             Toast.makeText(this, "还没有可用娱乐时间，先开始工作吧", Toast.LENGTH_SHORT).show(); return;
         }
         Intent launch = getPackageManager().getLaunchIntentForPackage(LedgerStore.TARGET);
@@ -506,13 +509,22 @@ public final class MainActivity extends Activity {
             }
         }
         if (balance != null) {
-            CatUi.setText(balance, duration(ledger.engine.balanceMs, true));
+            long nightGift = nightGiftMs();
+            long available = ledger.engine.balanceMs + nightGift;
+            CatUi.setText(balance, duration(available, true));
+            if (nightGift > 0) {
+                availableDetail.setVisibility(View.VISIBLE);
+                CatUi.setText(availableDetail, "攒得 " + duration(ledger.engine.balanceMs, true)
+                    + " + 夜间赠送 " + duration(nightGift, true) + "（至 "
+                    + String.format(java.util.Locale.ROOT, "%02d:%02d", ledger.night.endMin() / 60,
+                        ledger.night.endMin() % 60) + "）");
+            } else availableDetail.setVisibility(View.GONE);
             CatUi.setText(worked, "已工作 " + ledger.work.totalValidMs() / 60_000 + " 分钟");
-            boolean hasTime = ledger.engine.balanceMs > 0;
+            boolean hasTime = available > 0;
             Drawable cat = hasTime ? approvedCat : waitingCat;
             if (homeCat.getDrawable() != cat) homeCat.setImageDrawable(cat);
             CatUi.setText(speech, hasTime ? "准了，去玩吧！" : "假条呢？");
-            CatUi.setText(seal, hasTime ? "猫总 · 准玩" : "猫总等你开工");
+            CatUi.setText(seal, nightGift > 0 ? "夜间赠送 · 可以用" : hasTime ? "猫总 · 准玩" : "猫总等你开工");
             CatUi.setText(workButton, ledger.work.active() ? "▶  继续工作" : "▶  开始工作");
             entertainment.setEnabled(hasTime);
         }
@@ -554,6 +566,13 @@ public final class MainActivity extends Activity {
             + "\n" + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + " · Android " + android.os.Build.VERSION.RELEASE
             + "\n" + getString(R.string.app_version) + (ledger.note.isEmpty() ? "" : "\n" + ledger.note));
     }
+
+    private long nightGiftMs() {
+        return ledger.night.enabled() && ledger.night.active(System.currentTimeMillis(), java.time.ZoneId.systemDefault())
+            ? ledger.night.remainingMs() : 0;
+    }
+
+    private long availableEntertainmentMs() { return ledger.engine.balanceMs + nightGiftMs(); }
 
     private void renderPermissionState(TextView view, boolean allowed, String yes, String no) {
         CatUi.setText(view, allowed ? "✓ " + yes : no); view.setTextColor(allowed ? GOOD : CatUi.RED);
