@@ -25,6 +25,7 @@ final class LedgerStore {
     private int rewardRuleVersion;
     long workUpgradeCreditMs;
     DailyReset daily;
+    NightRelax night;
     private final LongSupplier wallClock, elapsedClock;
     private final Supplier<ZoneId> zoneClock;
     private final LongConsumer settleExpiry;
@@ -59,6 +60,14 @@ final class LedgerStore {
                 prefs.getString("daily_reset_zone", zoneClock.get().getId()), prefs.getLong("daily_reset_last_ms", 0),
                 prefs.getBoolean("daily_reset_notice", false))
             : DailyReset.initial(now, zoneClock.get());
+        night = prefs.contains("night_relax_enabled")
+            ? new NightRelax(prefs.getBoolean("night_relax_enabled", true),
+                prefs.getInt("night_relax_start_min", 22 * 60), prefs.getInt("night_relax_end_min", 8 * 60 + 30),
+                prefs.getLong("night_relax_allowance_ms", 45 * 60_000L),
+                prefs.getLong("night_relax_remaining_ms", 45 * 60_000L),
+                prefs.getLong("night_relax_window_start_ms", 0),
+                prefs.getString("night_relax_zone", zoneClock.get().getId()))
+            : NightRelax.initial(zoneClock.get());
         engine = new BalanceEngine(prefs.getLong("balance_ms", 0), prefs.getLong("consumed_ms", 0),
             prefs.getLong("cursor_ms", now), prefs.getBoolean("target_active", false));
         enabled = ProtectionPolicy.enabledOnLoad(prefs.getInt("protection_policy_version", 0) >= 1,
@@ -137,6 +146,29 @@ final class LedgerStore {
         return daily.enabled() ? "每天早晨 06:00 清空剩余娱乐时间。可在设置中关闭。" : "每天清零已关闭，剩余娱乐时间继续保留。";
     }
 
+    /** Refill on a new night; a mid-window process restart keeps the remaining quota. */
+    void refreshNight(long now, ZoneId zone) { night = night.refreshed(now, zone); }
+
+    void setNightRemaining(long remaining) { night = night.withRemaining(remaining); }
+
+    boolean setNightEnabled(boolean value) {
+        NightRelax before = night;
+        night = night.withEnabled(value);
+        if (save()) return true;
+        night = before;
+        return false;
+    }
+
+    String nightDescription() {
+        if (!night.enabled()) return "夜间放松已关闭，全天按余额保护。";
+        return "每晚 " + hm(night.startMin()) + "–" + hm(night.endMin()) + " 送 "
+            + night.allowanceMs() / 60_000 + " 分钟放松额度；用完后按余额照常保护，" + hm(night.endMin()) + " 恢复。";
+    }
+
+    private static String hm(int minute) {
+        return String.format("%02d:%02d", minute / 60, minute % 60);
+    }
+
     boolean setProtectionEnabled(boolean value) {
         boolean before = enabled;
         enabled = value;
@@ -185,6 +217,12 @@ final class LedgerStore {
             .putBoolean("daily_reset_enabled", reset.enabled()).putLong("daily_reset_next_ms", reset.nextMs())
             .putString("daily_reset_zone", reset.zone()).putLong("daily_reset_last_ms", reset.lastMs())
             .putBoolean("daily_reset_notice", reset.notice())
+            .putBoolean("night_relax_enabled", night.enabled())
+            .putInt("night_relax_start_min", night.startMin()).putInt("night_relax_end_min", night.endMin())
+            .putLong("night_relax_allowance_ms", night.allowanceMs())
+            .putLong("night_relax_remaining_ms", night.remainingMs())
+            .putLong("night_relax_window_start_ms", night.windowStartMs())
+            .putString("night_relax_zone", night.zone())
             .putInt("work_round_minutes", progress.roundMinutes()).putInt("work_selected_minutes", progress.selectedMinutes()).putLong("balance_ms", balance)
             .putInt("protection_policy_version", 1)
             .putInt("work_reward_rule_version", ruleVersion)

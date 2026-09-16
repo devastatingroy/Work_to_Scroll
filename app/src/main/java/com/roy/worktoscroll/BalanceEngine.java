@@ -10,6 +10,12 @@ public final class BalanceEngine {
     public long cursorMs;
     public boolean targetActive;
     private long chargeFromMs;
+    private long relaxBudgetMs = -1;
+
+    /** During a night-relax segment, target time draws from this free budget before balance. */
+    void relaxBudget(long budgetMs) { relaxBudgetMs = Math.max(0, budgetMs); }
+    void clearRelaxBudget() { relaxBudgetMs = -1; }
+    long relaxRemaining() { return Math.max(0, relaxBudgetMs); }
     record Checkpoint(long balance, long consumed, long cursor, boolean active, long chargeFrom) {}
     Checkpoint checkpoint() { return new Checkpoint(balanceMs, consumedMs, cursorMs, targetActive, chargeFromMs); }
     void restore(Checkpoint c) {
@@ -38,7 +44,14 @@ public final class BalanceEngine {
 
     private void chargeTo(long timeMs) {
         if (targetActive) {
-            long charged = Math.min(balanceMs, Math.max(0, timeMs - Math.max(cursorMs, chargeFromMs)));
+            long want = Math.max(0, timeMs - Math.max(cursorMs, chargeFromMs));
+            if (relaxBudgetMs >= 0) {
+                // Free night quota is spent first and never counts as consumed balance.
+                long fromRelax = Math.min(relaxBudgetMs, want);
+                relaxBudgetMs -= fromRelax;
+                want -= fromRelax;
+            }
+            long charged = Math.min(balanceMs, want);
             balanceMs -= charged;
             consumedMs += charged;
         }

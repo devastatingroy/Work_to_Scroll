@@ -99,4 +99,29 @@ public class BalanceEngineTest {
         assertFalse(e.targetActive);
         assertEquals(250_000, e.balanceMs);
     }
+    @Test public void nightBudgetSpentBeforeBalanceAndNotConsumed() {
+        var e = new BalanceEngine(300_000, 0, 0, true);
+        e.relaxBudget(300_000);
+        e.settle(List.of(), 200_000);
+        assertEquals(300_000, e.balanceMs);
+        assertEquals(0, e.consumedMs);
+        assertEquals(100_000, e.relaxRemaining());
+    }
+    @Test public void nightBudgetOverflowChargesBalance() {
+        var e = new BalanceEngine(300_000, 0, 0, true);
+        e.relaxBudget(60_000);
+        e.settle(List.of(), 120_000);
+        assertEquals(0, e.relaxRemaining());
+        assertEquals(240_000, e.balanceMs);
+        assertEquals(60_000, e.consumedMs);
+    }
+    @Test public void clearingNightBudgetRestoresBalanceCharging() {
+        var e = new BalanceEngine(300_000, 0, 0, true);
+        e.relaxBudget(60_000);
+        e.settle(List.of(), 60_000);
+        e.clearRelaxBudget();
+        e.settle(List.of(), 120_000);
+        assertEquals(240_000, e.balanceMs);
+        assertEquals(60_000, e.consumedMs);
+    }
 }

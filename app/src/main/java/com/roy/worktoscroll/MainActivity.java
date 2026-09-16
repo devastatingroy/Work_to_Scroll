@@ -36,6 +36,9 @@ public final class MainActivity extends Activity {
     private static final int GOOD = 0xFF456447, WARNING = 0xFF946119;
     private android.widget.Switch dailySwitch;
     private boolean updatingDailySwitch;
+    private android.widget.Switch nightSwitch;
+    private TextView nightDetail;
+    private boolean updatingNightSwitch;
     private ImageView homeCat;
     private Drawable waitingCat, approvedCat;
     private String page;
@@ -147,6 +150,19 @@ public final class MainActivity extends Activity {
         dailySwitch.setOnCheckedChangeListener((button, checked) -> {
             if (updatingDailySwitch) return;
             if (!ledger.setDailyEnabled(checked)) Toast.makeText(this, "设置保存失败，请重试", Toast.LENGTH_LONG).show();
+            render();
+        });
+        settingsDivider(rules);
+        nightSwitch = new android.widget.Switch(this);
+        nightSwitch.setText("夜间放松");
+        nightSwitch.setTextColor(CatUi.INK);
+        nightSwitch.setTextSize(16);
+        nightSwitch.setMinHeight(CatUi.dp(this, 48));
+        CatUi.add(rules, nightSwitch, -2, 4);
+        nightDetail = settingsText(rules, "", 13, CatUi.MUTED, 0);
+        nightSwitch.setOnCheckedChangeListener((button, checked) -> {
+            if (updatingNightSwitch) return;
+            if (!ledger.setNightEnabled(checked)) Toast.makeText(this, "设置保存失败，请重试", Toast.LENGTH_LONG).show();
             render();
         });
         section("帮助与说明");
@@ -449,6 +465,15 @@ public final class MainActivity extends Activity {
             updatingDailySwitch = false;
             CatUi.setText(dailyDetail, ledger.daily.enabled() ? "每天早晨 06:00 清空剩余时间；重新开启从下一个 06:00 生效，不立即清空。"
                 : "已关闭，剩余娱乐时间不每日清零；关闭不会恢复已到期余额。");
+        }
+        if (nightSwitch != null) {
+            updatingNightSwitch = true;
+            nightSwitch.setChecked(ledger.night.enabled());
+            updatingNightSwitch = false;
+            String detail = ledger.nightDescription();
+            if (ledger.night.enabled() && ledger.night.active(System.currentTimeMillis(), java.time.ZoneId.systemDefault()))
+                detail += "\n今晚剩余 " + ledger.night.remainingMs() / 60_000 + " 分钟。";
+            CatUi.setText(nightDetail, detail);
         }
         if (expiry != null) {
             expiry.setVisibility(ledger.daily.enabled() ? android.view.View.VISIBLE : android.view.View.GONE);

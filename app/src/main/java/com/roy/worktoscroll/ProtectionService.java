@@ -22,6 +22,7 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
+import java.time.ZoneId;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -197,8 +198,12 @@ public final class ProtectionService extends Service {
             failure = healthy ? "" : "余额保存失败，保护状态异常";
             boolean visible = getSystemService(PowerManager.class).isInteractive()
                 && !getSystemService(KeyguardManager.class).isKeyguardLocked();
+            boolean inWindow = ledger.night.enabled() && ledger.night.active(now, ZoneId.systemDefault());
+            boolean depleted = inWindow
+                ? ledger.night.remainingMs() == 0 && ledger.engine.balanceMs == 0
+                : ledger.engine.balanceMs == 0;
             if (visible && ledger.engine.targetActive
-                    && ledger.engine.balanceMs == 0 && heartbeatElapsed >= dismissUntilElapsed) showBlocker();
+                    && depleted && heartbeatElapsed >= dismissUntilElapsed) showBlocker();
             else hideBlocker();
         } catch (RuntimeException ex) {
             exhaustion.clear();
@@ -226,7 +231,25 @@ public final class ProtectionService extends Service {
         if (end <= e.cursorMs) return;
         syncExhaustion();
         long balanceBefore = e.balanceMs, consumedBefore = e.consumedMs;
-        e.settle(queryTransitions(e.cursorMs, end), end);
+        ZoneId zone = ZoneId.systemDefault();
+        // Settle in segments split at night-relax window edges so target time is charged to the
+        // right pool: inside the window the free quota is spent first (balance frozen until it
+        // overflows), outside the window balance is charged as usual.
+        while (e.cursorMs < end) {
+            long segStart = e.cursorMs;
+            long segEnd = Math.min(end, ledger.night.nextEdge(segStart, zone));
+            ledger.refreshNight(segStart, zone);
+            boolean inWindow = ledger.night.enabled() && ledger.night.active(segStart, zone);
+            if (inWindow) e.relaxBudget(ledger.night.remainingMs());
+            try {
+                e.settle(queryTransitions(segStart, segEnd), segEnd);
+            } finally {
+                if (inWindow) {
+                    ledger.setNightRemaining(e.relaxRemaining());
+                    e.clearRelaxBudget();
+                }
+            }
+        }
         // Daily expiry is a separate event; never infer consumption from a generic zero balance.
         if (!ledger.daily.due(System.currentTimeMillis()))
             exhaustion.settled(balanceBefore, e.balanceMs, consumedBefore, e.consumedMs,
