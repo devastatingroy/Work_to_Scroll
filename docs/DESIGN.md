@@ -81,12 +81,12 @@ v49–v52曾在v46计时基线上增加限时静态图诊断、手机离线准�
 
 - 推荐继续使用当前仓库并在构建时生成相互隔离的 WorkToScroll 与 WorkToWatch 发布物，避免复制整套计时、账本和保护代码；代码复用不形成用户可见的系列品牌。
 - 共用层只保留平台无关的计时、奖励、摄像头、账本、保护与阻止机制。小红书包名、中文入口文案和专属素材进入 WorkToScroll 变体；YouTube 目标配置、英文文案和 WorkToWatch 素材进入 WorkToWatch 变体。
-- WorkToWatch 采用独立且永久的应用 ID 和存储沙箱。确切包名、签名、source set 名称与构建任务在实施前核定，当前不把候选值写成已采用事实。
+- WorkToWatch 已采用独立且永久的应用 ID `com.roy.worktowatch`、`workToWatch` source set 和独立存储沙箱；当前只有 Debug 签名与开发版本，Google Play release 签名、AAB 和升级策略仍由流程轨道确定。
 - Google Play 只接收 WorkToWatch 对应的 release AAB；发布前静态检查 Manifest、资源和编译产物，出现 `com.xingin.xhs`、“小红书”或 WorkToScroll 专属素材即判为隔离失败。
 - 首版内部目标配置只有官方 YouTube Android App，不展示目标选择器，不预置 TikTok/Instagram，不新增页面内容读取或无障碍页面识别。将来启动其他单点产品时可复用共用层，但其名称、商店商品和适配证据重新决定。
 - 现有 WorkToScroll 行为与数据必须先建立回归基线；抽取共用层后两种构建分别运行单元、lint、Manifest/资源隔离和真机消费—耗尽—再阻止验证。任何一边通过都不能代替另一边验收。
 
-2026-09-16 已按本节开始代码实施：同一 `:app` 模块新增 `workToScroll` / `workToWatch` product flavor，分别保留 `com.roy.worktoscroll.overlaytest` / 使用已确认的 `com.roy.worktowatch`，目标分别为小红书 / 官方 YouTube Android App；两种 Debug 构建及静态隔离检查已通过。当前仍未安装 WorkToWatch、完成真机行为验收、创建商店商品或提交审核，正式语言、文案与独立品牌素材也未定稿。
+2026-09-16 已按本节开始代码实施：同一 `:app` 模块新增 `workToScroll` / `workToWatch` product flavor，分别保留 `com.roy.worktoscroll.overlaytest` / 使用已确认的 `com.roy.worktowatch`，目标分别为小红书 / 官方 YouTube Android App；两种 Debug 构建及静态隔离检查已通过。WorkToWatch 已在小米 14 Pro 完成独立安装、必要授权、前台保护服务和零余额 YouTube 阻止并回桌面的首验，且未共享或改变 WorkToScroll 账本；正数余额扣减与耗尽转换、锁屏/恢复、音频、多窗口、长期后台和跨机型仍待验收。尚未创建商店商品或提交审核，正式语言、文案、release 签名与独立品牌素材也未定稿。
 
 ## Android 监测恢复方案
 
