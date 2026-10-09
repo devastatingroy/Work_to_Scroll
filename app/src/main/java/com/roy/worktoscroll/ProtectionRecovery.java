@@ -44,7 +44,7 @@ public final class ProtectionRecovery extends BroadcastReceiver {
             alarms.cancel(alarmIntent(context));
             context.getSystemService(NotificationManager.class).cancel(NOTICE);
             if (!recover) return;
-            if (!Permissions.usage(context) || !Permissions.overlay(context)) {
+            if (!Permissions.usage(context) || !Permissions.overlay(context) || !Permissions.targetPipReady(context)) {
                 if (bootRecovery) BootRecoveryStatus.record(context, BootRecoveryPolicy.Outcome.MISSING_PERMISSION);
                 return;
             }

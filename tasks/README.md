@@ -1,10 +1,10 @@
 # 任务索引
 
-2026-09-16 当前操作：[WorkToWatch 产品实施](active/overseas-target-apps.md)已完成首轮代码与小米真机零余额链路。以当前 v53 为共用基线建立 `workToScroll` / `workToWatch` 双产品构建：前者保持 `com.roy.worktoscroll.overlaytest` 和小红书目标，后者使用永久应用 ID `com.roy.worktowatch`、开发版本 `0.1.0-dev` 和官方 YouTube 目标 `com.google.android.youtube`；两边各 161 项单测通过，lint 0 错误，APK 级隔离检查通过。WorkToWatch 已在小米 14 Pro 独立安装，必要权限和前台保护服务已核实；零余额启动官方 YouTube 后阻止页接管、阻止计数 0→1 并回桌面，原 WorkToScroll 身份和账本未改变。下一步验证正数余额扣减与耗尽转换，再继续锁屏/恢复、音频、分屏和长期后台矩阵。原[摄像头监控发热对照测试](active/camera-thermal-test.md)现场保持不变，后续从其任务文件继续。
+这里是唯一任务入口。恢复中断的多步骤任务时：AGENTS → 本索引 → 用户指定或唯一当前主任务 → 只读该任务文件 → 按需读取正式文档与代码；不遍历其他任务或历史。若只有并行轨道且用户未指定任务，不擅自选择。详细进度、版本、设备证据和停点只在对应任务文件维护。
 
-这里是唯一任务入口。恢复流程：AGENTS → 本索引 → 用户指定或当前主任务 → 按需读取正式文档与代码。当前主线为 Google Play 首发，明确分为两条独立轨道：[WorkToWatch 产品实施](active/overseas-target-apps.md)负责独立 YouTube 产品的定义、开发、适配和可靠性验收；[Google Play 流程与合规准备](active/google-play-release.md)负责账号、测试轨道、隐私和商店审核材料。2026-09-15 已确认保留现有 WorkToScroll 小红书产品，另做独立品牌 WorkToWatch；首发只支持整个官方 YouTube Android App，底层可复用但应用身份、数据和平台内容隔离；2026-09-16 已授权开始开发。两条轨道相互依赖，但任何一条的完成都不代表另一条完成；国内软件商店仅保留为候选路线。此前[设置页重新设计](active/settings-redesign.md)，0.5.7 已安装小米“锁定最近任务”三步图解，待解锁核对真机排版；“待核对”状态映射仍是独立未决问题。[每日清零与兑换比例](active/entertainment-rules.md)此前 0.5.0 已覆盖安装、79 项测试通过，余额和历史保留；等待真实新增档位奖励与自然跨夜验收。此前[猫总监工界面验收](active/cat-ui.md)，0.4.4 已安装“猫总批假”双状态图（零余额“工作优先”桌牌／有余额“准了”红章）并提交 `7ce99bb`，下一步是解锁手机核对实机显示、零余额画面及余额双向切换。[摄像头监控发热对照测试](active/camera-thermal-test.md)短测三轮已完成、支持低负载版本明显减轻发热，长期耐久与量化识别表现仍未验收。[侧后方在场观察](completed/side-rear-presence-exploration.md)已结项并保留历史证据；[零余额阻止页音频处理](active/audio-blocking.md)保留验收入口。用户明确指定其他任务时以用户要求为准，不能由目录排序推定授权。
+## 当前主线
 
-2026-09-13 结项：[侧后方人体识别探索](completed/side-rear-presence-exploration.md)已按Roy要求结束。本次真实640×480未显示识别收益，保持默认320×240/0.50；证据完整保留，不再等待补采或下一轮实验。未完的识别可靠性、计时及发热验收已交由现有对应任务保留，本轮未commit，既有分支/stash/未提交改动保留。
+Google Play 首发分为两条相互独立的轨道：[WorkToWatch 产品实施](active/overseas-target-apps.md)负责独立 YouTube 产品的定义、开发、适配和可靠性验收；[Google Play 流程与合规准备](active/google-play-release.md)负责账号、测试轨道、隐私和商店审核材料。任一轨道完成均不代表另一轨道完成。用户明确指定其他任务时，以用户要求为准。
 
 ## 目录与状态规则
 
@@ -30,17 +30,20 @@
 
 | 任务 | 目标与依赖 |
 | --- | --- |
-| [状态变化的戏剧化 UI 反馈设计](active/state-feedback-design.md) | 猫总耗尽单幕 0.5.4 已覆盖安装、103 项单测通过；零余额静态页已核对，接续动效与消费验收 |
-| [设置页重新设计](active/settings-redesign.md) | 0.5.10 已安装；允许自启动后的正常重启已实测恢复小红书封禁，待核对新增引导的排版/返回与省电“待核对”映射 |
-| [每日清零与兑换比例](active/entertainment-rules.md) | 已安装；接续真实 15/20 分钟奖励、自然跨夜清零及后台到期验证 |
-| [摄像头监控发热对照测试](active/camera-thermal-test.md) | v52第七轮预览持续开启、有效37分07秒端点为−1.8°C；高起温及条件不明，严格同条件耐久仍待验 |
-| [零余额阻止页音频处理](active/audio-blocking.md) | 处理阻止后继续出声，保留共享音频焦点的确认与真机验收边界 |
-| [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 当前源码为v46；v49–v52诊断已结项，继续验收日常计时、奖励和中断恢复 |
-| [猫总监工界面验收](active/cat-ui.md) | 0.5.2 已安装阻止页 A 到期假条图，待解锁验收；接续首页双状态、引导、返回路径及工作反馈验收 |
-| [WorkToWatch 产品实施](active/overseas-target-apps.md) | **当前产品轨道**：双产品构建与小米真机零余额 YouTube 阻止首验已完成；继续正数余额扣减、恢复、音频、多窗口和跨机型验收 |
-| [Google Play 流程与合规准备](active/google-play-release.md) | **当前流程与合规轨道**：账号、测试轨道、Data safety、隐私与商店审核材料；未注册/未付款/未提交 |
-| [后台冻结与消费拦截耐久验收](active/background-protection.md) | 0.5.6 已实测单任务、单最近任务计数及目标 STOPPED；0.5.7 加入锁定图解并保留修复，待完成最新版本视觉、停声和退出回归 |
-| [默认保护与提醒验收](active/default-protection.md) | 已通过一次允许自启动后的正常重启拦截；接续系统回收、手动停止和四小时实际提醒 |
+| [状态变化的戏剧化 UI 反馈设计](active/state-feedback-design.md) | 接续耗尽反馈的动效与真实消费验收 |
+| [设置页重新设计](active/settings-redesign.md) | 接续引导、返回和后台状态的真机体验核对 |
+| [每日清零与兑换比例](active/entertainment-rules.md) | 验收真实新增档位奖励、自然跨夜清零和后台到期 |
+| [放松时间窗（夜间 + 午间）](active/night-relax-quota.md) | 验收夜间与午间赠送的进出窗、额度耗尽回落、未用完作废与每日清零互不干扰 |
+| [摄像头监控发热对照测试](active/camera-thermal-test.md) | 完成严格同条件耐久与识别体验验证 |
+| [零余额阻止页音频处理](active/audio-blocking.md) | 验收阻止后的停声与返回边界 |
+| [摄像头计时与每轮奖励验收](active/camera-rewards.md) | 验收日常计时、奖励和中断恢复 |
+| [猫总监工界面验收](active/cat-ui.md) | 验收首页、引导、返回路径和工作反馈 |
+| [WorkToWatch 产品实施](active/overseas-target-apps.md) | 独立 YouTube 产品的实现、适配和可靠性验收 |
+| [TikTok 营销视频关键帧](active/marketing-video-keyframes.md) | 制作并审阅 WorkToWatch 阻止页、到账画面的宣传视频关键帧 |
+| [画中画软件监控可行性研究](active/picture-in-picture-monitoring.md) | 保留 PiP 前提、真实视频和跨机型边界的研究入口 |
+| [Google Play 流程与合规准备](active/google-play-release.md) | 推进账号、测试轨道、隐私和商店审核材料 |
+| [后台冻结与消费拦截耐久验收](active/background-protection.md) | 验证后台保护、停声和退出可靠性 |
+| [默认保护与提醒验收](active/default-protection.md) | 验证系统回收、手动停止和提醒行为 |
 
 ## todo
 
@@ -48,6 +51,7 @@
 | --- | --- |
 | [监控时的手机摆放提醒](todo/camera-placement-reminder.md) | 提醒避免笔记本电脑等物体遮挡，建议手机放在侧面、侧后方或背后，距离不超过 0.6 米；已记录，尚未实施 |
 | [Android 多目标娱乐应用监控准备](todo/target-app-selection.md) | 为小红书、抖音、红果等已支持 App 的单选/多选监控准备范围、边界和逐项真机验收；不改变当前固定小红书原型 |
+| [WorkToWatch 单产品多入口与多目标能力研究](todo/worktowatch-multi-entry-product-research.md) | 研究一个 Google Play 产品、多单点营销入口及后续多目标能力的可行性与边界；仅记录研究任务，不等于已批准实施 |
 | [国内软件商店候选准备](todo/release-readiness.md) | 国内小米/华为等商店改为候选路线；保留既有调研和材料矩阵，不启动账号、资质或备案流程 |
 | [小米商店资质与备案候选准备](todo/xiaomi-publishing-credentials.md) | 国内候选的具体资质入口；小米注册未提交，恢复时先重新核对主体与平台规则 |
 | [iPhone 核心原型开发准备](todo/ios-prototype.md) | 暂缓方向；恢复时核实 Mac、Xcode、设备、账号与签名 |
@@ -65,6 +69,8 @@
 | [Android 敏感授权调查](completed/android-permission-research.md) | 调查完成，候选路线及跨机型结论保持原证据边界 |
 | [原版无障碍恢复调查](completed/accessibility-recovery.md) | 旧版调查结束，保留未覆盖场景与暂缓加固方向 |
 | [原版 Gate 1 历史基线](completed/gate1-accessibility-baseline.md) | 旧路线被替代，历史待验收项不视为通过 |
+| [根目录文档职责整理](completed/documentation-information-architecture.md) | README、ARCHITECTURE、AGENTS 与任务索引职责已收束 |
+| [正式文档有效内容收束](completed/formal-document-consolidation.md) | DESIGN、SPEC 与 notes 已按当前有效内容和职责收束 |
 
 ## 正式资料与设计入口
 

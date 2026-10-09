@@ -3,6 +3,7 @@ package com.roy.worktoscroll;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
 
 public class ProductIdentityTest {
@@ -12,6 +13,7 @@ public class ProductIdentityTest {
         assertEquals("com.google.android.youtube", BuildConfig.TARGET_PACKAGE);
         assertEquals("YouTube", BuildConfig.TARGET_NAME);
         assertEquals("未找到YouTube，请确认已安装官方 Android App", BuildConfig.TARGET_MISSING_MESSAGE);
+        assertTrue(BuildConfig.TARGET_PIP_MUST_BE_DISABLED);
         assertNotEquals("com.roy.worktoscroll.overlaytest", BuildConfig.APPLICATION_ID);
         assertNotEquals("com.xingin.xhs", BuildConfig.TARGET_PACKAGE);
     }

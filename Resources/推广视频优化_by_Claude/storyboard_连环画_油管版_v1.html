@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work to Watch 连环画 Storyboard · 油管版 v1</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --muted:#6b6b6b; --line:#dcdcdc;
+    --green:#0a8f4f; --green-bg:#eafaf1; --red:#e5484d;
+    --warn:#b00020; --warn-bg:#fdecee; --tip-bg:#f4f7fb; --tip-line:#c9d8ec;
+    --chip:#30343c;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    color:var(--ink); background:#ebe7e0; margin:0; line-height:1.55;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  .wrap{max-width:1180px; margin:24px auto; padding:0 20px 50px}
+  h1{font-size:23px; margin:14px 0 2px}
+  .sub{color:var(--muted); font-size:13px; margin-bottom:16px}
+  .box{border-radius:8px; padding:12px 15px; margin:12px 0; font-size:13px}
+  .warn{background:var(--warn-bg); border:1px solid #f1b8c0}
+  .warn b{color:var(--warn)}
+  .tip{background:var(--tip-bg); border:1px solid var(--tip-line)}
+  h2{font-size:16px; margin:26px 0 6px; padding-bottom:5px; border-bottom:2px solid var(--ink)}
+  .strip{display:flex; flex-wrap:wrap; gap:16px; margin-top:14px}
+  .panel{width:262px; background:#fff; border:1px solid var(--line); border-radius:10px;
+    overflow:hidden; box-shadow:0 1px 6px rgba(0,0,0,.06); display:flex; flex-direction:column}
+  .frame{width:100%; display:block; background:#efe7db}
+  .meta{padding:9px 11px 11px; display:flex; flex-direction:column; gap:5px; flex:1}
+  .mrow{display:flex; align-items:center; gap:7px}
+  .chip{background:var(--chip); color:#fff; font-size:11px; font-weight:700; border-radius:5px; padding:1px 7px; white-space:nowrap}
+  .time{color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums}
+  .star{color:var(--red); font-weight:700}
+  .cap{font-weight:700; font-size:13px; color:#111; background:#fff6d6; border-left:3px solid #e8c33a; padding:3px 7px; border-radius:3px}
+  .vo{font-size:12px; color:#444}
+  .vo b{color:var(--green)}
+  .desc{font-size:11.5px; color:var(--muted); border-top:1px dashed var(--line); padding-top:6px; margin-top:2px}
+  .loop{display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:13px; margin-top:10px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px}
+  .node{background:var(--green-bg); color:var(--green); border:1px solid #a7e3c4; border-radius:999px; padding:4px 13px; font-weight:700}
+  .node.blk{background:#fdecee; color:var(--red); border-color:#f3b4b7}
+  .arrow{color:var(--muted); font-weight:700}
+  .foot{margin-top:26px; color:var(--muted); font-size:12px; border-top:1px solid var(--line); padding-top:12px}
+  @media print{ body{background:#fff} .panel{break-inside:avoid} h2{break-after:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Work to Watch —— 连环画 Storyboard</h1>
+  <div class="sub">油管版 · 竖屏 9:16 · 约 30 秒 · 7 镜 · v1（视觉示意，用于建立直观感受，非最终画面）</div>
+
+  <div class="box tip">
+    <b>审核结论：适合视频化</b> ——全片为常规实拍 + 录屏，无高难镜头。本稿已就地优化 3 处：
+    ① <b>S3</b> 旁白精简（原句 3 秒塞不下），"本地不上云"改由屏幕角标承载；
+    ② <b>S1</b> 手机顶部加"余额倒数"，让 S2 的掐断有因果；
+    ③ <b>S4</b> 标注为"加速蒙太奇"。<span class="star">★</span> 标记的 S2 / S6 是全片成败关键镜。
+  </div>
+
+  <div class="box warn">
+    <b>⚠️ 仍待你拍板：</b>开场 <i>"我最烦的 app，是我自己写的"</i> 是开发者口吻。默认保留此句（造型改普通）；若要纯普通用户，换成 →「<i>治好我 YouTube 上瘾的，居然是另一个 app。</i>」
+  </div>
+
+  <div class="strip">
+
+    <!-- S1 -->
+    <div class="panel">
+      <svg class="frame" viewBox="0 0 262 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="262" height="360" fill="#efe7db"/>
+        <rect x="14" y="20" width="58" height="80" rx="4" fill="#f7f2e8" stroke="#e2d8c6"/>
+        <line x1="43" y1="20" x2="43" y2="100" stroke="#e2d8c6"/>
+        <!-- desk -->
+        <rect x="0" y="262" width="262" height="98" fill="#c8a06a"/>
+        <rect x="0" y="262" width="262" height="7" fill="#d9b681"/>
+        <!-- laptop (stuck email) -->
+        <g>
+          <rect x="18" y="196" width="92" height="66" rx="3" fill="#eef0f2" stroke="#b8bcc2"/>
+          <rect x="24" y="202" width="48" height="6" rx="2" fill="#2b2b2b"/>
+          <rect x="24" y="214" width="70" height="4" rx="2" fill="#c3c7cc"/>
+          <rect x="24" y="223" width="22" height="4" rx="2" fill="#9aa0a6"/>
+          <rect x="47" y="221" width="2" height="9" fill="#111"/>
+          <rect x="24" y="250" width="54" height="4" rx="2" fill="#d7a0a0"/>
+          <rect x="6" y="262" width="116" height="6" rx="2" fill="#9aa0a6"/>
+        </g>
+        <text x="64" y="285" text-anchor="middle" font-size="9" fill="#8a3b3b">邮件·上次编辑 3 小时前</text>
+        <!-- person slumped -->
+        <g>
+          <rect x="150" y="214" width="74" height="70" rx="22" fill="#343842"/>
+          <circle cx="187" cy="188" r="25" fill="#f0c7a8"/>
+          <path d="M163 180 q24 -30 48 0 q-24 -12 -48 0Z" fill="#2b2b2b"/>
+          <circle cx="178" cy="190" r="6.5" fill="none" stroke="#c9a24b" stroke-width="2"/>
+          <circle cx="197" cy="190" r="6.5" fill="none" stroke="#c9a24b" stroke-width="2"/>
+          <line x1="184.5" y1="190" x2="190.5" y2="190" stroke="#c9a24b" stroke-width="2"/>
+          <path d="M180 203 q7 5 14 0" stroke="#9a6b4e" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- arm to phone -->
+          <path d="M156 236 q-18 2 -24 -18" stroke="#343842" stroke-width="13" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- phone with feed -->
+        <g>
+          <rect x="108" y="188" width="34" height="62" rx="7" fill="#1f2227"/>
+          <rect x="112" y="200" width="26" height="46" rx="3" fill="#fff"/>
+          <rect x="112" y="192" width="26" height="7" rx="2" fill="#0a8f4f"/>
+          <text x="125" y="198" text-anchor="middle" font-size="5.5" fill="#fff">余额 00:15 ↓</text>
+          <rect x="115" y="204" width="20" height="12" rx="2" fill="#f2c0b6"/>
+          <rect x="115" y="219" width="20" height="12" rx="2" fill="#bcd6f0"/>
+          <rect x="115" y="234" width="20" height="10" rx="2" fill="#d7ecc8"/>
+        </g>
+        <text x="150" y="168" font-size="13" fill="#b06">↑↑</text>
+      </svg>
+      <div class="meta">
+        <div class="mrow"><span class="chip">S1 · 钩子</span><span class="time">0–3s</span></div>
+        <div class="cap">我最烦的 app，是我自己写的。</div>
+        <div class="vo"><b>旁白：</b>我最烦的 app，是我自己写的。</div>
+        <div class="desc">瘫着刷手机（feed 飞速），电脑那封邮件卡死。<b>手机动 / 电脑静，对切</b>。手机顶标"余额 00:15"倒数。</div>
+      </div>
+    </div>
+
+    <!-- S2 -->
+    <div class="panel">
+      <svg class="frame" viewBox="0 0 262 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="262" height="360" fill="#2a2d33"/>
+        <!-- big phone -->
+        <rect x="71" y="40" width="120" height="258" rx="18" fill="#101216"/>
+        <rect x="81" y="54" width="100" height="230" rx="8" fill="#ffffff"/>
+        <text x="131" y="82" text-anchor="middle" font-size="9" fill="#9aa0a6">YouTube 已暂停</text>
+        <text x="131" y="168" text-anchor="middle" font-size="46" font-weight="800" fill="#1c1c1c">00:00</text>
+        <!-- pause -->
+        <rect x="122" y="196" width="7" height="22" rx="2" fill="#e5484d"/>
+        <rect x="133" y="196" width="7" height="22" rx="2" fill="#e5484d"/>
+        <text x="131" y="246" text-anchor="middle" font-size="11" font-weight="700" fill="#0a8f4f">Work first.</text>
+        <text x="131" y="262" text-anchor="middle" font-size="11" font-weight="700" fill="#0a8f4f">Watch later.</text>
+        <!-- frustrated face peek -->
+        <g>
+          <circle cx="222" cy="300" r="26" fill="#f0c7a8"/>
+          <path d="M198 294 q24 -26 48 0 q-24 -11 -48 0Z" fill="#2b2b2b"/>
+          <line x1="210" y1="298" x2="219" y2="301" stroke="#5a3b28" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="236" y1="301" x2="227" y2="298" stroke="#5a3b28" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="215" cy="306" r="2.3" fill="#2b2b2b"/>
+          <circle cx="230" cy="306" r="2.3" fill="#2b2b2b"/>
+          <path d="M216 318 q7 -4 14 0" stroke="#9a6b4e" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+        <text x="58" y="66" font-size="30" font-weight="800" fill="#ffd23f">!</text>
+      </svg>
+      <div class="meta">
+        <div class="mrow"><span class="chip">S2 · 掐断 <span class="star">★</span></span><span class="time">3–6s</span></div>
+        <div class="cap">想看？先把活干了。</div>
+        <div class="vo"><b>旁白：</b>想看？先把活干了。</div>
+        <div class="desc">看得正爽 →画面<b>"啪"硬切</b>成阻止页 00:00 →他一愣、皱眉。<b>撑起产品独特性的一镜。</b></div>
+      </div>
+    </div>
+
+    <!-- S3 -->
+    <div class="panel">
+      <svg class="frame" viewBox="0 0 262 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="262" height="360" fill="#efe7db"/>
+        <rect x="0" y="262" width="262" height="98" fill="#c8a06a"/>
+        <rect x="0" y="262" width="262" height="7" fill="#d9b681"/>
+        <!-- person sitting up, typing -->
+        <g>
+          <rect x="92" y="196" width="86" height="80" rx="20" fill="#343842"/>
+          <circle cx="135" cy="168" r="25" fill="#f0c7a8"/>
+          <path d="M111 160 q24 -30 48 0 q-24 -12 -48 0Z" fill="#2b2b2b"/>
+          <circle cx="126" cy="170" r="6.5" fill="none" stroke="#c9a24b" stroke-width="2"/>
+          <circle cx="145" cy="170" r="6.5" fill="none" stroke="#c9a24b" stroke-width="2"/>
+          <line x1="132.5" y1="170" x2="138.5" y2="170" stroke="#c9a24b" stroke-width="2"/>
+          <!-- arms down to laptop -->
+          <path d="M100 232 q-6 18 10 26" stroke="#343842" stroke-width="13" fill="none" stroke-linecap="round"/>
+          <path d="M170 232 q6 18 -10 26" stroke="#343842" stroke-width="13" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- laptop -->
+        <rect x="96" y="256" width="78" height="10" rx="2" fill="#9aa0a6"/>
+        <rect x="104" y="238" width="62" height="20" rx="2" fill="#eef0f2" stroke="#b8bcc2"/>
+        <text x="135" y="251" text-anchor="middle" font-size="7" fill="#555">计时 00:00 ▶</text>
+        <!-- phone on stand (small, side) -->
+        <g>
+          <rect x="196" y="236" width="26" height="30" rx="4" fill="#1f2227"/>
+          <rect x="200" y="240" width="18" height="22" rx="2" fill="#dff3e6"/>
+          <circle cx="209" cy="251" r="3.5" fill="#0a8f4f"/>
+          <rect x="205" y="266" width="8" height="10" fill="#8a909a"/>
+          <rect x="198" y="276" width="22" height="4" rx="2" fill="#8a909a"/>
+        </g>
+        <rect x="184" y="214" width="66" height="18" rx="9" fill="#0a8f4f"/>
+        <text x="217" y="226" text-anchor="middle" font-size="8" font-weight="700" fill="#fff">📵 本地 · 不上云</text>
+      </svg>
+      <div class="meta">
+        <div class="mrow"><span class="chip">S3 · 开工+摄像头</span><span class="time">6–9s</span></div>
+        <div class="cap">它只看我在不在，不管我干啥。</div>
+        <div class="vo"><b>旁白：</b>它只看我在不在，不管我干啥。<span style="color:#888">（"本地不上云"交给角标）</span></div>
+        <div class="desc">叹气坐正、开始打字；手机往支架<b>一放（不给盯脸特写）</b>，屏角亮"本地·不上云"。</div>
+      </div>
+    </div>
+
+    <!-- S4 -->
+    <div class="panel">
+      <svg class="frame" viewBox="0 0 262 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="262" height="360" fill="#d7cdb9"/>
+        <!-- laptop screen close-up filling with text -->
+        <rect x="26" y="40" width="210" height="248" rx="8" fill="#1f2227"/>
+        <rect x="38" y="54" width="186" height="220" rx="4" fill="#ffffff"/>
+        <rect x="50" y="68" width="70" height="8" rx="2" fill="#2b2b2b"/>
+        <g fill="#5b6066">
+          <rect x="50" y="90" width="162" height="5" rx="2"/>
+          <rect x="50" y="101" width="150" height="5" rx="2"/>
+          <rect x="50" y="112" width="158" height="5" rx="2"/>
+          <rect x="50" y="123" width="120" height="5" rx="2"/>
+          <rect x="50" y="140" width="162" height="5" rx="2"/>
+          <rect x="50" y="151" width="140" height="5" rx="2"/>
+          <rect x="50" y="162" width="155" height="5" rx="2"/>
+          <rect x="50" y="173" width="96" height="5" rx="2"/>
+        </g>
+        <rect x="50" y="242" width="80" height="18" rx="9" fill="#eafaf1" stroke="#a7e3c4"/>
+        <text x="90" y="254" text-anchor="middle" font-size="10" font-weight="700" fill="#0a8f4f">计时 20:00</text>
+        <text x="190" y="256" font-size="18" fill="#0a8f4f">↑</text>
+        <rect x="150" y="300" width="86" height="40" rx="6" fill="#fff" stroke="#c7bda8"/>
+        <text x="193" y="316" text-anchor="middle" font-size="9" fill="#8a7">加速蒙太奇</text>
+        <text x="193" y="330" text-anchor="middle" font-size="8.5" fill="#999">（延时/快剪，非实时）</text>
+      </svg>
+      <div class="meta">
+        <div class="mrow"><span class="chip">S4 · 有进展</span><span class="time">9–14s</span></div>
+        <div class="cap" style="background:#f0f0f0;border-color:#ccc;color:#555">（无字幕 / 走配乐）</div>
+        <div class="vo" style="color:#888">旁白留白，环境音 + 配乐推进</div>
+        <div class="desc">邮件<b>真的多出字来</b>、计时往上走。与 S1 的"死寂"呼应——这次真动了。<b>必须加速录屏</b>。</div>
+      </div>
+    </div>
+
+    <!-- S5 -->
+    <div class="panel">
+      <svg class="frame" viewBox="0 0 262 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="262" height="360" fill="#eafaf1"/>
+        <text x="131" y="86" text-anchor="middle" font-size="15" font-weight="700" fill="#0a8f4f">Watch Time</text>
+        <text x="131" y="176" text-anchor="middle" font-size="64" font-weight="800" fill="#0a8f4f">+05:20</text>
+        <circle cx="131" cy="236" r="30" fill="#0a8f4f"/>
+        <path d="M117 237 l10 11 l19 -22" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="131" y="306" text-anchor="middle" font-size="13" fill="#2f6f4f">先工作，再观看</text>
+        <g fill="#8fd9b0">
+          <circle cx="40" cy="60" r="3"/><circle cx="222" cy="70" r="3.5"/>
+          <circle cx="54" cy="300" r="3"/><circle cx="214" cy="286" r="3"/>
+        </g>
+      </svg>
+      <div class="meta">
+        <div class="mrow"><span class="chip">S5 · 到账</span><span class="time">14–17s</span></div>
+        <div class="cap">干够 20 分钟，换 5 分钟。</div>
+        <div class="vo"><b>旁白：</b>干够 20 分钟，换 5 分钟。</div>
+        <div class="desc">计时满 20:00 →产品界面<b>真实截图</b>弹"到账 ✓"。他嘴角动一下。</div>
+      </div>
+    </div>
+
+    <!-- S6 -->
+    <div class="panel">
+      <svg class="frame" viewBox="0 0 262 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="262" height="360" fill="#f3ead9"/>
+        <rect x="0" y="266" width="262" height="94" fill="#c8a06a"/>
+        <rect x="0" y="266" width="262" height="7" fill="#d9b681"/>
+        <!-- mug -->
+        <rect x="206" y="236" width="30" height="30" rx="4" fill="#fff" stroke="#d8cdb5"/>
+        <path d="M236 244 q12 2 0 16" stroke="#d8cdb5" stroke-width="3" fill="none"/>
+        <!-- person leaned back, relaxed, smiling -->
+        <g>
+          <rect x="78" y="208" width="92" height="76" rx="22" fill="#343842"/>
+          <circle cx="124" cy="176" r="27" fill="#f0c7a8"/>
+          <path d="M98 170 q26 -32 52 0 q-26 -13 -52 0Z" fill="#2b2b2b"/>
+          <circle cx="114" cy="178" r="6.5" fill="none" stroke="#c9a24b" stroke-width="2"/>
+          <circle cx="134" cy="178" r="6.5" fill="none" stroke="#c9a24b" stroke-width="2"/>
+          <line x1="120.5" y1="178" x2="127.5" y2="178" stroke="#c9a24b" stroke-width="2"/>
+          <path d="M113 190 q11 10 22 0" stroke="#9a6b4e" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          <path d="M150 240 q20 -2 20 -20" stroke="#343842" stroke-width="13" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- phone watching youtube -->
+        <g>
+          <rect x="158" y="196" width="34" height="58" rx="7" fill="#1f2227"/>
+          <rect x="162" y="208" width="26" height="42" rx="3" fill="#111"/>
+          <circle cx="175" cy="229" r="9" fill="#e5484d"/>
+          <path d="M172 224 l8 5 l-8 5Z" fill="#fff"/>
+          <rect x="162" y="200" width="26" height="6" rx="2" fill="#0a8f4f"/>
+          <text x="175" y="205" text-anchor="middle" font-size="5" fill="#fff">05:20 ↓</text>
+        </g>
+      </svg>
+      <div class="meta">
+        <div class="mrow"><span class="chip">S6 · 奖励+收尾 <span class="star">★</span></span><span class="time">17–24s</span></div>
+        <div class="cap">我还是照样看……不过这回，活也干了点。</div>
+        <div class="vo"><b>旁白：</b>我还是照样看……不过这回，活也干了点。</div>
+        <div class="desc">靠回椅子、<b>心安理得</b>地看，笑了。"诚实"调性的落点——全片的魂。</div>
+      </div>
+    </div>
+
+    <!-- S7 -->
+    <div class="panel">
+      <svg class="frame" viewBox="0 0 262 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="262" height="360" fill="#ffffff"/>
+        <rect x="0" y="0" width="262" height="360" fill="none" stroke="#ededed"/>
+        <!-- icon: clock+play -->
+        <circle cx="131" cy="86" r="30" fill="none" stroke="#0a8f4f" stroke-width="5"/>
+        <path d="M124 74 l16 12 l-16 12Z" fill="#0a8f4f"/>
+        <text x="131" y="156" text-anchor="middle" font-size="22" font-weight="800" fill="#1c1c1c">Work to Watch</text>
+        <text x="131" y="192" text-anchor="middle" font-size="16" font-weight="700" fill="#0a8f4f">Work first. Watch later.</text>
+        <text x="131" y="214" text-anchor="middle" font-size="11.5" fill="#555">Earn your entertainment. / 赚取你的娱乐时间</text>
+        <rect x="56" y="240" width="150" height="34" rx="17" fill="#0a8f4f"/>
+        <text x="131" y="262" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">Android · Beta 开放中 →</text>
+        <text x="131" y="312" text-anchor="middle" font-size="10" fill="#9aa0a6">全程本地运行，不上传云端</text>
+      </svg>
+      <div class="meta">
+        <div class="mrow"><span class="chip">S7 · END CARD</span><span class="time">24–30s</span></div>
+        <div class="cap" style="background:#eafaf1;border-color:#a7e3c4;color:#0a8f4f">产品名 + Slogan + CTA 三件套</div>
+        <div class="vo" style="color:#888">收尾静默 + 配乐，或复述 slogan</div>
+        <div class="desc">干净定格卡。给足"去哪拿"的行动出口。</div>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>一眼看懂产品闭环（这正是 S2 要演出来的）</h2>
+  <div class="loop">
+    <span class="node">工作 Work</span><span class="arrow">→</span>
+    <span class="node">换时间 Earn</span><span class="arrow">→</span>
+    <span class="node">看 Watch</span><span class="arrow">→</span>
+    <span class="node blk">00:00 被拦 Blocked</span><span class="arrow">↺</span>
+    <span class="node">再去工作</span>
+  </div>
+
+  <div class="foot">
+    Work to Watch · 连环画 Storyboard v1 · 配套《分镜脚本_油管版_v1》· 画面为示意，实际走真人实拍 + 真实录屏。
+  </div>
+
+</div>
+</body>
+</html>

@@ -25,7 +25,8 @@ final class LedgerStore {
     private int rewardRuleVersion;
     long workUpgradeCreditMs;
     DailyReset daily;
-    NightRelax night;
+    RelaxWindow night;
+    RelaxWindow noon;
     private final LongSupplier wallClock, elapsedClock;
     private final Supplier<ZoneId> zoneClock;
     private final LongConsumer settleExpiry;
@@ -61,13 +62,21 @@ final class LedgerStore {
                 prefs.getBoolean("daily_reset_notice", false))
             : DailyReset.initial(now, zoneClock.get());
         night = prefs.contains("night_relax_enabled")
-            ? new NightRelax(prefs.getBoolean("night_relax_enabled", true),
+            ? new RelaxWindow(prefs.getBoolean("night_relax_enabled", true),
                 prefs.getInt("night_relax_start_min", 22 * 60), prefs.getInt("night_relax_end_min", 8 * 60 + 30),
                 prefs.getLong("night_relax_allowance_ms", 45 * 60_000L),
                 prefs.getLong("night_relax_remaining_ms", 45 * 60_000L),
                 prefs.getLong("night_relax_window_start_ms", 0),
                 prefs.getString("night_relax_zone", zoneClock.get().getId()))
-            : NightRelax.initial(zoneClock.get());
+            : RelaxWindow.night(zoneClock.get());
+        noon = prefs.contains("noon_relax_enabled")
+            ? new RelaxWindow(prefs.getBoolean("noon_relax_enabled", true),
+                prefs.getInt("noon_relax_start_min", 11 * 60), prefs.getInt("noon_relax_end_min", 13 * 60),
+                prefs.getLong("noon_relax_allowance_ms", 30 * 60_000L),
+                prefs.getLong("noon_relax_remaining_ms", 30 * 60_000L),
+                prefs.getLong("noon_relax_window_start_ms", 0),
+                prefs.getString("noon_relax_zone", zoneClock.get().getId()))
+            : RelaxWindow.noon(zoneClock.get());
         engine = new BalanceEngine(prefs.getLong("balance_ms", 0), prefs.getLong("consumed_ms", 0),
             prefs.getLong("cursor_ms", now), prefs.getBoolean("target_active", false));
         enabled = ProtectionPolicy.enabledOnLoad(prefs.getInt("protection_policy_version", 0) >= 1,
@@ -146,23 +155,85 @@ final class LedgerStore {
         return daily.enabled() ? "每天早晨 06:00 清空剩余娱乐时间。可在设置中关闭。" : "每天清零已关闭，剩余娱乐时间继续保留。";
     }
 
-    /** Refill on a new night; a mid-window process restart keeps the remaining quota. */
-    void refreshNight(long now, ZoneId zone) { night = night.refreshed(now, zone); }
+    /** Refill when a new window opens; a mid-window process restart keeps the remaining quota. */
+    void refreshWindows(long now, ZoneId zone) {
+        night = night.refreshed(now, zone);
+        noon = noon.refreshed(now, zone);
+    }
 
-    void setNightRemaining(long remaining) { night = night.withRemaining(remaining); }
+    /** The window currently granting free time, or null when none is active. */
+    RelaxWindow giftWindow(long now, ZoneId zone) {
+        if (night.enabled() && night.active(now, zone)) return night;
+        if (noon.enabled() && noon.active(now, zone)) return noon;
+        return null;
+    }
 
-    boolean setNightEnabled(boolean value) {
-        NightRelax before = night;
-        night = night.withEnabled(value);
+    /** Writes the settled remainder back to whichever window was spent from. */
+    void setWindowRemaining(RelaxWindow window, long remaining) {
+        if (window == night) night = night.withRemaining(remaining);
+        else if (window == noon) noon = noon.withRemaining(remaining);
+    }
+
+    /** Earliest boundary of any window after {@code now}; settles each segment as one state. */
+    long nextWindowEdge(long now, ZoneId zone) {
+        return Math.min(night.nextEdge(now, zone), noon.nextEdge(now, zone));
+    }
+
+    /** Human label of the window granting free time right now; empty when none is active. */
+    String giftLabel(long now, ZoneId zone) {
+        RelaxWindow window = giftWindow(now, zone);
+        return window == null ? "" : window == night ? "夜间赠送" : "午间赠送";
+    }
+
+    boolean setNightEnabled(boolean value) { return setWindowEnabled(value, true); }
+
+    boolean setNoonEnabled(boolean value) { return setWindowEnabled(value, false); }
+
+    private boolean setWindowEnabled(boolean value, boolean isNight) {
+        RelaxWindow before = isNight ? night : noon;
+        RelaxWindow next = before.withEnabled(value);
+        if (isNight) night = next; else noon = next;
         if (save()) return true;
-        night = before;
+        if (isNight) night = before; else noon = before;
+        return false;
+    }
+
+    /** Developer-only reset of every balance currently available to the user. */
+    boolean clearAvailableForTest() {
+        if (!ensureRewardRules() || !refreshDailyReset()) return false;
+        refreshWindows(wallClock.getAsLong(), zoneClock.get());
+        long beforeBalance = engine.balanceMs;
+        RelaxWindow beforeNight = night, beforeNoon = noon;
+        engine.balanceMs = 0;
+        night = night.withRemaining(0);
+        noon = noon.withRemaining(0);
+        if (writeSnapshot(work, 0)) return true;
+        engine.balanceMs = beforeBalance;
+        night = beforeNight;
+        noon = beforeNoon;
         return false;
     }
 
     String nightDescription() {
-        if (!night.enabled()) return "夜间放松已关闭，全天按余额保护。";
-        return "每晚 " + hm(night.startMin()) + "–" + hm(night.endMin()) + " 送 "
-            + night.allowanceMs() / 60_000 + " 分钟放松额度；用完后按余额照常保护，" + hm(night.endMin()) + " 恢复。";
+        return windowDescription(night, "夜间放松", "每晚");
+    }
+
+    String noonDescription() {
+        return windowDescription(noon, "午间放松", "每天中午");
+    }
+
+    private String windowDescription(RelaxWindow window, String name, String prefix) {
+        if (!window.enabled()) return name + "已关闭，全天按余额保护。";
+        return prefix + " " + hm(window.startMin()) + "–" + hm(window.endMin()) + " 送 "
+            + window.allowanceMs() / 60_000 + " 分钟" + BuildConfig.TARGET_NAME + "时间；用完后按余额照常保护，"
+            + hm(window.endMin()) + " 恢复。未用完的部分到 " + hm(window.endMin()) + " 作废，下次重给。";
+    }
+
+    /** Remaining gift time of the active window, with its closing time, for the home screen. */
+    String giftDetail(long now, ZoneId zone) {
+        RelaxWindow window = giftWindow(now, zone);
+        if (window == null || window.remainingMs() <= 0) return "";
+        return giftLabel(now, zone) + " " + window.remainingMs() / 60_000 + " 分钟（至 " + hm(window.endMin()) + "）";
     }
 
     private static String hm(int minute) {
@@ -223,6 +294,12 @@ final class LedgerStore {
             .putLong("night_relax_remaining_ms", night.remainingMs())
             .putLong("night_relax_window_start_ms", night.windowStartMs())
             .putString("night_relax_zone", night.zone())
+            .putBoolean("noon_relax_enabled", noon.enabled())
+            .putInt("noon_relax_start_min", noon.startMin()).putInt("noon_relax_end_min", noon.endMin())
+            .putLong("noon_relax_allowance_ms", noon.allowanceMs())
+            .putLong("noon_relax_remaining_ms", noon.remainingMs())
+            .putLong("noon_relax_window_start_ms", noon.windowStartMs())
+            .putString("noon_relax_zone", noon.zone())
             .putInt("work_round_minutes", progress.roundMinutes()).putInt("work_selected_minutes", progress.selectedMinutes()).putLong("balance_ms", balance)
             .putInt("protection_policy_version", 1)
             .putInt("work_reward_rule_version", ruleVersion)

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work to Watch 开场钩子（重设计）· v6</title>
+<style>
+  :root{--ink:#1c1c1c;--muted:#6b6b6b;--line:#dcdcdc;--green:#0a8f4f;--green-bg:#eafaf1;--red:#e5484d;
+    --warn:#b00020;--warn-bg:#fdecee;--tip-bg:#f4f7fb;--tip-line:#c9d8ec;--code-bg:#1e2228;}
+  *{box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;color:var(--ink);background:#efece6;margin:0;line-height:1.55}
+  .wrap{max-width:1060px;margin:24px auto;background:#fff;padding:32px 38px 54px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  h1{font-size:23px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  h2{font-size:17px;margin:26px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+  .box{border-radius:8px;padding:12px 15px;margin:12px 0;font-size:13px}
+  .warn{background:var(--warn-bg);border:1px solid #f1b8c0}.warn b{color:var(--warn)}
+  .tip{background:var(--tip-bg);border:1px solid var(--tip-line)}
+  .good{background:var(--green-bg);border:1px solid #a7e3c4}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px;table-layout:fixed}
+  th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top;text-align:left;word-wrap:break-word}
+  th{background:#f0f0f0;font-size:12px}
+  tbody tr:nth-child(even){background:#fafafa}
+  .sh{font-weight:700;white-space:nowrap}
+  .emo{color:#b06;font-weight:600}
+  .star{color:var(--red);font-weight:700}
+  .cw1{width:46px}.cw2{width:74px}.cw3{width:230px}.cw4{width:120px}.cw5{width:110px}
+  ol,ul{margin:6px 0 6px 20px}li{margin:5px 0;font-size:13px}
+  pre{background:var(--code-bg);color:#e8eef3;border-radius:7px;padding:14px 16px;font-size:12.5px;
+    font-family:"Cascadia Code","Consolas","Microsoft YaHei",monospace;white-space:pre-wrap;word-break:break-word;margin:6px 0;line-height:1.6}
+  .foot{margin-top:26px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+  @media print{body{background:#fff}.wrap{box-shadow:none;margin:0;max-width:none;border-radius:0;padding:0}tr,pre,.box{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>开场钩子 · 重设计 —— 沉浸享受 → 被一刀切断</h1>
+  <div class="sub">Work to Watch 油管版 · 开场 8 镜（内容闪 + 脸停） · 约 6–8 秒 · v6（替换 v5 的"吃闭门羹"01–04）</div>
+
+  <div class="box good">
+    <b>这段要达到的效果：</b>情绪过山车（大笑 → 慈爱 → 泪目）层层加速，在他最投入的一刻<b>戛然而止</b>，一声"我靠！"把落差砸出笑点。看完观众记住两件事：这人跟我一样刷起来停不下来；这个 App 会在你正嗨时把你叫停。
+  </div>
+
+  <div class="box tip">
+    <b>两个让它成立的关键（建议都加）：</b>
+    <ol style="margin:6px 0 0 18px">
+      <li><b>顶角余额悄悄倒数</b>：手机顶角一个小小的"剩余 05:00"，随刷随减，到泪目那刻归零被拦。既给了"为什么突然被切"的因果，又在钩子里就把"你有一份有限的观看时间"悄悄讲清。</li>
+      <li><b>声音的"急刹"</b>：笑声/萌宠音/吸鼻子声一路热闹 → 阻止页弹出的瞬间<b>全部静音</b> → 只剩一声"我靠"。那个"突然安静"是一半的笑点。</li>
+    </ol>
+  </div>
+
+  <div class="box warn">
+    <b>⚠️ 基调提醒：</b>在他最感动时打断、喊"我靠"，有一点风险让 App 显得<b>讨人嫌</b>。化解：紧接着让他"哦对，得先干活"地<b>认账</b>（不是迁怒）。并与片尾呼应——<b>开场被拦="我靠！"（抗拒），片尾再被拦="没关系，继续"（释然）</b>，同一张阻止页、相反反应 = 人物成长 + 看懂这是个循环。
+  </div>
+
+  <h2>一、开场钩子分镜（8 镜）</h2>
+  <p style="font-size:12.5px;color:var(--muted);margin:2px 0 8px">每个情绪拍 = <b>内容特写（闪 0.3–0.5s，因）</b> + <b>面部特写（停住，果）</b>。搞笑、萌宠给内容；催泪只给脸。</p>
+  <table>
+    <thead>
+      <tr><th class="cw1">镜</th><th class="cw2">景别·运镜</th><th class="cw3">画面 / 动作</th><th class="cw4">声音</th><th class="cw5">顶角余额</th><th>情绪</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="sh">H1</td><td>MCU 实拍</td><td>男主舒服窝在椅子/沙发，<b>眼睛一亮</b>，满怀期待、饶有兴趣地点开 App 刷起来。</td><td>轻快起手音</td><td>05:00</td><td class="emo">期待</td></tr>
+      <tr><td class="sh">H2a</td><td>INS 屏 · 闪切(~0.4s)</td><td>手机屏：一个<b>沙雕/搞笑片段</b>（如有人滑稽摔进水里）。</td><td>沙雕音效</td><td>03:xx</td><td class="emo">（铺垫）</td></tr>
+      <tr><td class="sh">H2b</td><td>CU 脸（停·定机位）</td><td><b>哈哈大笑</b>，笑到前仰、眯眼露齿、拍一下腿。</td><td>他的大笑</td><td>—</td><td class="emo">爆笑</td></tr>
+      <tr><td class="sh">H3a</td><td>INS 屏 · 闪切(~0.4s)</td><td>手机屏：一只<b>圆滚滚的萌宠</b>（猫/狗）。</td><td>萌宠叫声</td><td>01:xx</td><td class="emo">（铺垫）</td></tr>
+      <tr><td class="sh">H3b</td><td>CU 脸（停·同 H2b 机位）</td><td>表情瞬间柔化、<b>满脸慈爱</b>，轻声"太可爱了~"。</td><td>"太可爱了~"</td><td>—</td><td class="emo">慈爱</td></tr>
+      <tr><td class="sh">H4</td><td>CU 脸（同机位，<b>只给脸</b>）</td><td>刷到感动的视频 → <b>眼眶红润、泛泪光，吸了下鼻子</b>。情绪最深处。</td><td>吸鼻子声、音乐渐强</td><td>00:0x</td><td class="emo">动容</td></tr>
+      <tr><td class="sh">H5</td><td>CU 屏 · ✂硬切</td><td>正最投入——<b>啪</b>，画面从视频硬切成阻止页。切在他吸鼻子那一下。</td><td><b>全部静音</b> + 一声锁定"咔"</td><td>00:00</td><td class="emo">急刹</td></tr>
+      <tr><td class="sh">H6</td><td>BCU 脸 <span class="star">★</span></td><td>表情定格/垮掉，脱口而出<b>"我靠！"</b>。错愕又好笑。</td><td>"我靠！"</td><td>—</td><td class="emo">错愕(笑点)</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:11.5px;color:var(--muted)">催泪那拍（H4）建议不给内容特写：0.4s 的煽情片段很难让观众也破防，且真片源有版权成本；靠他的脸最稳。若坚持要给，可加 H4a：一角虚化的煽情画面。</p>
+
+  <h2>二、手法要点</h2>
+  <ul>
+    <li><b>H2–H4 用同一机位、同一景别</b>，只换表情——又省又好笑，也让 H5 的硬切更干净利落。</li>
+    <li><b>节奏越切越快</b>：H2→H3→H4 逐渐缩短，堆到情绪顶点；H5 是一个突然的 STOP，靠反差出戏。</li>
+    <li><b>内容闪 + 脸停</b>：内容特写只给 0.3–0.5s（够看清"沙雕/猫/催泪"即可），表演和停留全在脸上；内容别喧宾夺主，否则拖慢钩子、毁掉加速感。</li>
+    <li><b>内容是你要填的坑</b>：放的搞笑片段必须观众也真觉得好笑、萌宠真的萌，否则笑点塌。搞不到好素材就退回"只给脸"，风险更小。</li>
+    <li><b>H5 的阻止页 = 片尾那张同一界面</b>，首尾呼应。</li>
+    <li>H6 之后立刻接"哦对，得先干活"的认账镜，把基调从"被激怒"拉回"认账"。</li>
+  </ul>
+
+  <h2>三、配套 ChatGPT 生图指令（H1–H6）</h2>
+  <div class="box good">接在 v5 母指令后，用这 8 条替换原来的 01–04；其余 05 起不变。手机界面中文糊就留空屏，后期合成真截图。</div>
+  <pre>H1｜实拍。男主舒服地窝在椅子/沙发里，眼睛一亮，满怀期待、饶有兴趣地点开手机里的短视频 App 开始刷；暖光居家夜晚；手机顶角隐约可见小字"剩余 05:00"。竖屏 9:16。
+
+H2a｜手机特写。手机屏里是一个搞笑的短视频画面（例如一个人滑稽地摔进水里的沙雕瞬间），带一点短视频 App 的界面感；男主的手握着手机；暖光，背景虚化。竖屏 9:16。
+
+H2b｜实拍。面部特写：男主看着手机哈哈大笑，笑得前仰、眯眼、露齿，被逗得很开心；暖光，背景虚化。竖屏 9:16。
+
+H3a｜手机特写。手机屏里是一只圆滚滚、超可爱的小猫或小狗的短视频，带短视频 App 的界面感；男主的手握着手机；暖光。竖屏 9:16。
+
+H3b｜实拍。与 H2b 同机位、同景别的面部特写：表情瞬间柔化成满脸慈爱、嘴角上扬、一副"太可爱了"的温柔神情；眼神宠溺。竖屏 9:16。
+
+H4｜实拍。与上一张同机位的面部特写（只给脸）：被感动了，眼眶红润、泛着泪光，正吸了一下鼻子，神情动容。竖屏 9:16。
+
+H5｜手机特写（中文糊就留空屏，我合成）。同机位的手机屏，画面从视频突然变成阻止页：顶部 YouTube 图标，中间沙漏图标，大字"观看时间已用完"，小字"先完成工作或学习，再获得观看时间。"，余额 00:00。竖屏 9:16。
+
+H6｜实拍。面部大特写：男主表情定格、嘴张开，正是脱口而出"我靠！"的那一瞬间；又错愕又好笑；暖光。竖屏 9:16。</pre>
+
+  <h2>四、整片怎么接</h2>
+  <ol>
+    <li><b>H1–H6（含 H2a/H3a，共 8 镜）</b>（这段，新开场）→ 替换 v5 的 01–04。</li>
+    <li>接 v5 的 <b>05 起</b>：坐到桌前认账 → 懂规则(20→5) → 放手机(本地·不上云) → 开始计时 → 工作 → 进度。</li>
+    <li>Part 2：到账 → 终于能看 → <b>片尾再被拦</b>，这次是<b>"没关系，继续"</b>（与开场"我靠"对照）→ 结束卡(含 CTA) → 空镜 slogan。</li>
+  </ol>
+
+  <div class="foot">
+    Work to Watch · 开场钩子（重设计）v6 · 6 镜 · 替换 v5 的 01–04 · 产品名统一 WorkToWatch · 主张 Work first. Watch later.
+  </div>
+</div>
+</body>
+</html>

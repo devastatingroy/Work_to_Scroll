@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatGPT 生图指令 · 油管版 v3</title>
+<style>
+  :root{--ink:#1c1c1c;--muted:#6b6b6b;--line:#dcdcdc;--green:#0a8f4f;--green-bg:#eafaf1;
+    --tip-bg:#f4f7fb;--tip-line:#c9d8ec;--code-bg:#1e2228;}
+  *{box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;color:var(--ink);
+    background:#efece6;margin:0;line-height:1.6}
+  .wrap{max-width:900px;margin:24px auto;background:#fff;padding:32px 38px 52px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  h2{font-size:16px;margin:26px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+  .box{border-radius:8px;padding:12px 15px;margin:12px 0;font-size:13px;background:var(--tip-bg);border:1px solid var(--tip-line)}
+  ol{margin:6px 0 6px 20px}li{margin:5px 0;font-size:13px}
+  .lbl{font-size:12px;font-weight:700;color:#0a8f4f;margin:16px 0 4px}
+  pre{background:var(--code-bg);color:#e8eef3;border-radius:7px;padding:12px 14px;font-size:12.5px;
+    font-family:"Cascadia Code","Consolas","Microsoft YaHei",monospace;white-space:pre-wrap;word-break:break-word;margin:5px 0;line-height:1.55}
+  .foot{margin-top:26px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+  @media print{body{background:#fff}.wrap{box-shadow:none;margin:0;max-width:none;border-radius:0;padding:0}pre{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ChatGPT 生图指令 —— WorkToWatch 油管版</h1>
+  <div class="sub">16 帧照片级竖屏 9:16 分镜静帧 · 直接粘贴给 ChatGPT 生图 agent · v3</div>
+
+  <div class="box">
+    <b>用法：</b>
+    <ol>
+      <li>先把【母指令】发给 ChatGPT，等它回"开始"。</li>
+      <li>再逐条发 <code>01</code>→<code>16</code>（一次一张，质量最稳）。</li>
+      <li>第 1 张满意后，把它回传当参考，让它"后面都以这张男主为准"（如支持传脸参考图更好）。</li>
+      <li>16 张出齐发我，我帮你排成参考图那样的成品分镜板。</li>
+    </ol>
+    <b>注意：</b>旁白/字幕不画进图里（后期加），所以"开场口吻 A/B"这一步不用管。手机界面若中文渲染不清，就让它留空屏，后期合成真·App 截图。第 15 张（版式卡）建议用设计软件做，别用 AI 渲染文字。
+  </div>
+
+  <h2>母指令（先发这段）</h2>
+  <pre>你是我的分镜生成助手。我要为一款 App 的推广短片生成 16 张照片级、竖屏 9:16 的分镜静帧。请严格遵守以下设定，我会逐帧发给你，你每次只生成那一张。
+
+【统一风格】电影感写实；夜晚温暖居家；暖色台灯/床头灯光；浅景深；全画幅 35mm 质感；自然肤色；轻微胶片颗粒；安静、私密、纪录片感。禁止：水印、卡通/插画感、把字幕烧录进画面、畸形的手。
+
+【角色锁定】男主固定为同一人：28 岁东亚男性，清瘦，蓬松短黑发，淡胡茬，穿素色深灰或黑色 T 恤（夜里可深色毛衣）。每一张都必须是同一个人、同样发型和穿着。以你生成的第 1 张为准，后续全部保持一致。
+
+【画幅】每张都是竖屏 9:16。
+
+【手机屏文字规则】遇到手机界面，请在屏幕上准确渲染我给出的中文文字，不要改写、不要乱码、不要变形；如果你无法保证中文清晰，就把屏幕留空（纯色或关屏），我后期自己合成。
+
+【工作方式】我会按"镜号 + 画面描述"逐条发给你，你保持连贯、每次只出一张。准备好了就回复"开始"，然后等我发第 01 张。</pre>
+
+  <h2>逐帧指令（母指令之后，一条一条发）</h2>
+
+  <div class="lbl">Part 1 · 想看 → 被拦 → 懂规则 → 开始计时</div>
+  <pre>01｜实拍。夜晚卧室，男主靠在枕头上，举着手机往上刷，手机冷光映在他疲惫、无聊的脸上；暖色床头灯，昏暗温馨的卧室，被子，柔和阴影。9:16。</pre>
+  <pre>02｜手机界面（中文糊就留空屏，我合成）。昏暗卧室里，男主的手举着一部手机的特写，背景柔和虚化。屏幕显示阻止页：顶部 YouTube 图标，中间一个沙漏图标，大字"观看时间已用完"，小字"先完成工作或学习，再获得观看时间。"。9:16。</pre>
+  <pre>03｜实拍。男主坐在书桌前，手托下巴，若有所思、略带无奈；暖色台灯、几本书、小盆栽；夜晚书房。9:16。</pre>
+  <pre>04｜手机界面（中文糊就留空屏）。桌前手持或支架上的手机，屏幕显示 WorkToWatch 规则卡：顶部"WorkToWatch"；中部"20 分钟 工作或学习 → 5 分钟 观看时间"；底部绿色按钮"开始工作 ›"。同样的暖色桌面光。9:16。</pre>
+  <pre>05｜实拍。男主把手机轻轻放到桌上的小支架上、面向自己，顺势瞥一眼；手入镜；桌子、台灯、旁边一台笔记本电脑。自然、随手，不要刻意。9:16。</pre>
+  <pre>06｜手机界面（中文糊就留空屏）。支架上的手机特写，屏幕显示 WorkToWatch 确认页：顶部"WorkToWatch"；一个小小的人脸缩略图加绿色对勾；"已确认在场"；小字"开始累计有效时间"；大字"00:00"；底部角标"全程本地运行 · 不上传云端"。9:16。</pre>
+  <pre>07｜实拍。男主专注地在笔记本电脑前打字；周围有书和暖色灯；画面边缘能看到支架上的手机。投入的神情。9:16。</pre>
+  <pre>08｜手机界面（中文糊就留空屏）。手机进度页：顶部"WorkToWatch"；"正在累计有效时间"；一个绿色环形进度条；中央大字"12:34"。9:16。</pre>
+
+  <div class="lbl">Part 2 · 完成 → 兑现 → 观看 → 再被拦 → 平静继续 → 结束卡</div>
+  <pre>09｜实拍。男主在本子上写字、继续工作，侧面角度，深度专注，暖灯；有一种时间已经过去一会儿的感觉。9:16。</pre>
+  <pre>10｜手机界面（中文糊就留空屏）。手机到账页：绿色对勾加细碎的庆祝粒子；"本轮完成！"；大字"+ 5:00"；下方"可用观看时间 05:00"；绿色按钮"去看 YouTube"。9:16。</pre>
+  <pre>11｜实拍（关键）。男主向后靠、整个人放松下来，脸上是真诚温暖的微笑，低头看着手里的手机；肩膀松弛、满足；温暖的夜晚光。9:16。</pre>
+  <pre>12｜实拍（可真机拍）。特写：一只手横握手机，屏幕正播放一段平静的 YouTube 风景视频（静谧的湖、远山）；放松的双手。9:16。</pre>
+  <pre>13｜手机界面（中文糊就留空屏）。阻止页再次出现：一个沙漏图标，"观看时间已用完"，小字"再完成一段工作，获得更多观看时间。"。9:16。</pre>
+  <pre>14｜实拍。男主的脸在柔和的弱光里，平静、释然——不是烦躁，而是"这样也挺好"的小表情；亲密的面部特写。9:16。</pre>
+  <pre>15｜版式卡（建议别用 AI，自己用设计软件做，这里仅供参考）。干净定格卡：主标"先完成重要的事，再享受你喜欢的视频"；下方绿色"WorkToWatch"标志；底部一行小字"Android · Beta 开放中 →"加一个二维码位置；角落小字"全程本地运行，不上传云端"。9:16。</pre>
+  <pre>16｜实拍/空镜。夜晚的空书桌：支架上的手机、合着的笔记本电脑、暖色台灯、小盆栽；画面里没有人；安静；右侧留出空白，方便后期叠加手写体 slogan"Better Focus, Brighter You"。9:16。</pre>
+
+  <div class="foot">
+    ChatGPT 生图指令 v3 · 16 帧 · 配套《提示词包 v3》《脚本 v1》《连环画 v1》《详细分镜 v2》· 产品名统一 WorkToWatch · 主张 Work first. Watch later.
+  </div>
+</div>
+</body>
+</html>

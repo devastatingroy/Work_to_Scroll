@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work to Watch 分镜提示词包（真实风格）· v3</title>
+<style>
+  :root{--ink:#1c1c1c;--muted:#6b6b6b;--line:#dcdcdc;--green:#0a8f4f;--green-bg:#eafaf1;
+    --warn:#b00020;--warn-bg:#fdecee;--tip-bg:#f4f7fb;--tip-line:#c9d8ec;--code-bg:#1e2228;}
+  *{box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;color:var(--ink);
+    background:#efece6;margin:0;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:1000px;margin:24px auto;background:#fff;padding:34px 40px 56px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  h1{font-size:23px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  h2{font-size:17px;margin:28px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+  h3{font-size:14px;margin:18px 0 4px;color:#111}
+  .box{border-radius:8px;padding:12px 15px;margin:12px 0;font-size:13px}
+  .warn{background:var(--warn-bg);border:1px solid #f1b8c0}.warn b{color:var(--warn)}
+  .tip{background:var(--tip-bg);border:1px solid var(--tip-line)}
+  .good{background:var(--green-bg);border:1px solid #a7e3c4}
+  pre{background:var(--code-bg);color:#e8eef3;border-radius:7px;padding:12px 14px;font-size:12px;
+    font-family:"Cascadia Code","Consolas",monospace;white-space:pre-wrap;word-break:break-word;margin:6px 0;line-height:1.5}
+  pre .zh{color:#ffd37a}
+  .frame{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:12px 0;background:#fafafa}
+  .frame .hd{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:4px}
+  .n{background:#1c1c1c;color:#fff;font-weight:700;font-size:12px;border-radius:5px;padding:1px 8px}
+  .kind{font-size:11px;font-weight:700;border-radius:5px;padding:1px 8px}
+  .k-real{background:#eef3ec;color:#3a6b3a;border:1px solid #cfe0cf}
+  .k-ui{background:#fdf0e6;color:#9a5a1a;border:1px solid #f0d2b0}
+  .k-card{background:#eef0ff;color:#3a3a8a;border:1px solid #cfd2f0}
+  .cap{font-weight:700;font-size:12.5px;color:#111;background:#fff6d6;border-left:3px solid #e8c33a;padding:2px 7px;border-radius:3px;display:inline-block;margin-top:4px}
+  .note{font-size:11.5px;color:var(--muted);margin-top:4px}
+  ol,ul{margin:6px 0 6px 20px}li{margin:4px 0;font-size:13px}
+  .foot{margin-top:28px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+  @media print{body{background:#fff}.wrap{box-shadow:none;margin:0;max-width:none;border-radius:0;padding:0}.frame,pre,.box{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Work to Watch —— 分镜提示词包（真实风格）</h1>
+  <div class="sub">油管版 · 竖屏 9:16 · 16 帧 · 用于你的文生图工具（即梦 / nano-banana / GPT-image / Midjourney 等）生成照片级分镜 · v3</div>
+
+  <div class="box tip">
+    <b>怎么用这份文件：</b>每帧的最终提示词 = <b>【通用风格块】+ 【该帧场景句】</b>。先把"通用风格块"固定好，再逐帧把场景句拼上去。
+    <b>务必先生成第 1 帧的人</b>，然后把这张脸当作"角色参考图/face reference"喂给其余每一帧，并<b>固定同一个 seed</b>——这是让 16 帧像"同一个人、同一场拍摄"的关键。
+  </div>
+
+  <div class="box warn">
+    <b>⚠️ 开拍前必须先定：开场口吻</b>（你的参考图默认选了"普通用户"这版，等于放弃了"我自己写的"钩子）。<br>
+    · <b>A｜普通用户版（参考图现状）：</b>第 1 帧旁白「哎，刷会儿 YouTube 吧。」——大众、好懂。<br>
+    · <b>B｜保留钩子版（更独特）：</b>第 1 帧旁白「我最烦的 app，是我自己写的。」——自嘲、有记忆点，但人物带点"开发者"味。<br>
+    画面两版可共用，差别只在这一句旁白 + 整体气质。<b>建议：若主攻大众拉新用 A；若先打独立开发者 / 种子用户用 B。</b>
+  </div>
+
+  <h2>① 通用风格块（每帧都前置）</h2>
+  <pre>Cinematic photorealistic still, vertical 9:16 aspect ratio.
+SAME MAN throughout: late-20s East Asian man, lean build, tousled short black
+hair, light stubble, wearing a plain charcoal/black t-shirt (dark sweater at night).
+Warm, dimly-lit modern home at night; soft practical lamp light (warm tungsten);
+shallow depth of field; shot on full-frame 35mm; natural skin tones; subtle film
+grain; muted warm cinematic color grade; quiet, intimate, documentary feel.
+--no watermark, burned-in caption text, cartoon, illustration, distorted hands, extra fingers</pre>
+  <div class="note">Midjourney 用户：把末行换成 <code>--ar 9:16 --style raw</code> 并自行加 <code>--no ...</code>。即梦/nano-banana/GPT-image 直接用自然语言即可。</div>
+
+  <h2>② 一致性与 UI 文字（两条铁律）</h2>
+  <div class="box good">
+    <b>铁律 1 · 锁人：</b>先出第 1 帧 →选定最满意的那张男主 →作为 reference image 贴到后续每一帧 →固定 seed →每帧只改"动作/景别/环境"。脸一飘就重抽。
+  </div>
+  <div class="box good">
+    <b>铁律 2 · UI 文字别交给 AI：</b>凡标注 <span class="kind k-ui">UI 屏</span> 的帧，<b>首选：让 AI 只生成"空屏 / 关屏 / 纯色屏的手机"</b>（姿态、光线、景深对就行），<b>再把真·WorkToWatch 截图后期合成上去</b>。若非要 AI 直接渲染文字，必须逐字核对无错字、无变形（这是 v1 翻车的根因）。
+  </div>
+
+  <h2>③ 逐帧提示词（16 帧）</h2>
+  <p class="note">结构沿用你参考图的叙事（已修正编号与闭环顺序）。Part 1 = 想看→被拦→懂规则→开始计时；Part 2 = 完成→兑现→观看→再被拦→平静继续→结束卡。</p>
+
+  <h3 style="color:#0a8f4f">Part 1 · 从想看视频到开始工作</h3>
+
+  <div class="frame">
+    <div class="hd"><span class="n">01</span><span class="kind k-real">实拍/真人</span></div>
+    <pre>[通用风格块] + A young man lies in bed at night, propped against the pillow,
+scrolling his phone held above his face; the phone glow lights his tired, bored
+expression; warm bedside lamp, cozy dim bedroom, blanket, soft shadows.</pre>
+    <div class="cap">A：哎，刷会儿 YouTube 吧。　｜　B：我最烦的 app，是我自己写的。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">02</span><span class="kind k-ui">UI 屏（建议合成）</span></div>
+    <pre>空屏版（推荐）：[通用风格块] + Close-up of the same man's hand holding a modern
+smartphone up in the dim bedroom, the screen clean/blank, soft bokeh behind.
+──────────
+若直接渲染：手机屏显示阻止页：顶部 YouTube 标志，中间沙漏图标，大字
+<span class="zh">"观看时间已用完"</span>，小字 <span class="zh">"先完成工作或学习，再获得观看时间。"</span></pre>
+    <div class="cap">嗯？看不了。</div>
+    <div class="note">合成素材：WorkToWatch 的"余额耗尽 / 阻止"真实截图。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">03</span><span class="kind k-real">实拍/真人</span></div>
+    <pre>[通用风格块] + The man sits at his desk, chin resting on his hand, looking
+thoughtful and slightly resigned; warm desk lamp, books, small plant; evening study.</pre>
+    <div class="cap">哦，得先工作才能看。好吧，那就开始。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">04</span><span class="kind k-ui">UI 屏（建议合成）</span></div>
+    <pre>空屏版：[通用风格块] + a smartphone propped/held showing a clean app screen,
+same desk lighting.
+──────────
+若直接渲染：WorkToWatch 规则卡：<span class="zh">"20 分钟 工作或学习  →  5 分钟 观看时间"</span>，
+下方绿色按钮 <span class="zh">"开始工作 ›"</span>。</pre>
+    <div class="cap">20 分钟换 5 分钟，挺清楚的。开始吧。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">05</span><span class="kind k-real">实拍/真人</span></div>
+    <pre>[通用风格块] + The man places his phone onto a small desk stand facing himself,
+glancing at it; hands in frame; desk, lamp, laptop nearby. Calm, matter-of-fact.</pre>
+    <div class="cap">把手机放在旁边，让它看到我。</div>
+    <div class="note">⚠️ 别给"手机盯脸"的直勾勾特写——轻描淡写地放下即可，消解监视感。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">06</span><span class="kind k-ui">UI 屏（建议合成）</span></div>
+    <pre>空屏版：[通用风格块] + the phone resting on the stand, clean screen, desk bokeh.
+──────────
+若直接渲染：WorkToWatch 确认页：一个小小的人脸缩略图 + 绿色对勾，
+<span class="zh">"已确认在场"</span>，小字 <span class="zh">"开始累计有效时间"</span>，大字 <span class="zh">"00:00"</span>。
+角标（重要）：<span class="zh">"全程本地运行 · 不上传云端"</span>。</pre>
+    <div class="cap">好了，开始计时。</div>
+    <div class="note">把"本地·不上云"做进这块截图，是消除隐私疑虑的关键。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">07</span><span class="kind k-real">实拍/真人</span></div>
+    <pre>[通用风格块] + The man focused, typing on a laptop at his desk at night; books
+and a warm lamp around; a phone sits on a stand at the edge of frame. Concentrated.</pre>
+    <div class="cap">先把这部分做完。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">08</span><span class="kind k-ui">UI 屏（建议合成）</span></div>
+    <pre>空屏版：[通用风格块] + phone on stand, clean screen, warm desk background.
+──────────
+若直接渲染：WorkToWatch 进度页：<span class="zh">"正在累计有效时间"</span>，一个绿色环形进度条，
+中间大字 <span class="zh">"12:34"</span>。</pre>
+    <div class="cap">已经有进展了。</div>
+  </div>
+
+  <h3 style="color:#0a8f4f">Part 2 · 完成工作、兑现奖励、再被拦、平静继续</h3>
+
+  <div class="frame">
+    <div class="hd"><span class="n">09</span><span class="kind k-real">实拍/真人</span></div>
+    <pre>[通用风格块] + The man writing on a notepad / still working, side angle, deep
+focus, warm lamp; a few minutes later feel (time passing). Quiet determination.</pre>
+    <div class="cap">再坚持一下。（原参考图此格无字幕，建议补这句或留白走配乐）</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">10</span><span class="kind k-ui">UI 屏（建议合成）</span></div>
+    <pre>空屏版：[通用风格块] + hand holding phone, clean screen, celebratory warm light.
+──────────
+若直接渲染：WorkToWatch 到账页：绿色对勾 + 细碎庆祝粒子，<span class="zh">"本轮完成！"</span>，
+大字 <span class="zh">"+ 5:00"</span>，下方 <span class="zh">"可用观看时间 05:00"</span>，绿色按钮 <span class="zh">"去看 YouTube"</span>。</pre>
+    <div class="cap">搞定！获得 5 分钟观看时间。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">11</span><span class="kind k-real">实拍/真人 ★</span></div>
+    <pre>[通用风格块] + The man leans back, relaxed, a genuine warm smile, looking down
+at the phone in his hands; shoulders loose, satisfied. Cozy evening glow.</pre>
+    <div class="cap">终于可以看了。</div>
+    <div class="note">★ 情绪落点：这个"放松地笑"是全片的魂，务必拍到位。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">12</span><span class="kind k-ui">UI 屏（可直接拍真机）</span></div>
+    <pre>[通用风格块] + Close-up of the phone held horizontally, playing a calm YouTube
+nature/landscape video (a still lake, mountains); the man's relaxed hands holding it.</pre>
+    <div class="cap">舒服~</div>
+    <div class="note">这帧可直接真机播放真实视频拍摄，最省事。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">13</span><span class="kind k-ui">UI 屏（建议合成）· 闭环</span></div>
+    <pre>空屏版：[通用风格块] + hand holding phone, clean screen, dim room.
+──────────
+若直接渲染：阻止页再次出现：沙漏图标，<span class="zh">"观看时间已用完"</span>，
+小字 <span class="zh">"再完成一段工作，获得更多观看时间。"</span></pre>
+    <div class="cap">时间用完了。再去工作吧。</div>
+    <div class="note">（参考图里误标成 16）——这格就是闭环闭合的一环：看→用完→回去工作。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">14</span><span class="kind k-real">实拍/真人</span></div>
+    <pre>[通用风格块] + The man's face in soft low light, calm and accepting — not
+frustrated, a small peaceful look; he's okay with it. Intimate close-up.</pre>
+    <div class="cap">没关系，继续。</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">15</span><span class="kind k-card">版式卡（非照片）</span></div>
+    <pre>干净定格卡（设计稿，别用 AI 生成文字）：
+主标 <span class="zh">"先完成重要的事，再享受你喜欢的视频"</span>
+下方 <span class="zh">WorkToWatch</span> 标志（绿色）
+（可加英文 slogan: Work first. Watch later. / Earn your entertainment.）
+底部一行小字：<span class="zh">Android · Beta 开放中 →</span> + 二维码/@账号
+角标：<span class="zh">全程本地运行，不上传云端</span></pre>
+    <div class="cap">产品名 + Slogan + CTA 三件套（现在参考图缺 CTA，务必补）</div>
+  </div>
+
+  <div class="frame">
+    <div class="hd"><span class="n">16</span><span class="kind k-real">实拍/空镜</span></div>
+    <pre>[通用风格块] + An empty wooden desk at night: a phone resting on its stand, a
+closed laptop, a warm lamp, a plant; nobody in frame; peaceful. Leave negative
+space on the right for an overlaid handwritten-style line.</pre>
+    <div class="cap">空镜 + 手写体 slogan：Better Focus, Brighter You</div>
+  </div>
+
+  <h2>④ 出完图之后</h2>
+  <ol>
+    <li>把 16 张图（命名 01–16）发我，我<b>排成参考图那样的 Part1 / Part2 成品板</b>（编号、字幕、分段标题都排好），可直接看、可打印、可交剪辑。</li>
+    <li>这套静帧既能当<b>分镜稿</b>指导实拍，也能直接当<b>AI 短片关键帧</b>（喂给 Seedance/即梦做图生视频）。</li>
+    <li>告诉我你用的是<b>哪个文生图工具</b>，我把提示词语法再按它调一版（尤其 Midjourney 的参数写法不同）。</li>
+  </ol>
+
+  <div class="foot">
+    Work to Watch · 分镜提示词包（真实风格）v3 · 16 帧 · 配套《脚本 v1》《连环画 v1》《详细分镜 v2》·
+    产品名统一 <b>WorkToWatch</b> · 主张 <b>Work first. Watch later.</b>
+  </div>
+
+</div>
+</body>
+</html>

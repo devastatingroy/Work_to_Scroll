@@ -5,17 +5,24 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 
 /**
- * Pure nightly relax allowance. A fixed local time window (default 22:00–08:30) grants a
- * bounded free quota that is spent before earned balance; once used up, normal balance rules
- * apply. The persisted protection switch is never touched, so the pre-window state resumes on
- * its own when the window closes. Wall-clock only, mirroring {@link DailyReset}.
+ * Pure free-time allowance for one fixed local-time window. Inside the window a bounded quota is
+ * spent before earned balance; once used up, normal balance rules apply. Quota never survives its
+ * window: a new window refills it, so an unused remainder is dropped when the window closes.
+ * The persisted protection switch is never touched, so the pre-window state resumes on its own
+ * when the window closes. Wall-clock only, mirroring {@link DailyReset}.
+ *
+ * <p>Two instances exist: the night window and the noon window. They never overlap, so at most one
+ * grants time at any moment; {@code LedgerStore} picks the active one.
  */
-public record NightRelax(boolean enabled, int startMin, int endMin, long allowanceMs,
-                         long remainingMs, long windowStartMs, String zone) {
+public record RelaxWindow(boolean enabled, int startMin, int endMin, long allowanceMs,
+                          long remainingMs, long windowStartMs, String zone) {
 
-    static NightRelax initial(ZoneId zone) {
-        long allowance = 45 * 60_000L;
-        return new NightRelax(true, 22 * 60, 8 * 60 + 30, allowance, allowance, 0, zone.getId());
+    static RelaxWindow night(ZoneId zone) {
+        return new RelaxWindow(true, 22 * 60, 8 * 60 + 30, 45 * 60_000L, 45 * 60_000L, 0, zone.getId());
+    }
+
+    static RelaxWindow noon(ZoneId zone) {
+        return new RelaxWindow(true, 11 * 60, 13 * 60, 30 * 60_000L, 30 * 60_000L, 0, zone.getId());
     }
 
     private static int minuteOfDay(long now, ZoneId zone) {
@@ -55,27 +62,27 @@ public record NightRelax(boolean enabled, int startMin, int endMin, long allowan
         return best;
     }
 
-    /** Refill only when a new night's window opens; a mid-window restart keeps the remaining quota. */
-    NightRelax refreshed(long now, ZoneId currentZone) {
+    /** Refill only when a new window opens; a mid-window restart keeps the remaining quota. */
+    RelaxWindow refreshed(long now, ZoneId currentZone) {
         String zid = currentZone.getId();
         boolean sameZone = zone.equals(zid);
         if (!enabled || !active(now, currentZone))
             return sameZone ? this
-                : new NightRelax(enabled, startMin, endMin, allowanceMs, remainingMs, windowStartMs, zid);
+                : new RelaxWindow(enabled, startMin, endMin, allowanceMs, remainingMs, windowStartMs, zid);
         long key = windowStartKey(now, currentZone);
         if (key == windowStartMs && sameZone) return this;
-        return new NightRelax(enabled, startMin, endMin, allowanceMs, allowanceMs, key, zid);
+        return new RelaxWindow(enabled, startMin, endMin, allowanceMs, allowanceMs, key, zid);
     }
 
-    NightRelax withRemaining(long remaining) {
+    RelaxWindow withRemaining(long remaining) {
         long r = Math.max(0, Math.min(allowanceMs, remaining));
         return r == remainingMs ? this
-            : new NightRelax(enabled, startMin, endMin, allowanceMs, r, windowStartMs, zone);
+            : new RelaxWindow(enabled, startMin, endMin, allowanceMs, r, windowStartMs, zone);
     }
 
-    NightRelax withEnabled(boolean value) {
+    RelaxWindow withEnabled(boolean value) {
         if (value == enabled) return this;
         // Turning it back on forces a fresh refill the next time the window opens.
-        return new NightRelax(value, startMin, endMin, allowanceMs, remainingMs, value ? 0 : windowStartMs, zone);
+        return new RelaxWindow(value, startMin, endMin, allowanceMs, remainingMs, value ? 0 : windowStartMs, zone);
     }
 }

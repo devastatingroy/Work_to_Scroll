@@ -21,6 +21,7 @@ android {
             buildConfigField 'String', 'TARGET_PACKAGE', '"com.xingin.xhs"'
             buildConfigField 'String', 'TARGET_NAME', '"小红书"'
             buildConfigField 'String', 'TARGET_MISSING_MESSAGE', '"未找到小红书，请确认已安装标准版"'
+            buildConfigField 'boolean', 'TARGET_PIP_MUST_BE_DISABLED', 'false'
             resValue 'string', 'app_version', '0.5.31-night-relax-preview'
         }
         workToWatch {
@@ -33,6 +34,7 @@ android {
             buildConfigField 'String', 'TARGET_PACKAGE', '"com.google.android.youtube"'
             buildConfigField 'String', 'TARGET_NAME', '"YouTube"'
             buildConfigField 'String', 'TARGET_MISSING_MESSAGE', '"未找到YouTube，请确认已安装官方 Android App"'
+            buildConfigField 'boolean', 'TARGET_PIP_MUST_BE_DISABLED', 'true'
             resValue 'string', 'app_version', '0.1.0-dev'
         }
     }

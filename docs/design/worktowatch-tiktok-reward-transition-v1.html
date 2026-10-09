@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WorkToWatch · 15 分钟换 5 分钟</title>
+  <style>
+    :root { color-scheme: light; font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #e9edf0; }
+    #stage { position: absolute; width: 1080px; height: 1920px; overflow: hidden; transform-origin: top left; background: radial-gradient(circle at 50% 37%, #fff 0%, #f4f6f5 76%); }
+    .phone { position: absolute; left: 89px; top: 65px; width: 902px; height: 1790px; border: 9px solid #171c21; border-radius: 112px; background: #090d11; padding: 14px; box-shadow: 0 26px 42px #0003, inset 0 0 0 3px #666d72; }
+    .screen { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 89px; background: #fff; }
+    .status { position: absolute; top: 38px; left: 62px; right: 62px; height: 48px; z-index: 8; display: flex; justify-content: space-between; align-items: center; color: #121923; font-family: Arial, sans-serif; font-size: 30px; font-weight: 700; }
+    .status-right { display: flex; gap: 12px; align-items: center; }
+    .signal { display: flex; align-items: end; height: 27px; gap: 4px; }
+    .signal i { display: block; width: 7px; border-radius: 4px; background: #121923; }
+    .signal i:nth-child(1) { height: 10px; } .signal i:nth-child(2) { height: 16px; } .signal i:nth-child(3) { height: 22px; } .signal i:nth-child(4) { height: 27px; }
+    .wifi { width: 27px; height: 20px; border: 6px solid #121923; border-left-color: transparent; border-right-color: transparent; border-bottom-color: transparent; border-radius: 50%; position: relative; top: 7px; }
+    .wifi::after { content: ""; position: absolute; top: 5px; left: 7px; width: 8px; height: 8px; background: #121923; border-radius: 50%; }
+    .battery { width: 42px; height: 23px; border: 3px solid #121923; border-radius: 5px; padding: 3px; position: relative; }
+    .battery::before { content: ""; position: absolute; right: -7px; top: 6px; width: 4px; height: 7px; border-radius: 0 2px 2px 0; background: #121923; }
+    .battery::after { content: ""; display: block; width: 26px; height: 11px; border-radius: 1px; background: #121923; }
+    .camera { position: absolute; z-index: 9; top: 33px; left: 50%; margin-left: -16px; width: 32px; height: 32px; border: 8px solid #0c1014; border-radius: 50%; background: #204269; box-shadow: 0 0 0 2px #313941; }
+    .top-row { position: absolute; top: 132px; left: 59px; right: 59px; height: 68px; z-index: 5; display: flex; justify-content: space-between; align-items: center; }
+    .back, .more { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: #f0f3f4; color: #162331; font-size: 43px; font-family: Arial, sans-serif; line-height: 1; }
+    .back { padding: 0 4px 7px 0; } .more { font-size: 35px; letter-spacing: 1px; padding-bottom: 16px; }
+    .brand { font-size: 29px; font-weight: 800; color: #1b2834; letter-spacing: .5px; }
+    .scene { position: absolute; inset: 0; transform-origin: 50% 48%; }
+    .red { background: radial-gradient(circle at 50% 38%, #fff2f1, #fff 55%); }
+    .green { background: radial-gradient(circle at 50% 38%, #f1fff8, #fff 57%); opacity: 0; }
+    .red .mark, .green .mark { position: absolute; left: 50%; top: 278px; transform: translateX(-50%); display: grid; place-items: center; width: 330px; height: 330px; }
+    .ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .red-lock { width: 220px; height: 220px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, #fa6266, #c91c30); box-shadow: 0 26px 65px #e32d4255, inset 0 7px 15px #fff5; }
+    .red-lock svg { width: 115px; height: 115px; }
+    .green-check { width: 242px; height: 242px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, #45da8e, #00965d); border: 9px solid #72e9ac; box-shadow: 0 22px 60px #16b97955, inset 0 6px 14px #fff5; }
+    .green-check svg { width: 145px; height: 145px; }
+    .headline { position: absolute; top: 644px; left: 40px; right: 40px; text-align: center; font-size: 70px; line-height: 1.25; font-weight: 900; letter-spacing: -2px; }
+    .red .headline { color: #b71d32; } .green .headline { color: #087e59; }
+    .minor { position: absolute; top: 742px; left: 70px; right: 70px; text-align: center; color: #65727e; font-size: 34px; }
+    .timer-label { position: absolute; top: 832px; left: 60px; right: 60px; text-align: center; font-size: 39px; font-weight: 700; color: #5f6b77; }
+    .green .timer-label { top: 818px; }
+    .timer { position: absolute; top: 885px; left: 65px; right: 65px; text-align: center; font-family: Arial, sans-serif; font-size: 170px; line-height: 1.2; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -8px; }
+    .red .timer { color: #d72d40; } .green .timer { color: #09865f; }
+    .timer-box { position: absolute; top: 874px; left: 85px; right: 85px; height: 236px; border-radius: 110px; background: #e8faf0; }
+    .progress-track { position: absolute; top: 1138px; left: 136px; width: 594px; height: 14px; border-radius: 9px; background: #f4d7db; overflow: hidden; }
+    .progress-fill { width: 98%; height: 100%; background: linear-gradient(90deg, #ff7177, #d92b40); border-radius: inherit; }
+    .footnote { position: absolute; top: 1190px; left: 62px; right: 62px; text-align: center; font-size: 36px; color: #66727e; }
+    .red .rule { position: absolute; top: 1350px; left: 90px; right: 90px; min-height: 110px; border-radius: 55px; display: grid; place-items: center; padding: 18px 20px; color: #ab2939; background: #fff0f0; font-size: 38px; font-weight: 700; }
+    .green .button { position: absolute; top: 1360px; left: 78px; right: 78px; height: 112px; border-radius: 60px; display: grid; place-items: center; background: #098c65; color: #fff; font-size: 40px; font-weight: 800; box-shadow: 0 16px 29px #0b8e632a; }
+    .green .later { position: absolute; top: 1513px; left: 0; right: 0; text-align: center; color: #588b7d; font-size: 30px; }
+    .home-bar { position: absolute; z-index: 8; left: 50%; bottom: 17px; margin-left: -142px; width: 284px; height: 12px; border-radius: 9px; background: #13181d; }
+    .particle { position: absolute; left: 50%; top: 475px; width: 15px; height: 43px; border-radius: 7px; opacity: 0; transform-origin: center; }
+    .burst { position: absolute; z-index: 7; left: 50%; top: 47%; width: 120px; height: 120px; border-radius: 50%; background: white; transform: translate(-50%, -50%) scale(0); pointer-events: none; }
+    .flash { position: absolute; z-index: 10; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+    .preview-controls { position: fixed; z-index: 20; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 12px; background: #171c21e8; color: white; font: 14px Arial, sans-serif; white-space: nowrap; }
+    .preview-controls button { border: 0; border-radius: 6px; padding: 5px 11px; cursor: pointer; }
+    .preview-controls input { width: min(40vw, 360px); }
+    body.export .preview-controls { display: none; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="15 分钟有效工作换取 5 分钟观看时间的宣传动画">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span class="status-right"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="wifi"></span><span class="battery"></span></span></div>
+      <span class="camera"></span>
+      <div class="scene red" id="red">
+        <div class="mark"><svg class="ring" viewBox="0 0 330 330"><circle cx="165" cy="165" r="150" fill="none" stroke="#f9d9dd" stroke-width="12"/><circle id="ringProgress" cx="165" cy="165" r="150" fill="none" stroke="#d82a40" stroke-width="12" stroke-linecap="round" stroke-dasharray="942.48" stroke-dashoffset="2"/></svg><div class="red-lock"><svg viewBox="0 0 100 100" fill="none"><path d="M30 43V31a20 20 0 0 1 40 0v12" stroke="white" stroke-width="9" stroke-linecap="round"/><rect x="23" y="42" width="54" height="43" rx="9" fill="white"/><circle cx="50" cy="62" r="6" fill="#d92c40"/><path d="M50 63v10" stroke="#d92c40" stroke-width="6" stroke-linecap="round"/></svg></div></div>
+        <div class="headline">暂不可观看</div>
+        <div class="minor">YouTube Watch Time 00:00</div>
+        <div class="timer-label">本轮有效工作</div>
+        <div class="timer" id="redTimer">14:58</div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="footnote">满 15:00 即可获得 5 分钟</div>
+        <div class="rule">继续工作，观看时间即将到账</div>
+      </div>
+      <div class="scene green" id="green">
+        <div class="mark" id="greenMark"><div class="green-check"><svg viewBox="0 0 100 100" fill="none"><path d="m21 52 19 19 40-42" stroke="white" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+        <div class="headline">奖励到账</div>
+        <div class="minor">+ 5 分钟 Watch Time</div>
+        <div class="timer-box"></div>
+        <div class="timer-label">可用 Watch Time</div>
+        <div class="timer">05:00</div>
+        <div class="footnote">本轮有效工作 15:00</div>
+        <div class="button">开始观看 YouTube　›</div>
+        <div class="later">稍后再看</div>
+      </div>
+      <div id="particles"></div><div class="burst" id="burst"></div><div class="flash" id="flash"></div>
+      <div class="top-row"><div class="back">‹</div><div class="brand">WorkToWatch</div><div class="more">…</div></div>
+      <div class="home-bar"></div>
+    </div></div>
+  </main>
+  <div class="preview-controls"><button id="play">暂停</button><input id="scrub" type="range" min="0" max="3.6" step="0.01" value="0"><span id="timeReadout">0.00 / 3.60 秒</span></div>
+  <script>
+    const DURATION = 3.6;
+    const exportMode = new URLSearchParams(location.search).has('export');
+    if (exportMode) document.body.classList.add('export');
+    const stage = document.getElementById('stage');
+    const red = document.getElementById('red');
+    const green = document.getElementById('green');
+    const timer = document.getElementById('redTimer');
+    const fill = document.getElementById('progressFill');
+    const ring = document.getElementById('ringProgress');
+    const burst = document.getElementById('burst');
+    const flash = document.getElementById('flash');
+    const particlesHost = document.getElementById('particles');
+    const particleColors = ['#15bd78','#77e99f','#c4f52d','#ffd832','#36cc91','#92e4ad','#f4d847','#11aa72','#5cda89','#d7ea37','#35c67f','#a0f7aa'];
+    const particles = particleColors.map((color) => { const el = document.createElement('i'); el.className = 'particle'; el.style.background = color; particlesHost.append(el); return el; });
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const easeOut = p => 1 - Math.pow(1 - p, 3);
+    function fit() { const scale = Math.min(innerWidth / 1080, innerHeight / 1920); stage.style.transform = `translate(${(innerWidth - 1080 * scale) / 2}px, ${(innerHeight - 1920 * scale) / 2}px) scale(${scale})`; }
+    addEventListener('resize', fit); fit();
+    function renderAt(seconds) {
+      const t = clamp(seconds, 0, DURATION);
+      timer.textContent = t < .68 ? '14:58' : t < 1.36 ? '14:59' : '15:00';
+      const progress = t < .68 ? .996 : t < 1.36 ? .998 : 1;
+      fill.style.width = `${progress * 100}%`;
+      ring.style.strokeDashoffset = `${942.48 * (1 - progress)}`;
+      const impact = clamp((t - 1.57) / .24, 0, 1);
+      const out = easeOut(impact);
+      red.style.opacity = `${1 - out}`;
+      red.style.transform = `scale(${1 - .11 * out})`;
+      green.style.opacity = `${out}`;
+      green.style.transform = `scale(${.83 + .17 * out})`;
+      const boom = clamp((t - 1.58) / .36, 0, 1);
+      burst.style.opacity = boom > 0 && boom < 1 ? `${(1 - boom) * .8}` : '0';
+      burst.style.transform = `translate(-50%, -50%) scale(${.2 + boom * 12})`;
+      flash.style.opacity = t >= 1.62 && t < 1.77 ? `${.36 * (1 - (t - 1.62) / .15)}` : '0';
+      particles.forEach((el, i) => {
+        const a = (i / particles.length) * Math.PI * 2;
+        const p = clamp((t - 1.64) / .65, 0, 1);
+        const radius = 185 + p * (165 + (i % 3) * 35);
+        el.style.opacity = p > 0 && p < 1 ? `${Math.min(1, p * 8) * (1 - p)}` : '0';
+        el.style.transform = `translate(${Math.cos(a) * radius}px, ${Math.sin(a) * radius - p * 25}px) rotate(${Math.round(a * 180 / Math.PI) + 110 * p}deg) scale(${.7 + .5 * p})`;
+      });
+      document.getElementById('scrub').value = t;
+      document.getElementById('timeReadout').textContent = `${t.toFixed(2)} / 3.60 秒`;
+    }
+    window.renderAt = renderAt;
+    let playing = !exportMode, anchor = performance.now(), offset = 0;
+    const play = document.getElementById('play');
+    play.addEventListener('click', () => {
+      const now = performance.now();
+      if (playing) offset = (offset + (now - anchor) / 1000) % DURATION;
+      playing = !playing;
+      play.textContent = playing ? '暂停' : '播放';
+      anchor = now;
+    });
+    document.getElementById('scrub').addEventListener('input', (e) => { offset = +e.target.value; anchor = performance.now(); playing = false; play.textContent = '播放'; renderAt(offset); });
+    function tick(now) { if (playing) renderAt((offset + (now - anchor) / 1000) % DURATION); requestAnimationFrame(tick); }
+    renderAt(0); requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

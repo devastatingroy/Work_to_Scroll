@@ -3,6 +3,7 @@ package com.roy.worktoscroll;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class ProductIdentityTest {
     @Test public void keepsExistingWorkToScrollIdentityAndTarget() {
@@ -11,5 +12,6 @@ public class ProductIdentityTest {
         assertEquals("com.xingin.xhs", BuildConfig.TARGET_PACKAGE);
         assertEquals("小红书", BuildConfig.TARGET_NAME);
         assertEquals("未找到小红书，请确认已安装标准版", BuildConfig.TARGET_MISSING_MESSAGE);
+        assertFalse(BuildConfig.TARGET_PIP_MUST_BE_DISABLED);
     }
 }

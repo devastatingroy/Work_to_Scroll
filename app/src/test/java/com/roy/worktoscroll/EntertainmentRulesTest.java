@@ -142,6 +142,84 @@ public class EntertainmentRulesTest {
         assertTrue(l.daily.notice());
     }
 
+    @Test public void developerClearRemovesEarnedAndCurrentNightAllowance() {
+        now = time("2026-09-09T22:30:00");
+        LedgerStore l = load();
+        l.engine.grant(300_000);
+        l.refreshWindows(now, ZONE);
+        assertEquals(45 * 60_000L, l.night.remainingMs());
+        assertTrue(l.save());
+
+        assertTrue(l.clearAvailableForTest());
+        assertEquals(0, l.engine.balanceMs);
+        assertEquals(0, l.night.remainingMs());
+        LedgerStore reloaded = load();
+        assertEquals(0, reloaded.engine.balanceMs);
+        assertEquals(0, reloaded.night.remainingMs());
+    }
+
+    @Test public void failedDeveloperClearRestoresBothBalances() {
+        now = time("2026-09-09T22:30:00");
+        LedgerStore l = load();
+        l.engine.grant(300_000);
+        l.refreshWindows(now, ZONE);
+        assertTrue(l.save());
+        prefs.fail = true;
+
+        assertFalse(l.clearAvailableForTest());
+        assertEquals(300_000, l.engine.balanceMs);
+        assertEquals(45 * 60_000L, l.night.remainingMs());
+        prefs.fail = false;
+        LedgerStore reloaded = load();
+        assertEquals(300_000, reloaded.engine.balanceMs);
+        assertEquals(45 * 60_000L, reloaded.night.remainingMs());
+    }
+
+    @Test public void noonWindowGrantsThirtyMinutesAndPersistsRemaining() {
+        now = time("2026-09-09T12:00:00");
+        LedgerStore l = load();
+        l.refreshWindows(now, ZONE);
+        assertEquals(30 * 60_000L, l.noon.remainingMs());
+        assertSame(l.noon, l.giftWindow(now, ZONE));
+        assertEquals("午间赠送", l.giftLabel(now, ZONE));
+        l.setWindowRemaining(l.noon, 600_000);
+        assertTrue(l.save());
+        LedgerStore reloaded = load();
+        assertEquals(600_000, reloaded.noon.remainingMs());
+        assertEquals(45 * 60_000L, reloaded.night.remainingMs());
+    }
+
+    @Test public void onlyTheCurrentlyActiveWindowGrantsTime() {
+        LedgerStore l = load();
+        assertSame(l.noon, l.giftWindow(time("2026-09-09T12:00:00"), ZONE));
+        assertNull(l.giftWindow(time("2026-09-09T14:00:00"), ZONE));
+        assertEquals("", l.giftLabel(time("2026-09-09T14:00:00"), ZONE));
+        assertSame(l.night, l.giftWindow(time("2026-09-09T22:30:00"), ZONE));
+        assertEquals("夜间赠送", l.giftLabel(time("2026-09-09T22:30:00"), ZONE));
+    }
+
+    @Test public void nextWindowEdgeSplitsSettlingAtBothWindows() {
+        LedgerStore l = load();
+        assertEquals(time("2026-09-09T13:00:00"), l.nextWindowEdge(time("2026-09-09T12:00:00"), ZONE));
+        assertEquals(time("2026-09-09T22:00:00"), l.nextWindowEdge(time("2026-09-09T14:00:00"), ZONE));
+        assertEquals(time("2026-09-10T08:30:00"), l.nextWindowEdge(time("2026-09-09T23:00:00"), ZONE));
+    }
+
+    @Test public void noonSwitchKeepsNightStateAndPersistsChoice() {
+        now = time("2026-09-09T12:00:00");
+        LedgerStore l = load();
+        assertTrue(l.noon.enabled());
+        assertTrue(l.setNoonEnabled(false));
+        assertNull(l.giftWindow(now, ZONE));
+        assertEquals("午间放松已关闭，全天按余额保护。", l.noonDescription());
+        LedgerStore reloaded = load();
+        assertFalse(reloaded.noon.enabled());
+        assertTrue(reloaded.night.enabled());
+        assertTrue(reloaded.setNoonEnabled(true));
+        assertEquals(30 * 60_000L, reloaded.noon.remainingMs());
+        assertTrue(load().noon.enabled());
+    }
+
     @Test public void ratioPersistsAcrossProcessRecreationWithoutRepricing() {
         LedgerStore l = load();
         assertTrue(l.selectMinutes(15));

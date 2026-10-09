@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work to Watch 分镜图(detailed) · 油管版 v2</title>
+<style>
+  :root{
+    --ink:#201d19; --muted:#6c665c; --line:#d6cfc2; --paper:#efe9dd;
+    --green:#0a8f4f; --green-bg:#eafaf1; --red:#e5484d;
+    --warn:#b00020; --warn-bg:#fdecee; --tip-bg:#f4f7fb; --tip-line:#c9d8ec;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    color:var(--ink); background:#e4ddd0; margin:0; line-height:1.5;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  .wrap{max-width:1260px; margin:22px auto; padding:0 20px 56px}
+  h1{font-size:23px; margin:12px 0 2px}
+  .sub{color:var(--muted); font-size:13px; margin-bottom:14px}
+  .box{border-radius:8px; padding:11px 14px; margin:11px 0; font-size:12.5px}
+  .warn{background:var(--warn-bg); border:1px solid #f1b8c0} .warn b{color:var(--warn)}
+  .tip{background:var(--tip-bg); border:1px solid var(--tip-line)}
+  .legend{background:#fff; border:1px solid var(--line); border-radius:8px; padding:11px 14px; font-size:12px; margin:11px 0}
+  .legend b{color:#111}
+  .legend span{display:inline-block; margin:2px 10px 2px 0; white-space:nowrap}
+  .beat{margin-top:26px}
+  .beat h2{font-size:16px; margin:0 0 3px; padding-bottom:5px; border-bottom:2px solid var(--ink)}
+  .beat .bdesc{font-size:12.5px; color:var(--muted); margin:4px 0 10px}
+  .row{display:flex; flex-wrap:wrap; gap:14px}
+  .cut{width:234px; background:#fff; border:1px solid var(--line); border-radius:9px; overflow:hidden;
+    box-shadow:0 1px 5px rgba(0,0,0,.06); display:flex; flex-direction:column}
+  .frame{width:100%; display:block; background:var(--paper)}
+  .m{padding:8px 10px 10px; display:flex; flex-direction:column; gap:4px; flex:1}
+  .m .hd{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  .id{background:#201d19; color:#fff; font-size:11px; font-weight:700; border-radius:4px; padding:1px 6px}
+  .sz{background:#efe9dd; border:1px solid var(--line); color:#4a443b; font-size:10.5px; font-weight:700; border-radius:4px; padding:1px 6px}
+  .tm{color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums; margin-left:auto}
+  .star{color:var(--red)}
+  .pic{font-size:11.5px; color:#333}
+  .scr{font-family:"Cascadia Code","Consolas",monospace; font-size:10.5px; background:#f6f3ec; border:1px solid #e6e0d3; border-radius:4px; padding:4px 6px; white-space:pre-wrap; color:#333}
+  .cap{font-size:11.5px; font-weight:700; color:#111; background:#fff6d6; border-left:3px solid #e8c33a; padding:2px 6px; border-radius:3px}
+  .vo{font-size:11px; color:#444} .vo b{color:var(--green)}
+  .nt{font-size:10.5px; color:var(--muted); border-top:1px dashed var(--line); padding-top:5px; margin-top:1px}
+  .foot{margin-top:28px; color:var(--muted); font-size:12px; border-top:1px solid var(--line); padding-top:12px}
+  @media print{ body{background:#fff} .cut{break-inside:avoid} .beat h2{break-after:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Work to Watch —— 分镜图(detailed)</h1>
+  <div class="sub">油管版 · 竖屏 9:16 · 约 30 秒 · 7 段 / 18 镜 · v2（示意画面，用于定构图与节奏；成片走真人实拍 + 真实录屏）</div>
+
+  <div class="box tip">
+    <b>相比 v1 的变化：</b>把每个段落拆成了真正的分镜——尤其 <b>S1 的"对切"由 4 个镜头构成</b>（建立 → 手机特写 → 电脑特写 → 人脸），
+    <b>S2 的"掐断"是一组 match-cut</b>（同机位硬切，手机画面一秒内从"在看"变"被拦"）。每镜标了景别与运镜。
+  </div>
+
+  <div class="legend">
+    <b>景别：</b>
+    <span>WS 全景</span><span>MS 中景</span><span>MCU 中近景</span><span>CU 特写</span><span>BCU 大特写</span><span>OTS 过肩</span><span>INS 插入（屏幕）</span><br>
+    <b>运镜：</b>
+    <span>● 固定</span><span>↗ 推近</span><span>↘ 拉远</span><span>✂ 硬切 / match-cut</span><span>⤻ 叠化</span><span>★ 关键镜</span>
+  </div>
+
+  <div class="box warn">
+    <b>⚠️ 仍待拍板：</b>开场旁白 <i>"我最烦的 app，是我自己写的"</i>（开发者口吻）。默认保留；若要纯普通用户 →「<i>治好我 YouTube 上瘾的，居然是另一个 app。</i>」
+  </div>
+
+
+  <!-- ============ S1 ============ -->
+  <div class="beat">
+    <h2>S1 · 钩子 —— 对切（0–3s）</h2>
+    <div class="bdesc">结构：建立场景 →手机特写 →电脑特写 →回到人脸。手机"狂动"与电脑"死寂"交替，一句话都不用就说清"沉迷刷手机、活没动"。</div>
+    <div class="row">
+
+      <!-- 1A -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#efe9dd"/>
+          <!-- window -->
+          <rect x="16" y="26" width="60" height="92" rx="3" fill="#f6f1e6" stroke="#ddd3c2"/>
+          <line x1="46" y1="26" x2="46" y2="118" stroke="#ddd3c2"/><line x1="16" y1="72" x2="76" y2="72" stroke="#ddd3c2"/>
+          <!-- shelf -->
+          <rect x="150" y="40" width="74" height="10" fill="#c9b893"/><rect x="156" y="20" width="7" height="20" fill="#9c7f55"/><rect x="166" y="24" width="7" height="16" fill="#8a6f49"/>
+          <!-- desk -->
+          <rect x="0" y="300" width="234" height="116" fill="#c7a06a"/><rect x="0" y="300" width="234" height="6" fill="#d9b681"/>
+          <!-- laptop left -->
+          <rect x="18" y="238" width="86" height="62" rx="3" fill="#e9ebee" stroke="#b4b8bf"/>
+          <rect x="24" y="244" width="40" height="5" rx="2" fill="#2b2b2b"/><rect x="24" y="255" width="66" height="3.5" rx="2" fill="#c3c7cc"/><rect x="24" y="263" width="20" height="3.5" rx="2" fill="#aab0b6"/>
+          <rect x="8" y="300" width="106" height="5" rx="2" fill="#9aa0a6"/>
+          <!-- person slumped MS -->
+          <g>
+            <path d="M120 300 q4 -70 54 -70 q50 0 54 70Z" fill="#3a3f47"/>
+            <rect x="160" y="196" width="18" height="30" fill="#e8c4a2"/>
+            <ellipse cx="168" cy="178" rx="27" ry="29" fill="#e8c4a2"/>
+            <path d="M141 170 q27 -34 54 2 q-10 -16 -27 -16 q-19 0 -27 14Z" fill="#2c2c2c"/>
+            <circle cx="158" cy="180" r="7" fill="#fff" stroke="#c9a24b" stroke-width="2"/><circle cx="179" cy="180" r="7" fill="#fff" stroke="#c9a24b" stroke-width="2"/><line x1="165" y1="180" x2="172" y2="180" stroke="#c9a24b" stroke-width="2"/>
+            <circle cx="158" cy="181" r="2" fill="#2c2c2c"/><circle cx="179" cy="181" r="2" fill="#2c2c2c"/>
+            <path d="M162 196 q6 4 12 0" stroke="#9a6b4e" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <!-- arm holding phone -->
+            <path d="M138 260 q-16 -4 -22 -34" stroke="#3a3f47" stroke-width="15" fill="none" stroke-linecap="round"/>
+          </g>
+          <!-- phone in hand -->
+          <rect x="104" y="214" width="26" height="46" rx="5" fill="#15171b"/><rect x="107" y="222" width="20" height="33" rx="2" fill="#fff"/>
+          <rect x="107" y="216" width="20" height="6" rx="2" fill="#0a8f4f"/><text x="117" y="221" text-anchor="middle" font-size="4.6" fill="#fff">余额 00:15↓</text>
+          <rect x="110" y="225" width="14" height="9" rx="1.5" fill="#f2c0b6"/><rect x="110" y="236" width="14" height="9" rx="1.5" fill="#bcd6f0"/><rect x="110" y="247" width="14" height="6" rx="1.5" fill="#d7ecc8"/>
+          <!-- framing overlay -->
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+          <line x1="88" y1="10" x2="88" y2="406" stroke="#fff" stroke-opacity=".18"/><line x1="156" y1="10" x2="156" y2="406" stroke="#fff" stroke-opacity=".18"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">1A</span><span class="sz">WS ●</span><span class="tm">0–1.2s</span></div>
+          <div class="pic">建立镜头：人瘫坐桌后低头刷手机，左侧电脑亮着。交代环境 + 状态。</div>
+          <div class="vo"><b>旁白起：</b>我最烦的 app……</div>
+          <div class="nt">自然光，暖色居家。姿态要"塌"。</div>
+        </div>
+      </div>
+
+      <!-- 1B -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#d8cfbf"/>
+          <!-- big phone CU -->
+          <rect x="62" y="30" width="110" height="356" rx="16" fill="#111318"/>
+          <rect x="72" y="44" width="90" height="328" rx="7" fill="#fff"/>
+          <rect x="72" y="44" width="90" height="20" rx="7" fill="#0a8f4f"/><text x="117" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">余额 00:15 ↓</text>
+          <!-- feed cards -->
+          <rect x="82" y="74" width="70" height="70" rx="5" fill="#f3c2b7"/><rect x="82" y="150" width="70" height="70" rx="5" fill="#bcd6f0"/><rect x="82" y="226" width="70" height="70" rx="5" fill="#d7ecc8"/><rect x="82" y="302" width="70" height="60" rx="5" fill="#f1e2b4"/>
+          <!-- motion -->
+          <g stroke="#e5484d" stroke-width="3" stroke-linecap="round">
+            <line x1="182" y1="300" x2="182" y2="270"/><line x1="192" y1="300" x2="192" y2="260"/><line x1="202" y1="300" x2="202" y2="275"/>
+          </g>
+          <path d="M192 250 l-7 10 h14Z" fill="#e5484d"/>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">1B</span><span class="sz">INS/CU ●</span><span class="tm">切 ~0.6s</span></div>
+          <div class="pic">插入手机屏：feed <b>飞速上划</b>，顶部"余额 00:15"在<b>倒数</b>。</div>
+          <div class="scr">真实录屏：YouTube Shorts 连续上滑</div>
+          <div class="nt">动感要足，是"狂动"的一方。</div>
+        </div>
+      </div>
+
+      <!-- 1C -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#cfc6b6"/>
+          <!-- laptop screen CU (stuck email) -->
+          <rect x="20" y="40" width="194" height="300" rx="7" fill="#15171b"/>
+          <rect x="32" y="54" width="170" height="272" rx="4" fill="#fff"/>
+          <rect x="44" y="70" width="40" height="8" rx="2" fill="#8a909a"/>
+          <rect x="44" y="92" width="120" height="7" rx="2" fill="#2b2b2b"/>
+          <text x="44" y="121" font-size="11" fill="#333">Hi David，关于</text>
+          <text x="44" y="138" font-size="11" fill="#333">季度总结，我</text>
+          <rect x="99" y="128" width="2.5" height="13" fill="#111"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/></rect>
+          <line x1="44" y1="300" x2="190" y2="300" stroke="#eee"/>
+          <text x="44" y="315" font-size="9" fill="#b06">字数 0 · 上次编辑 3 小时前</text>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#000" stroke-opacity=".25" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">1C</span><span class="sz">INS/CU ●</span><span class="tm">切 ~0.6s</span></div>
+          <div class="pic">插入电脑屏：半封邮件<b>光标闪烁不动</b>，"3 小时前"。</div>
+          <div class="scr">主题 Re:季度总结—今天下班前
+正文仅："Hi David，关于季度总结，我▏"</div>
+          <div class="nt">"死寂"的一方，与 1B 强烈对比。</div>
+        </div>
+      </div>
+
+      <!-- 1D -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#efe9dd"/>
+          <rect x="0" y="330" width="234" height="86" fill="#c7a06a"/><rect x="0" y="330" width="234" height="6" fill="#d9b681"/>
+          <!-- MCU face, listless -->
+          <g>
+            <path d="M58 330 q6 -96 59 -96 q53 0 59 96Z" fill="#3a3f47"/>
+            <rect x="106" y="150" width="22" height="40" fill="#e8c4a2"/>
+            <ellipse cx="117" cy="128" rx="40" ry="43" fill="#e8c4a2"/>
+            <path d="M78 116 q39 -46 80 2 q-14 -24 -40 -24 q-27 0 -40 22Z" fill="#2c2c2c"/>
+            <circle cx="100" cy="132" r="10" fill="#fff" stroke="#c9a24b" stroke-width="2.4"/><circle cx="134" cy="132" r="10" fill="#fff" stroke="#c9a24b" stroke-width="2.4"/><line x1="110" y1="132" x2="124" y2="132" stroke="#c9a24b" stroke-width="2.4"/>
+            <circle cx="100" cy="134" r="3" fill="#2c2c2c"/><circle cx="134" cy="134" r="3" fill="#2c2c2c"/>
+            <path d="M88 116 q8 -4 16 -1" stroke="#2c2c2c" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M130 115 q8 -3 16 1" stroke="#2c2c2c" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M108 160 q9 3 18 0" stroke="#9a6b4e" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          </g>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">1D</span><span class="sz">MCU ↗</span><span class="tm">~0.6s</span></div>
+          <div class="pic">回到人脸，无神发呆。微微推近。旁白落点。</div>
+          <div class="cap">我最烦的 app，是我自己写的。</div>
+          <div class="vo"><b>旁白收：</b>……是我自己写的。</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============ S2 ============ -->
+  <div class="beat">
+    <h2>S2 · 掐断 <span class="star">★</span> —— match-cut（3–6s）</h2>
+    <div class="bdesc">同一机位、同一手机，画面在一帧之间从"正在看"硬切成"被拦住"。这组是全片的产品独特性所在。</div>
+    <div class="row">
+
+      <!-- 2A -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#2a2d33"/>
+          <rect x="57" y="34" width="120" height="348" rx="17" fill="#0e1014"/>
+          <rect x="67" y="48" width="100" height="320" rx="7" fill="#111"/>
+          <!-- a video playing -->
+          <rect x="67" y="120" width="100" height="130" fill="#394b63"/><circle cx="117" cy="185" r="20" fill="#ffffff" fill-opacity=".85"/><path d="M111 175 l15 10 l-15 10Z" fill="#111"/>
+          <rect x="79" y="300" width="60" height="6" rx="3" fill="#555"/><rect x="79" y="300" width="34" height="6" rx="3" fill="#e5484d"/>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">2A</span><span class="sz">CU ●</span><span class="tm">~1s</span></div>
+          <div class="pic">手机屏特写：一条 YouTube 正播得入神。</div>
+          <div class="scr">真实录屏：任意一条视频播放中</div>
+        </div>
+      </div>
+
+      <!-- 2B -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#2a2d33"/>
+          <rect x="57" y="34" width="120" height="348" rx="17" fill="#0e1014"/>
+          <rect x="67" y="48" width="100" height="320" rx="7" fill="#fff"/>
+          <text x="117" y="104" text-anchor="middle" font-size="9" fill="#9aa0a6">YouTube 已暂停</text>
+          <text x="117" y="212" text-anchor="middle" font-size="46" font-weight="800" fill="#1c1c1c">00:00</text>
+          <rect x="108" y="238" width="7" height="22" rx="2" fill="#e5484d"/><rect x="119" y="238" width="7" height="22" rx="2" fill="#e5484d"/>
+          <text x="117" y="296" text-anchor="middle" font-size="12" font-weight="700" fill="#0a8f4f">Work first.</text>
+          <text x="117" y="314" text-anchor="middle" font-size="12" font-weight="700" fill="#0a8f4f">Watch later.</text>
+          <text x="40" y="58" font-size="26" font-weight="800" fill="#ffd23f">✂</text>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">2B</span><span class="sz">CU ✂</span><span class="tm">硬切 ~1s</span></div>
+          <div class="pic"><b>同机位硬切</b>：画面"啪"变阻止页 00:00。突兀感要保留。</div>
+          <div class="scr">真实录屏：产品阻止页</div>
+          <div class="cap">想看？先把活干了。</div>
+          <div class="vo"><b>旁白：</b>想看？先把活干了。</div>
+        </div>
+      </div>
+
+      <!-- 2C -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#efe9dd"/>
+          <rect x="0" y="330" width="234" height="86" fill="#c7a06a"/><rect x="0" y="330" width="234" height="6" fill="#d9b681"/>
+          <g>
+            <path d="M58 330 q6 -96 59 -96 q53 0 59 96Z" fill="#3a3f47"/>
+            <rect x="106" y="150" width="22" height="40" fill="#e8c4a2"/>
+            <ellipse cx="117" cy="128" rx="40" ry="43" fill="#e8c4a2"/>
+            <path d="M78 116 q39 -46 80 2 q-14 -24 -40 -24 q-27 0 -40 22Z" fill="#2c2c2c"/>
+            <circle cx="100" cy="134" r="9" fill="#fff" stroke="#c9a24b" stroke-width="2.4"/><circle cx="134" cy="134" r="9" fill="#fff" stroke="#c9a24b" stroke-width="2.4"/><line x1="109" y1="134" x2="125" y2="134" stroke="#c9a24b" stroke-width="2.4"/>
+            <circle cx="100" cy="135" r="3" fill="#2c2c2c"/><circle cx="134" cy="135" r="3" fill="#2c2c2c"/>
+            <!-- furrowed brows -->
+            <path d="M88 118 q9 6 17 3" stroke="#2c2c2c" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M146 118 q-9 6 -17 3" stroke="#2c2c2c" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <path d="M107 165 q10 -5 20 0" stroke="#9a6b4e" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          </g>
+          <text x="196" y="120" font-size="22" font-weight="800" fill="#b06">…</text>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">2C</span><span class="sz">MCU ●</span><span class="tm">~0.8s</span></div>
+          <div class="pic">切人脸：皱眉、一个"又来了"的反应。</div>
+          <div class="nt">半秒就够，别演过。</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============ S3 ============ -->
+  <div class="beat">
+    <h2>S3 · 认命开工 + 摄像头=见证（6–9s）</h2>
+    <div class="bdesc">重点落在"他动起来了"，不是"他被监控"。摄像头一笔带过，隐私承诺交给屏角标。</div>
+    <div class="row">
+
+      <!-- 3A -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#efe9dd"/>
+          <rect x="0" y="300" width="234" height="116" fill="#c7a06a"/><rect x="0" y="300" width="234" height="6" fill="#d9b681"/>
+          <!-- person sitting up, sigh, turning to laptop -->
+          <g>
+            <path d="M70 300 q6 -78 59 -78 q53 0 59 78Z" fill="#3a3f47"/>
+            <rect x="118" y="168" width="20" height="34" fill="#e8c4a2"/>
+            <ellipse cx="128" cy="146" rx="30" ry="32" fill="#e8c4a2"/>
+            <path d="M100 136 q29 -38 60 2 q-12 -18 -30 -18 q-21 0 -30 16Z" fill="#2c2c2c"/>
+            <circle cx="117" cy="150" r="7.5" fill="#fff" stroke="#c9a24b" stroke-width="2"/><circle cx="141" cy="150" r="7.5" fill="#fff" stroke="#c9a24b" stroke-width="2"/><line x1="124.5" y1="150" x2="133.5" y2="150" stroke="#c9a24b" stroke-width="2"/>
+            <circle cx="117" cy="151" r="2.3" fill="#2c2c2c"/><circle cx="141" cy="151" r="2.3" fill="#2c2c2c"/>
+            <path d="M121 170 q7 2 14 0" stroke="#9a6b4e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <!-- sigh puff -->
+            <path d="M150 168 q10 -2 16 -8" stroke="#bbb" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-opacity=".7"/>
+            <path d="M152 176 q10 0 18 -5" stroke="#cfcfcf" stroke-width="2" fill="none" stroke-linecap="round" stroke-opacity=".6"/>
+            <path d="M92 238 q-8 16 8 24" stroke="#3a3f47" stroke-width="14" fill="none" stroke-linecap="round"/>
+          </g>
+          <rect x="88" y="258" width="76" height="10" rx="2" fill="#9aa0a6"/><rect x="96" y="240" width="60" height="20" rx="2" fill="#e9ebee" stroke="#b4b8bf"/>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">3A</span><span class="sz">MS ●</span><span class="tm">~1s</span></div>
+          <div class="pic">叹口气，坐正，转向电脑。放下手机的意味。</div>
+          <div class="vo"><b>旁白起：</b>它只看我在不在……</div>
+        </div>
+      </div>
+
+      <!-- 3B -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#e3dacb"/>
+          <!-- hand placing phone on stand, INS -->
+          <rect x="78" y="150" width="78" height="150" rx="10" fill="#15171b"/>
+          <rect x="86" y="166" width="62" height="118" rx="5" fill="#dff3e6"/>
+          <circle cx="117" cy="210" r="11" fill="#0a8f4f"/><circle cx="117" cy="210" r="4" fill="#dff3e6"/>
+          <text x="117" y="250" text-anchor="middle" font-size="9" fill="#2f6f4f">在场检测中…</text>
+          <!-- stand -->
+          <rect x="108" y="300" width="18" height="36" fill="#8a909a"/><rect x="88" y="336" width="58" height="8" rx="3" fill="#8a909a"/>
+          <!-- hand -->
+          <path d="M150 360 q40 -18 18 -70" stroke="#e8c4a2" stroke-width="26" fill="none" stroke-linecap="round"/>
+          <!-- badge -->
+          <rect x="44" y="60" width="150" height="30" rx="15" fill="#0a8f4f"/><text x="119" y="80" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">📵 全程本地 · 不上传云端</text>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".45" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">3B</span><span class="sz">INS ●</span><span class="tm">~1s</span></div>
+          <div class="pic">手把手机往支架一放（<b>不给盯脸特写</b>），屏角亮出承诺标签。</div>
+          <div class="scr">屏角：在场检测中 · 📵 本地·不上云</div>
+          <div class="nt">这块是消除隐私疑虑的关键一帧。</div>
+        </div>
+      </div>
+
+      <!-- 3C -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#dfd6c6"/>
+          <!-- OTS: shoulder foreground, hands on keyboard, timer -->
+          <path d="M-10 416 q40 -150 120 -150 q80 0 90 150Z" fill="#3a3f47"/>
+          <rect x="40" y="150" width="170" height="96" rx="6" fill="#15171b"/>
+          <rect x="50" y="160" width="150" height="76" rx="3" fill="#fff"/>
+          <rect x="60" y="172" width="34" height="6" rx="2" fill="#2b2b2b"/><rect x="60" y="186" width="120" height="4" rx="2" fill="#c3c7cc"/><rect x="60" y="196" width="90" height="4" rx="2" fill="#c3c7cc"/>
+          <rect x="60" y="214" width="70" height="16" rx="8" fill="#eafaf1" stroke="#a7e3c4"/><text x="95" y="226" text-anchor="middle" font-size="9" font-weight="700" fill="#0a8f4f">00:00 ▶</text>
+          <!-- keyboard + hands -->
+          <rect x="40" y="252" width="170" height="40" rx="4" fill="#b9bdc4"/>
+          <path d="M80 300 q6 -24 24 -26" stroke="#e8c4a2" stroke-width="20" fill="none" stroke-linecap="round"/>
+          <path d="M150 300 q-6 -24 -24 -26" stroke="#e8c4a2" stroke-width="20" fill="none" stroke-linecap="round"/>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".4" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">3C</span><span class="sz">OTS ●</span><span class="tm">~1s</span></div>
+          <div class="pic">过肩看电脑：手指开始敲键盘，计时器 00:00 起跳。</div>
+          <div class="cap">它只看我在不在，不管我干啥。</div>
+          <div class="vo"><b>旁白收：</b>……不管我干啥。</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============ S4 ============ -->
+  <div class="beat">
+    <h2>S4 · 有进展 —— 加速蒙太奇（9–14s）</h2>
+    <div class="bdesc">时间流逝 + 工作推进。全部用加速录屏 / 叠化，别拍成实时干等。无旁白，走配乐。</div>
+    <div class="row">
+
+      <!-- 4A -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#cfc6b6"/>
+          <rect x="20" y="40" width="194" height="300" rx="7" fill="#15171b"/>
+          <rect x="32" y="54" width="170" height="272" rx="4" fill="#fff"/>
+          <rect x="44" y="70" width="60" height="8" rx="2" fill="#2b2b2b"/>
+          <g fill="#5b6066">
+            <rect x="44" y="92" width="150" height="5" rx="2"/><rect x="44" y="103" width="138" height="5" rx="2"/><rect x="44" y="114" width="146" height="5" rx="2"/><rect x="44" y="125" width="110" height="5" rx="2"/>
+            <rect x="44" y="142" width="150" height="5" rx="2"/><rect x="44" y="153" width="130" height="5" rx="2"/><rect x="44" y="164" width="144" height="5" rx="2"/><rect x="44" y="175" width="84" height="5" rx="2"/>
+          </g>
+          <!-- fast-forward glyph -->
+          <g fill="#0a8f4f" opacity=".9"><path d="M150 236 l16 10 l-16 10Z"/><path d="M168 236 l16 10 l-16 10Z"/></g>
+          <text x="186" y="274" text-anchor="end" font-size="9" fill="#8a8">×加速</text>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#000" stroke-opacity=".2" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">4A</span><span class="sz">INS ⤻</span><span class="tm">~2.5s</span></div>
+          <div class="pic">屏幕：邮件从一句<b>快速写成几段</b>（加速/延时录屏）。</div>
+          <div class="scr">真实录屏 →后期快进</div>
+        </div>
+      </div>
+
+      <!-- 4B -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#efe9dd"/>
+          <rect x="0" y="320" width="234" height="96" fill="#c7a06a"/><rect x="0" y="320" width="234" height="6" fill="#d9b681"/>
+          <!-- focused profile -->
+          <g>
+            <path d="M70 320 q10 -90 64 -90 q40 0 52 60" fill="#3a3f47"/>
+            <ellipse cx="120" cy="150" rx="34" ry="36" fill="#e8c4a2"/>
+            <path d="M86 140 q30 -42 68 -6 q-8 -30 -38 -30 q-24 0 -34 30Z" fill="#2c2c2c"/>
+            <circle cx="134" cy="152" r="8" fill="#fff" stroke="#c9a24b" stroke-width="2.2"/><circle cx="134" cy="153" r="2.4" fill="#2c2c2c"/>
+            <path d="M126 180 q8 2 14 0" stroke="#9a6b4e" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <!-- nose -->
+            <path d="M152 150 q8 8 -2 14" stroke="#d9a883" stroke-width="2.2" fill="none"/>
+          </g>
+          <!-- rising timer -->
+          <rect x="150" y="56" width="70" height="26" rx="13" fill="#eafaf1" stroke="#a7e3c4"/><text x="185" y="74" text-anchor="middle" font-size="13" font-weight="800" fill="#0a8f4f">18:42</text>
+          <text x="205" y="104" font-size="18" fill="#0a8f4f">↑</text>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">4B</span><span class="sz">MCU ⤻</span><span class="tm">~2.5s</span></div>
+          <div class="pic">专注侧脸 + 计时器数字<b>往上跳</b>（叠化表现时间流逝）。</div>
+          <div class="vo" style="color:#888">无旁白，配乐推进</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============ S5 ============ -->
+  <div class="beat">
+    <h2>S5 · 到账（14–17s）</h2>
+    <div class="bdesc">计时满额 →产品真实界面弹出"到账"。</div>
+    <div class="row">
+
+      <!-- 5A -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#eafaf1"/>
+          <text x="117" y="96" text-anchor="middle" font-size="15" font-weight="700" fill="#0a8f4f">Watch Time</text>
+          <text x="117" y="196" text-anchor="middle" font-size="58" font-weight="800" fill="#0a8f4f">+05:20</text>
+          <circle cx="117" cy="262" r="30" fill="#0a8f4f"/><path d="M103 263 l10 11 l19 -22" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="117" y="334" text-anchor="middle" font-size="13" fill="#2f6f4f">先工作，再观看</text>
+          <g fill="#8fd9b0"><circle cx="40" cy="70" r="3"/><circle cx="198" cy="80" r="3.5"/><circle cx="50" cy="340" r="3"/><circle cx="192" cy="326" r="3"/></g>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#0a8f4f" stroke-opacity=".25" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">5A</span><span class="sz">INS ↗</span><span class="tm">~2s</span></div>
+          <div class="pic">满屏产品界面：到账 +05:20，绿勾弹出。微推。</div>
+          <div class="scr">真实截图：Watch Time 到账页</div>
+          <div class="cap">干够 20 分钟，换 5 分钟。</div>
+          <div class="vo"><b>旁白：</b>干够 20 分钟，换 5 分钟。</div>
+        </div>
+      </div>
+
+      <!-- 5B -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#efe9dd"/>
+          <rect x="0" y="330" width="234" height="86" fill="#c7a06a"/><rect x="0" y="330" width="234" height="6" fill="#d9b681"/>
+          <g>
+            <path d="M58 330 q6 -96 59 -96 q53 0 59 96Z" fill="#3a3f47"/>
+            <rect x="106" y="150" width="22" height="40" fill="#e8c4a2"/>
+            <ellipse cx="117" cy="128" rx="40" ry="43" fill="#e8c4a2"/>
+            <path d="M78 116 q39 -46 80 2 q-14 -24 -40 -24 q-27 0 -40 22Z" fill="#2c2c2c"/>
+            <circle cx="100" cy="132" r="9" fill="#fff" stroke="#c9a24b" stroke-width="2.4"/><circle cx="134" cy="132" r="9" fill="#fff" stroke="#c9a24b" stroke-width="2.4"/><line x1="109" y1="132" x2="125" y2="132" stroke="#c9a24b" stroke-width="2.4"/>
+            <circle cx="100" cy="133" r="3" fill="#2c2c2c"/><circle cx="134" cy="133" r="3" fill="#2c2c2c"/>
+            <!-- slight smile -->
+            <path d="M104 162 q13 9 26 0" stroke="#9a6b4e" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          </g>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">5B</span><span class="sz">MCU ●</span><span class="tm">~1s</span></div>
+          <div class="pic">人脸：嘴角微微上扬（克制，别大笑）。</div>
+          <div class="nt">给 S6 的"笑"留出递进空间。</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============ S6 ============ -->
+  <div class="beat">
+    <h2>S6 · 奖励 + 诚实收尾 <span class="star">★</span>（17–24s）</h2>
+    <div class="bdesc">这组是全片的"魂"——不装、不说教。他心安理得地看，笑了。</div>
+    <div class="row">
+
+      <!-- 6A -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#f3ead9"/>
+          <rect x="0" y="300" width="234" height="116" fill="#c7a06a"/><rect x="0" y="300" width="234" height="6" fill="#d9b681"/>
+          <rect x="188" y="266" width="30" height="34" rx="4" fill="#fff" stroke="#d8cdb5"/><path d="M218 276 q12 2 0 16" stroke="#d8cdb5" stroke-width="3" fill="none"/>
+          <!-- person leaning back, raising phone -->
+          <g>
+            <path d="M66 300 q8 -80 62 -80 q54 0 62 80Z" fill="#3a3f47"/>
+            <rect x="116" y="162" width="22" height="38" fill="#e8c4a2"/>
+            <ellipse cx="127" cy="140" rx="31" ry="33" fill="#e8c4a2"/>
+            <path d="M98 130 q29 -40 60 2 q-12 -18 -30 -18 q-21 0 -30 16Z" fill="#2c2c2c"/>
+            <circle cx="116" cy="144" r="7.5" fill="#fff" stroke="#c9a24b" stroke-width="2"/><circle cx="140" cy="144" r="7.5" fill="#fff" stroke="#c9a24b" stroke-width="2"/><line x1="123.5" y1="144" x2="132.5" y2="144" stroke="#c9a24b" stroke-width="2"/>
+            <circle cx="116" cy="145" r="2.3" fill="#2c2c2c"/><circle cx="140" cy="145" r="2.3" fill="#2c2c2c"/>
+            <path d="M119 164 q8 5 16 0" stroke="#9a6b4e" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <path d="M160 230 q22 -2 20 -26" stroke="#3a3f47" stroke-width="14" fill="none" stroke-linecap="round"/>
+          </g>
+          <rect x="166" y="186" width="30" height="52" rx="6" fill="#15171b"/><rect x="170" y="196" width="22" height="38" rx="2" fill="#111"/><circle cx="181" cy="215" r="8" fill="#e5484d"/><path d="M178 210 l7 5 l-7 5Z" fill="#fff"/>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">6A</span><span class="sz">MS ●</span><span class="tm">~2s</span></div>
+          <div class="pic">拿起手机、靠回椅背，身体放松下来。</div>
+          <div class="vo"><b>旁白起：</b>我还是照样看……</div>
+        </div>
+      </div>
+
+      <!-- 6B -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#f3ead9"/>
+          <rect x="0" y="334" width="234" height="82" fill="#c7a06a"/><rect x="0" y="334" width="234" height="6" fill="#d9b681"/>
+          <g>
+            <path d="M54 334 q6 -98 63 -98 q57 0 63 98Z" fill="#3a3f47"/>
+            <rect x="105" y="150" width="24" height="42" fill="#e8c4a2"/>
+            <ellipse cx="117" cy="126" rx="42" ry="45" fill="#e8c4a2"/>
+            <path d="M75 114 q42 -48 84 2 q-14 -26 -42 -26 q-28 0 -42 24Z" fill="#2c2c2c"/>
+            <path d="M92 128 q10 -6 20 -2" stroke="#2c2c2c" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M124 126 q10 -4 20 2" stroke="#2c2c2c" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <!-- happy squint eyes -->
+            <path d="M92 138 q8 7 18 0" stroke="#2c2c2c" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M126 138 q8 7 18 0" stroke="#2c2c2c" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <circle cx="96" cy="135" r="8" fill="none" stroke="#c9a24b" stroke-width="2"/><circle cx="138" cy="135" r="8" fill="none" stroke="#c9a24b" stroke-width="2"/><line x1="104" y1="135" x2="130" y2="135" stroke="#c9a24b" stroke-width="2"/>
+            <!-- big smile -->
+            <path d="M100 162 q17 16 34 0 q-17 6 -34 0Z" fill="#fff" stroke="#9a6b4e" stroke-width="2"/>
+          </g>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">6B</span><span class="sz">MCU ↗ <span class="star">★</span></span><span class="tm">~3s</span></div>
+          <div class="pic">近景：真心地<b>笑了</b>。放松、满足。全片情绪落点。</div>
+          <div class="cap">我还是照样看……不过这回，活也干了点。</div>
+          <div class="vo"><b>旁白收：</b>……不过这回，活也干了点。</div>
+        </div>
+      </div>
+
+      <!-- 6C -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#2a2d33"/>
+          <rect x="57" y="40" width="120" height="340" rx="17" fill="#0e1014"/>
+          <rect x="67" y="54" width="100" height="312" rx="7" fill="#111"/>
+          <rect x="67" y="54" width="100" height="20" rx="7" fill="#1f1f1f"/><text x="117" y="68" text-anchor="middle" font-size="9" fill="#9fe3bf">余额 05:20 ↓</text>
+          <rect x="67" y="130" width="100" height="120" fill="#394b63"/><circle cx="117" cy="190" r="18" fill="#fff" fill-opacity=".9"/><path d="M111 181 l14 9 l-14 9Z" fill="#111"/>
+          <rect x="79" y="300" width="76" height="5" rx="2" fill="#555"/><rect x="79" y="300" width="50" height="5" rx="2" fill="#e5484d"/>
+          <rect x="10" y="10" width="214" height="396" fill="none" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">6C</span><span class="sz">INS ●</span><span class="tm">~1s</span></div>
+          <div class="pic">手机屏：正常看 YouTube，顶部余额<b>在倒数</b>（闭环闭合）。</div>
+          <div class="scr">真实录屏：正常播放 + 余额倒数</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============ S7 ============ -->
+  <div class="beat">
+    <h2>S7 · END CARD（24–30s）</h2>
+    <div class="bdesc">定格卡。产品名 + Slogan + CTA 三件套，给足"去哪拿"的出口。</div>
+    <div class="row">
+
+      <!-- 7A -->
+      <div class="cut">
+        <svg class="frame" viewBox="0 0 234 416" xmlns="http://www.w3.org/2000/svg">
+          <rect width="234" height="416" fill="#ffffff"/>
+          <circle cx="117" cy="92" r="30" fill="none" stroke="#0a8f4f" stroke-width="5"/><path d="M110 80 l16 12 l-16 12Z" fill="#0a8f4f"/>
+          <text x="117" y="168" text-anchor="middle" font-size="21" font-weight="800" fill="#1c1c1c">Work to Watch</text>
+          <text x="117" y="206" text-anchor="middle" font-size="15" font-weight="700" fill="#0a8f4f">Work first. Watch later.</text>
+          <text x="117" y="230" text-anchor="middle" font-size="10.5" fill="#555">Earn your entertainment. / 赚取你的娱乐时间</text>
+          <rect x="47" y="258" width="140" height="34" rx="17" fill="#0a8f4f"/><text x="117" y="280" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Android · Beta 开放中 →</text>
+          <rect x="97" y="308" width="40" height="40" rx="4" fill="#f0f0f0" stroke="#ddd"/><text x="117" y="332" text-anchor="middle" font-size="8" fill="#999">QR</text>
+          <text x="117" y="374" text-anchor="middle" font-size="10" fill="#9aa0a6">全程本地运行，不上传云端</text>
+        </svg>
+        <div class="m">
+          <div class="hd"><span class="id">7A</span><span class="sz">定格 ●</span><span class="tm">~6s</span></div>
+          <div class="pic">干净定格卡（版式，非实拍）。</div>
+          <div class="vo" style="color:#888">配乐收尾，或复述 slogan</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot">
+    Work to Watch · 分镜图(detailed) v2 · 18 镜 · 配套《分镜脚本_油管版_v1》《连环画 v1》· 画面为示意，成片走真人实拍 + 真实录屏。
+  </div>
+
+</div>
+</body>
+</html>

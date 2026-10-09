@@ -39,8 +39,8 @@
 
 ## 关联资料
 
-- [当前 Android 分阶段范围](../../docs/SPEC.md#当前分阶段验证范围2026-09-08用户确认)
-- [娱乐 App 限制](../../docs/SPEC.md#4-娱乐-app-限制)
+- [WorkToScroll 产品要求](../../docs/SPEC.md#worktoscroll)
+- [当前范围与验收边界](../../docs/SPEC.md#当前范围与验收边界)
 - [当前固定小红书边界](../../docs/DESIGN.md#gate-1android-奖励消费与再拦截基础原型)
 - [后台冻结与消费拦截耐久验收](../active/background-protection.md)
 - [摄像头计时与每轮奖励验收](../active/camera-rewards.md)

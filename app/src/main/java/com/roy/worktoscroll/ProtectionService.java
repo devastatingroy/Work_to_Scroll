@@ -95,9 +95,11 @@ public final class ProtectionService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
-        if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this)) {
+        if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this) || !Permissions.targetPipReady(this)) {
             if (bootRecovery) BootRecoveryStatus.record(this, BootRecoveryPolicy.Outcome.MISSING_PERMISSION);
-            ledger.note = "监测未启动，请检查使用情况访问和悬浮窗授权。";
+            ledger.note = Permissions.targetPipReady(this)
+                ? "监测未启动，请检查使用情况访问和悬浮窗授权。"
+                : "监测未启动，请先关闭 " + BuildConfig.TARGET_NAME + " 画中画并在应用内确认。";
             ledger.save();
             stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
@@ -165,10 +167,11 @@ public final class ProtectionService extends Service {
         lastWall = now;
         lastElapsed = heartbeatElapsed;
         try {
-            if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this)) {
+            if (!ledger.enabled || !Permissions.usage(this) || !Permissions.overlay(this) || !Permissions.targetPipReady(this)) {
                 exhaustion.clear();
                 healthy = false;
-                failure = ledger.enabled ? "系统授权未开启，保护已失效" : "保护未开启";
+                failure = !ledger.enabled ? "保护未开启" : !Permissions.targetPipReady(this)
+                    ? "请先关闭 " + BuildConfig.TARGET_NAME + " 画中画并确认" : "系统授权未开启，保护已失效";
                 reconcileObservation = true;
                 ledger.engine.resetObservation(now);
                 ledger.save();
@@ -198,9 +201,9 @@ public final class ProtectionService extends Service {
             failure = healthy ? "" : "余额保存失败，保护状态异常";
             boolean visible = getSystemService(PowerManager.class).isInteractive()
                 && !getSystemService(KeyguardManager.class).isKeyguardLocked();
-            boolean inWindow = ledger.night.enabled() && ledger.night.active(now, ZoneId.systemDefault());
-            boolean depleted = inWindow
-                ? ledger.night.remainingMs() == 0 && ledger.engine.balanceMs == 0
+            RelaxWindow gift = ledger.giftWindow(now, ZoneId.systemDefault());
+            boolean depleted = gift != null
+                ? gift.remainingMs() == 0 && ledger.engine.balanceMs == 0
                 : ledger.engine.balanceMs == 0;
             if (visible && ledger.engine.targetActive
                     && depleted && heartbeatElapsed >= dismissUntilElapsed) showBlocker();
@@ -232,20 +235,20 @@ public final class ProtectionService extends Service {
         syncExhaustion();
         long balanceBefore = e.balanceMs, consumedBefore = e.consumedMs;
         ZoneId zone = ZoneId.systemDefault();
-        // Settle in segments split at night-relax window edges so target time is charged to the
-        // right pool: inside the window the free quota is spent first (balance frozen until it
-        // overflows), outside the window balance is charged as usual.
+        // Settle in segments split at every gift-window edge so target time is charged to the
+        // right pool: inside the active window the free quota is spent first (balance frozen until
+        // it overflows), outside any window balance is charged as usual.
         while (e.cursorMs < end) {
             long segStart = e.cursorMs;
-            long segEnd = Math.min(end, ledger.night.nextEdge(segStart, zone));
-            ledger.refreshNight(segStart, zone);
-            boolean inWindow = ledger.night.enabled() && ledger.night.active(segStart, zone);
-            if (inWindow) e.relaxBudget(ledger.night.remainingMs());
+            long segEnd = Math.min(end, ledger.nextWindowEdge(segStart, zone));
+            ledger.refreshWindows(segStart, zone);
+            RelaxWindow gift = ledger.giftWindow(segStart, zone);
+            if (gift != null) e.relaxBudget(gift.remainingMs());
             try {
                 e.settle(queryTransitions(segStart, segEnd), segEnd);
             } finally {
-                if (inWindow) {
-                    ledger.setNightRemaining(e.relaxRemaining());
+                if (gift != null) {
+                    ledger.setWindowRemaining(gift, e.relaxRemaining());
                     e.clearRelaxBudget();
                 }
             }

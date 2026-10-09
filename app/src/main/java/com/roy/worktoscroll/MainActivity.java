@@ -29,9 +29,9 @@ public final class MainActivity extends Activity {
     private LedgerStore ledger;
     private LinearLayout content;
     private TextView balance, availableDetail, status, diagnostics, worked, speech, seal;
-    private Button workButton, toggle, usagePermission, overlayPermission, entertainment, repair;
+    private Button workButton, toggle, usagePermission, overlayPermission, pipPermission, pipConfirmation, entertainment, repair;
     private TextView expiry, ratio, ratioDetail, protectionDetail, permissionSummary, backgroundSummary;
-    private TextView usageState, overlayState, notificationState, backgroundState, bootRecoveryState, dailyDetail;
+    private TextView usageState, overlayState, pipState, notificationState, backgroundState, bootRecoveryState, dailyDetail;
     private static final int SETTINGS_SURFACE = 0xFFFFFDF8, SETTINGS_BORDER = 0xFFE8E0D1;
     private static final int GOOD = 0xFF456447, WARNING = 0xFF946119;
     private android.widget.Switch dailySwitch;
@@ -39,6 +39,9 @@ public final class MainActivity extends Activity {
     private android.widget.Switch nightSwitch;
     private TextView nightDetail;
     private boolean updatingNightSwitch;
+    private android.widget.Switch noonSwitch;
+    private TextView noonDetail;
+    private boolean updatingNoonSwitch;
     private ImageView homeCat;
     private Drawable waitingCat, approvedCat;
     private String page;
@@ -156,16 +159,19 @@ public final class MainActivity extends Activity {
             render();
         });
         settingsDivider(rules);
-        nightSwitch = new android.widget.Switch(this);
-        nightSwitch.setText("夜间放松");
-        nightSwitch.setTextColor(CatUi.INK);
-        nightSwitch.setTextSize(16);
-        nightSwitch.setMinHeight(CatUi.dp(this, 48));
-        CatUi.add(rules, nightSwitch, -2, 4);
+        nightSwitch = giftSwitch(rules, "夜间放松");
         nightDetail = settingsText(rules, "", 13, CatUi.MUTED, 0);
         nightSwitch.setOnCheckedChangeListener((button, checked) -> {
             if (updatingNightSwitch) return;
             if (!ledger.setNightEnabled(checked)) Toast.makeText(this, "设置保存失败，请重试", Toast.LENGTH_LONG).show();
+            render();
+        });
+        settingsDivider(rules);
+        noonSwitch = giftSwitch(rules, "午间放松");
+        noonDetail = settingsText(rules, "", 13, CatUi.MUTED, 0);
+        noonSwitch.setOnCheckedChangeListener((button, checked) -> {
+            if (updatingNoonSwitch) return;
+            if (!ledger.setNoonEnabled(checked)) Toast.makeText(this, "设置保存失败，请重试", Toast.LENGTH_LONG).show();
             render();
         });
         section("帮助与说明");
@@ -190,6 +196,13 @@ public final class MainActivity extends Activity {
         settingsDivider(required);
         overlayState = permissionItem(required, "悬浮窗", "娱乐时间用完时，显示阻止界面。");
         overlayPermission = permissionLink(required, "查看系统设置  ›", this::openOverlaySettings);
+        if (BuildConfig.TARGET_PIP_MUST_BE_DISABLED) {
+            settingsDivider(required);
+            pipState = permissionItem(required, "关闭 " + BuildConfig.TARGET_NAME + " 画中画",
+                "防止余额耗尽后视频缩成可继续播放的悬浮窗口。应用无法自动读取此系统开关，需由你核对并确认。");
+            pipPermission = permissionLink(required, "打开 " + BuildConfig.TARGET_NAME + " 画中画设置  ›", this::openTargetPipSettings);
+            pipConfirmation = permissionLink(required, "我已关闭画中画", this::confirmTargetPipDisabled);
+        }
         permissionHeading("重要", "后台运行保障", WARNING);
         LinearLayout background = settingsCard(10);
         backgroundState = permissionItem(background, "允许持续后台运行", "避免系统休眠应用，导致用时扣减或阻止失效。");
@@ -214,6 +227,16 @@ public final class MainActivity extends Activity {
     }
 
     private boolean isXiaomi() { return "Xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER); }
+
+    private android.widget.Switch giftSwitch(LinearLayout parent, String title) {
+        android.widget.Switch s = new android.widget.Switch(this);
+        s.setText(title);
+        s.setTextColor(CatUi.INK);
+        s.setTextSize(16);
+        s.setMinHeight(CatUi.dp(this, 48));
+        CatUi.add(parent, s, -2, 4);
+        return s;
+    }
 
     private void settingsHeader(String title) {
         CatUi.header(this, content, title, "‹ 返回", this::finish, null, null, false);
@@ -337,7 +360,7 @@ public final class MainActivity extends Activity {
 
     private void repairProtection() {
         if (!ledger.enabled) { render(); return; }
-        if (!Permissions.usage(this) || !Permissions.overlay(this)) { openPage("permissions"); return; }
+        if (!Permissions.usage(this) || !Permissions.overlay(this) || !targetPipReady()) { openPage("permissions"); return; }
         if (getSystemService(android.app.ActivityManager.class).isBackgroundRestricted()) { openPage("permissions"); return; }
         if (!ledger.save()) { Toast.makeText(this, "保存失败，请重试", Toast.LENGTH_LONG).show(); return; }
         startProtection(); render();
@@ -372,11 +395,11 @@ public final class MainActivity extends Activity {
         });
         row("清空测试余额", () -> new AlertDialog.Builder(this)
             .setTitle("清空测试余额？")
-            .setMessage("将清空此测试版当前可用的全部娱乐时间，包括工作获得的时间。仅用于零余额验证。")
+            .setMessage("将清空此测试版当前可用的全部娱乐时间，包括工作获得和当前夜间赠送的时间。仅用于零余额验证。")
             .setNegativeButton("取消", null)
             .setPositiveButton("清空", (d, w) -> {
-                prepareChange(); ledger.engine.balanceMs = 0;
-                if (!ledger.save()) Toast.makeText(this, "余额保存失败", Toast.LENGTH_LONG).show();
+                prepareChange();
+                if (!ledger.clearAvailableForTest()) Toast.makeText(this, "余额保存失败", Toast.LENGTH_LONG).show();
                 render();
             }).show());
         section("测试说明");
@@ -402,9 +425,12 @@ public final class MainActivity extends Activity {
     private SharedPreferences uiPreferences() { return getSharedPreferences("ui_preferences", MODE_PRIVATE); }
 
     private void showGuide(boolean first) {
+        String pipStep = BuildConfig.TARGET_PIP_MUST_BE_DISABLED
+            ? "\n\n首次使用前，请在权限与后台保障中关闭 " + BuildConfig.TARGET_NAME + " 画中画并确认；保留画中画时无法可靠阻止继续播放。"
+            : "";
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("先工作，再安心刷一会儿")
-            .setMessage("① 开始工作\n固定手机，让前置摄像头朝向你的肩部和躯干；可放在侧后方，无需露出人脸。在工作页手动开启监测，背影效果仍在试用验证。\n\n② 攒娱乐时间\n" + WorkProgress.ruleText(ledger.work.selectedMinutes()) + "连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。本轮重置不倒扣奖励，历史工作保留；主动结束后重新开始一轮。" + ledger.expiryDescription() + "修改比例从下一轮生效。\n\n③ 去" + BuildConfig.TARGET_NAME + "\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
+            .setMessage("① 开始工作\n固定手机，让前置摄像头朝向你的肩部和躯干；可放在侧后方，无需露出人脸。在工作页手动开启监测，背影效果仍在试用验证。\n\n② 攒娱乐时间\n" + WorkProgress.ruleText(ledger.work.selectedMinutes()) + "连续离开或暂停达到 3 分钟，本轮进度归零；不足 3 分钟可续接。本轮重置不倒扣奖励，历史工作保留；主动结束后重新开始一轮。" + ledger.expiryDescription() + "修改比例从下一轮生效。\n\n③ 去" + BuildConfig.TARGET_NAME + "\n保护运行时按实际用时扣减，时间用完后限制使用。请先在设置完成必要授权。" + pipStep + "\n\n仅观察是否在场，不代表证明正在工作。画面在本机处理，不保存、不上传。")
             .setPositiveButton("知道了", null).create();
         if (first) dialog.setOnDismissListener(d -> uiPreferences().edit().putBoolean("cat_intro_seen_v3", true).apply());
         dialog.show();
@@ -415,6 +441,10 @@ public final class MainActivity extends Activity {
             .setPositiveButton("知道了", null).show();
     }
     private void openTargetApp() {
+        if (!targetPipReady()) {
+            Toast.makeText(this, "请先关闭 " + BuildConfig.TARGET_NAME + " 画中画并确认", Toast.LENGTH_LONG).show();
+            openPage("permissions"); return;
+        }
         if (!ledger.refreshDailyReset()) {
             Toast.makeText(this, "余额保存失败，请稍后重试", Toast.LENGTH_LONG).show(); return;
         }
@@ -431,7 +461,7 @@ public final class MainActivity extends Activity {
         else ledger.engine.resetObservation(System.currentTimeMillis());
     }
     private void toggleProtection() {
-        if (!ledger.enabled && (!Permissions.usage(this) || !Permissions.overlay(this))) {
+        if (!ledger.enabled && (!Permissions.usage(this) || !Permissions.overlay(this) || !targetPipReady())) {
             openPage("permissions"); return;
         }
         if (ledger.enabled) {
@@ -469,14 +499,22 @@ public final class MainActivity extends Activity {
             CatUi.setText(dailyDetail, ledger.daily.enabled() ? "每天早晨 06:00 清空剩余时间；重新开启从下一个 06:00 生效，不立即清空。"
                 : "已关闭，剩余娱乐时间不每日清零；关闭不会恢复已到期余额。");
         }
+        long nowMs = System.currentTimeMillis();
+        java.time.ZoneId zone = java.time.ZoneId.systemDefault();
+        RelaxWindow gift = ledger.giftWindow(nowMs, zone);
         if (nightSwitch != null) {
             updatingNightSwitch = true;
             nightSwitch.setChecked(ledger.night.enabled());
             updatingNightSwitch = false;
-            String detail = ledger.nightDescription();
-            if (ledger.night.enabled() && ledger.night.active(System.currentTimeMillis(), java.time.ZoneId.systemDefault()))
-                detail += "\n今晚剩余 " + ledger.night.remainingMs() / 60_000 + " 分钟。";
-            CatUi.setText(nightDetail, detail);
+            CatUi.setText(nightDetail, ledger.nightDescription()
+                + (gift == ledger.night ? "\n现在剩余 " + gift.remainingMs() / 60_000 + " 分钟。" : ""));
+        }
+        if (noonSwitch != null) {
+            updatingNoonSwitch = true;
+            noonSwitch.setChecked(ledger.noon.enabled());
+            updatingNoonSwitch = false;
+            CatUi.setText(noonDetail, ledger.noonDescription()
+                + (gift == ledger.noon ? "\n现在剩余 " + gift.remainingMs() / 60_000 + " 分钟。" : ""));
         }
         if (expiry != null) {
             expiry.setVisibility(ledger.daily.enabled() ? android.view.View.VISIBLE : android.view.View.GONE);
@@ -490,13 +528,14 @@ public final class MainActivity extends Activity {
             if (hasWindowFocus() && ledger.acknowledgeReset())
                 Toast.makeText(this, "已按设置清零剩余娱乐时间", Toast.LENGTH_LONG).show();
         }
-        boolean usage = Permissions.usage(this), overlay = Permissions.overlay(this);
+        boolean usage = Permissions.usage(this), overlay = Permissions.overlay(this), pipReady = targetPipReady();
         ProtectionService service = ProtectionService.current();
         boolean running = service != null && SystemClock.elapsedRealtime() - service.heartbeatElapsed < 3_000;
         boolean restricted = getSystemService(android.app.ActivityManager.class).isBackgroundRestricted();
         String state; boolean healthy = false;
         if (!ledger.enabled) state = "未保护 · 用时不扣减，点此开启";
         else if (!usage || !overlay) state = "尚未保护 · 点此完成必要授权";
+        else if (!pipReady) state = "保护前提未完成 · 先关闭 " + BuildConfig.TARGET_NAME + " 画中画";
         else if (!running) state = "保护中断 · 点此检查运行设置";
         else if (!service.healthy) state = service.failure;
         else if (restricted) state = "后台运行受限 · 点此检查";
@@ -509,36 +548,44 @@ public final class MainActivity extends Activity {
             }
         }
         if (balance != null) {
-            long nightGift = nightGiftMs();
-            long available = ledger.engine.balanceMs + nightGift;
+            long giftRemaining = gift == null ? 0 : gift.remainingMs();
+            long available = ledger.engine.balanceMs + giftRemaining;
             CatUi.setText(balance, duration(available, true));
-            if (nightGift > 0) {
+            if (giftRemaining > 0) {
                 availableDetail.setVisibility(View.VISIBLE);
                 CatUi.setText(availableDetail, "攒得 " + duration(ledger.engine.balanceMs, true)
-                    + " + 夜间赠送 " + duration(nightGift, true) + "（至 "
-                    + String.format(java.util.Locale.ROOT, "%02d:%02d", ledger.night.endMin() / 60,
-                        ledger.night.endMin() % 60) + "）");
+                    + " + " + ledger.giftLabel(nowMs, zone) + " " + duration(giftRemaining, true) + "（至 "
+                    + String.format(java.util.Locale.ROOT, "%02d:%02d", gift.endMin() / 60,
+                        gift.endMin() % 60) + "）");
             } else availableDetail.setVisibility(View.GONE);
             CatUi.setText(worked, "已工作 " + ledger.work.totalValidMs() / 60_000 + " 分钟");
             boolean hasTime = available > 0;
             Drawable cat = hasTime ? approvedCat : waitingCat;
             if (homeCat.getDrawable() != cat) homeCat.setImageDrawable(cat);
             CatUi.setText(speech, hasTime ? "准了，去玩吧！" : "假条呢？");
-            CatUi.setText(seal, nightGift > 0 ? "夜间赠送 · 可以用" : hasTime ? "猫总 · 准玩" : "猫总等你开工");
+            CatUi.setText(seal, giftRemaining > 0 ? ledger.giftLabel(nowMs, zone) + " · 可以用"
+                : hasTime ? "猫总 · 准玩" : "猫总等你开工");
             CatUi.setText(workButton, ledger.work.active() ? "▶  继续工作" : "▶  开始工作");
             entertainment.setEnabled(hasTime);
         }
         if (toggle != null) {
             renderProtectionCard(ProtectionUiState.from(ledger.enabled, usage, overlay, running,
-                service != null && service.healthy, restricted), usage, overlay, service);
-            int missing = (usage ? 0 : 1) + (overlay ? 0 : 1);
-            CatUi.setText(permissionSummary, missing == 0 ? "✓ 两项必需权限已授权" : "! 缺少 " + missing + " 项必需授权");
+                service != null && service.healthy, restricted), usage, overlay, pipReady, service);
+            int missing = (usage ? 0 : 1) + (overlay ? 0 : 1)
+                + (BuildConfig.TARGET_PIP_MUST_BE_DISABLED && !pipReady ? 1 : 0);
+            int required = BuildConfig.TARGET_PIP_MUST_BE_DISABLED ? 3 : 2;
+            CatUi.setText(permissionSummary, missing == 0 ? "✓ " + required + " 项必需设置已完成" : "! 缺少 " + missing + " 项必需设置");
             permissionSummary.setTextColor(missing == 0 ? GOOD : CatUi.RED);
             CatUi.setText(backgroundSummary, restricted ? "! 系统已限制后台运行" : "! 后台运行设置待核对");
         }
         if (usageState != null) {
             renderPermissionState(usageState, usage, "已授权", "未授权");
             renderPermissionState(overlayState, overlay, "已授权", "未授权");
+            if (pipState != null) {
+                renderPermissionState(pipState, pipReady, "已由你确认关闭", "尚未确认");
+                CatUi.setText(pipPermission, pipReady ? "重新核对系统设置  ›" : "打开 " + BuildConfig.TARGET_NAME + " 画中画设置  ›");
+                pipConfirmation.setVisibility(pipReady ? View.GONE : View.VISIBLE);
+            }
             renderPermissionState(notificationState, getSystemService(android.app.NotificationManager.class).areNotificationsEnabled(), "已允许", "未允许");
             notificationState.setTextColor(getSystemService(android.app.NotificationManager.class).areNotificationsEnabled() ? GOOD : CatUi.MUTED);
             CatUi.setText(backgroundState, restricted ? "已受限" : "待核对"); backgroundState.setTextColor(WARNING);
@@ -567,20 +614,28 @@ public final class MainActivity extends Activity {
             + "\n" + getString(R.string.app_version) + (ledger.note.isEmpty() ? "" : "\n" + ledger.note));
     }
 
-    private long nightGiftMs() {
-        return ledger.night.enabled() && ledger.night.active(System.currentTimeMillis(), java.time.ZoneId.systemDefault())
-            ? ledger.night.remainingMs() : 0;
+    private RelaxWindow activeGiftWindow() {
+        return ledger.giftWindow(System.currentTimeMillis(), java.time.ZoneId.systemDefault());
     }
 
-    private long availableEntertainmentMs() { return ledger.engine.balanceMs + nightGiftMs(); }
+    private long giftMs() {
+        RelaxWindow window = activeGiftWindow();
+        return window == null ? 0 : window.remainingMs();
+    }
+
+    private long availableEntertainmentMs() { return ledger.engine.balanceMs + giftMs(); }
 
     private void renderPermissionState(TextView view, boolean allowed, String yes, String no) {
         CatUi.setText(view, allowed ? "✓ " + yes : no); view.setTextColor(allowed ? GOOD : CatUi.RED);
     }
 
-    private void renderProtectionCard(ProtectionUiState state, boolean usage, boolean overlay, ProtectionService service) {
+    private void renderProtectionCard(ProtectionUiState state, boolean usage, boolean overlay, boolean pipReady, ProtectionService service) {
         String title, detail, action = ""; int color = CatUi.RED;
-        switch (state) {
+        if (state != ProtectionUiState.STOPPED && !pipReady) {
+            title = "保护前提未完成";
+            detail = "请先关闭 " + BuildConfig.TARGET_NAME + " 画中画并确认；保留画中画时，余额耗尽后仍可能继续播放。";
+            action = "完成画中画设置";
+        } else switch (state) {
             case STOPPED:
                 title = "保护已停止"; color = CatUi.MUTED;
                 detail = "当前不扣减娱乐时间，也不阻止" + BuildConfig.TARGET_NAME + "。已有余额保留。"; break;
@@ -602,6 +657,29 @@ public final class MainActivity extends Activity {
         CatUi.setText(status, title); status.setTextColor(color); CatUi.setText(protectionDetail, detail);
         repair.setVisibility(action.isEmpty() ? View.GONE : View.VISIBLE); CatUi.setText(repair, action);
         CatUi.setText(toggle, ledger.enabled ? "停止保护" : "开启保护"); styleSettingsAction(toggle, !ledger.enabled);
+    }
+
+    private boolean targetPipReady() {
+        return Permissions.targetPipReady(this);
+    }
+
+    private void openTargetPipSettings() {
+        if (!BuildConfig.TARGET_PIP_MUST_BE_DISABLED) return;
+        Permissions.setTargetPipConfirmed(this, false);
+        Intent direct = new Intent("android.settings.PICTURE_IN_PICTURE_SETTINGS",
+            Uri.parse("package:" + LedgerStore.TARGET));
+        try { startActivity(direct); }
+        catch (android.content.ActivityNotFoundException | SecurityException ex) {
+            openSettings(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + LedgerStore.TARGET)));
+        }
+    }
+
+    private void confirmTargetPipDisabled() {
+        Permissions.setTargetPipConfirmed(this, true);
+        ProtectionRecovery.sync(this, true);
+        Toast.makeText(this, "已记录你的确认；应用无法自动核验此系统开关", Toast.LENGTH_LONG).show();
+        render();
     }
     static String duration(long millis, boolean roundUp) {
         long seconds = Math.max(0, millis) / 1000;

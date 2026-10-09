@@ -10,6 +10,15 @@
 
 ## 已有记录与证据
 
+## 画中画核心能力复核（2026-09-16，未通过可行性判定）
+
+- 触发原因：WorkToWatch 的 Android 真机发现 YouTube 进入画中画后不再扣减额度；额度耗尽时虽出现阻止界面，画中画窗口仍可由用户重新播放。该问题使“实际观看等额扣减”和“归零后不能继续观看”两项核心要求都未获证明。
+- Apple 的 [`DeviceActivityEvent`](https://developer.apple.com/documentation/deviceactivity/deviceactivityevent) 将计量定义为所选 App 或网站处于前台屏幕的累计时间。官方资料没有说明第三方 YouTube 画中画是否仍计入；由于画中画常在另一 App 位于前台时继续显示，不能据此假定会等额扣减，必须用真机阈值实验核验。
+- [`ManagedSettings.ShieldSettings`](https://developer.apple.com/documentation/managedsettings/shieldsettings) 可以对用户选择的 App 设置系统 Shield，强于 Android 普通使用时长读取；但 Apple 官方资料同样没有保证它会关闭或暂停已存在的第三方画中画窗口，或阻止用户在该窗口再次点播放。因此不能把 Shield 当作第二项要求已经成立的证据。
+- 结论边界：iOS 目前只能列为“有更强系统限制候选、但画中画核心能力未证实”的路线，不能作为 WorkToWatch 已可行的替代平台，也不据此修改 SPEC、开始编码或对外承诺。
+- 若恢复本任务，首个 Spike 只验证这两项：① YouTube 前台 60 秒后进入画中画并在另一 App 前台停留 60 秒，阈值是否如实触发；② 阈值在画中画期间触发后，Shield 是否使画中画视频/音频停止且无法通过播放键恢复。任一项失败，即停止将 iOS 作为此核心承诺的产品路线。
+- 前置条件仍不变：需先实际启用 Mac mini、连接 iPhone、完成 Xcode 真机调试，并配置 Family Controls 能力；其分发权限还需 Apple 审核，见 [Requesting the Family Controls entitlement](https://developer.apple.com/documentation/familycontrols/requesting-the-family-controls-entitlement)。
+
 ## 暂停任务：iPhone 核心原型开发准备
 
 ## 本次接续：开发条件核查（2026-09-07）

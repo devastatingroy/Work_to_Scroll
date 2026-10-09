@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work to Watch 分镜脚本 · 油管版 v1</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#6b6b6b; --line:#d9d9d9; --line2:#ededed;
+    --green:#0a8f4f; --green-bg:#eafaf1; --warn:#b00020; --warn-bg:#fdecee;
+    --tip-bg:#f4f7fb; --tip-line:#c9d8ec; --paper:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    color:var(--ink); background:#f3f3f3; margin:0; line-height:1.6;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .page{max-width:1080px; margin:24px auto; background:var(--paper); padding:36px 40px 56px;
+        box-shadow:0 2px 16px rgba(0,0,0,.08); border-radius:10px}
+  h1{font-size:24px; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:13px; margin-bottom:20px}
+  h2{font-size:17px; margin:30px 0 10px; padding-bottom:6px; border-bottom:2px solid var(--ink)}
+  h3{font-size:14px; margin:18px 0 6px}
+  p{margin:6px 0}
+  .box{border-radius:8px; padding:14px 16px; margin:14px 0; font-size:13.5px}
+  .warn{background:var(--warn-bg); border:1px solid #f1b8c0}
+  .warn b{color:var(--warn)}
+  .tip{background:var(--tip-bg); border:1px solid var(--tip-line)}
+  ul,ol{margin:6px 0 6px 20px; padding:0}
+  li{margin:4px 0; font-size:13.5px}
+  table{width:100%; border-collapse:collapse; margin:10px 0 6px; font-size:12.5px; table-layout:fixed}
+  th,td{border:1px solid var(--line); padding:8px 9px; vertical-align:top; text-align:left; word-wrap:break-word}
+  th{background:#f0f0f0; font-size:12px}
+  tbody tr:nth-child(even){background:#fafafa}
+  .sh{font-weight:700; white-space:nowrap}
+  .t{color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums}
+  .screen{font-family:"Cascadia Code","Consolas",monospace; font-size:11.5px; background:#f6f6f6; display:block; padding:6px 8px; border-radius:4px; border:1px solid var(--line2); white-space:pre-wrap}
+  .cap{font-weight:700; color:#111}
+  .vo{color:#333}
+  .green{color:var(--green); font-weight:700}
+  .badge{display:inline-block; background:var(--green-bg); color:var(--green); border:1px solid #a7e3c4; border-radius:999px; padding:1px 9px; font-size:11.5px; font-weight:700}
+  .check li{list-style:none; position:relative; padding-left:24px; margin:6px 0}
+  .check li::before{content:"☐"; position:absolute; left:0; font-size:15px; color:var(--muted)}
+  .colw1{width:46px} .colw2{width:58px} .colw3{width:200px} .colw4{width:120px}
+  .colw5{width:220px} .colw6{width:150px}
+  .foot{margin-top:28px; color:var(--muted); font-size:12px; border-top:1px solid var(--line); padding-top:12px}
+  @media print{
+    body{background:#fff}
+    .page{box-shadow:none; margin:0; max-width:none; border-radius:0; padding:0}
+    h2{break-after:avoid} tr{break-inside:avoid}
+    .box{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Work to Watch —— 推广短片分镜脚本</h1>
+  <div class="sub">油管版 · 竖屏 9:16 · 约 30 秒 · 平台 TikTok / YouTube Shorts · v1（照此拍摄 / 交剪辑）</div>
+
+  <div class="box warn">
+    <b>⚠️ 开拍前必须先定的一件事：主角是"开发者"还是"纯普通用户"？</b><br>
+    开场旁白 <i>"我最烦的 app，是我自己写的"</i> 是<b>开发者口吻</b>，而你要主角是<b>普通人</b>——两者有张力。<br>
+    · <b>推荐（本稿默认）：</b>保留"我自己写的"这个灵魂（<i>为治自己的瘾、亲手做了个工具</i>，最真实最打动人），但把<b>造型和场景改普通</b>——普通家居、普通穿着、普通电脑，去掉"满墙书 / 高领毛衣 / 苹果电脑 C 位"的精英感。开发者也是普通人。<br>
+    · <b>备选（若要纯非开发者用户）：</b>换开场旁白为 →「<i>治好我 YouTube 上瘾的，居然是另一个 app。</i>」其余不变。
+  </div>
+
+  <div class="box tip">
+    <b>通用拍摄须知（每条都影响成片是否"露馅"）</b>
+    <ul>
+      <li><b>实拍/录屏优先：</b>屏幕内容、产品 UI、所有文字和数字——<b>一律真实录屏</b>（真开邮箱/文档打字、真截产品界面）。人物情绪<b>实拍</b>。AI 只允许用于氛围空镜，且必须去水印、挑无穿帮帧。<b>别再让 AI 碰任何一个字。</b></li>
+      <li><b>名称统一：</b>全片只出现<b>一个</b>产品名（确认用 <b>Work to Watch</b>），不要和仓库名 WorkToScroll 混用。</li>
+      <li><b>字幕规范：</b>下表加粗的"字幕"必须上<b>大字幕</b>——居中偏下、粗体、描边或底色，保证<b>静音</b>也能读（平台约一半人首刷静音）。</li>
+      <li><b>水印 / 合规：</b>海外 TikTok/YouTube 可直接去水印；<b>国内</b>平台（抖音/小红书/视频号）AI 内容需标注，用平台<b>自带的 AI 声明开关</b>，别硬抠水印。</li>
+      <li><b>设备一致：</b>这是安卓产品，别让苹果电脑当 C 位；手机用安卓机出镜。</li>
+    </ul>
+  </div>
+
+  <h2>一、分镜表</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="colw1">镜号</th>
+        <th class="colw2">时间</th>
+        <th class="colw3">画面 / 动作</th>
+        <th class="colw4">景别 · 机位</th>
+        <th class="colw5">屏幕真实内容（录屏，照打）</th>
+        <th class="colw6">字幕（大字）</th>
+        <th>旁白（中文）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sh">S1</td><td class="t">0–3s<br>钩子</td>
+        <td>他瘫在椅子上刷手机（YouTube 竖屏飞速上划）；桌上电脑亮着一封<b>卡住的半封工作邮件</b>，光标不动。<b>手机在动、电脑死寂</b>——用"对切"（两画面交替）强化反差。</td>
+        <td>中景，略俯，固定机位</td>
+        <td><span class="screen">【电脑·Gmail草稿】
+主题: Re: 季度总结 — 今天下班前
+收件人: David（老板）
+正文: Hi David，关于季度总结，我▏
+底栏: 字数 0 · 上次编辑 3 小时前
+
+【手机】YouTube Shorts 快速上划</span></td>
+        <td class="cap">我最烦的 app，是我自己写的。</td>
+        <td class="vo">我最烦的 app，是我自己写的。</td>
+      </tr>
+      <tr>
+        <td class="sh">S2</td><td class="t">3–6s<br>掐断 ★</td>
+        <td>他正看得入神 →手机画面<b>"啪"地硬切</b>成阻止页（不是淡出，要突兀）→切到他的脸，一个"又来了"的皱眉烦躁（0.5 秒）。<b>这是全片最核心的一下：演出"被拦住"。</b></td>
+        <td>手机屏特写 →脸部近景</td>
+        <td><span class="screen">【产品·真实阻止页】
+00:00
+Work first. Watch later.
+（YouTube 已暂停）</span></td>
+        <td class="cap">想看？先把活干了。</td>
+        <td class="vo">想看？先把活干了。</td>
+      </tr>
+      <tr>
+        <td class="sh">S3</td><td class="t">6–9s<br>开工 + 摄像头</td>
+        <td>他叹气、坐正、开始打字；顺手把手机往支架上<b>一放（一笔带过，不给盯脸特写）</b>。手机屏角亮出标签。重点落在"他动起来了"，不是"他被监控"。</td>
+        <td>中景，带手机被放下的动作；<b>禁止手机盯脸特写</b></td>
+        <td><span class="screen">【手机屏·小标签】
+在场检测中…
+📵 全程本地运行 · 不上传云端
+【工作页】计时器开始走</span></td>
+        <td class="cap">它只看我在不在，判断全在手机本地，不上传云端。</td>
+        <td class="vo">它只看我在不在，不管我干啥——判断全程在本地，不传云端。</td>
+      </tr>
+      <tr>
+        <td class="sh">S4</td><td class="t">9–14s<br>有进展</td>
+        <td>邮件正文<b>真的多出字来</b>（录屏加速/延时），计时器往上走；穿插他专注的侧脸。与 S1 的"死寂"形成呼应——这次真动了。</td>
+        <td>屏幕录屏为主，插专注侧脸</td>
+        <td><span class="screen">【电脑】邮件正文由一句 →写成两三段（真实录屏）
+【计时】12:00 → 18:00 → 20:00</span></td>
+        <td>（可选小字：工作中…）</td>
+        <td class="vo">（旁白留白，走环境音/配乐）</td>
+      </tr>
+      <tr>
+        <td class="sh">S5</td><td class="t">14–17s<br>到账</td>
+        <td>计时满 20:00 →产品界面弹出"到账"，绿色打勾。他嘴角动一下。</td>
+        <td>产品 UI 真实截图（满屏）</td>
+        <td><span class="screen">【产品·真实界面】
+Watch Time  +05:20  ✓
+先工作，再观看</span></td>
+        <td>干够 20 分钟，换 5 分钟。</td>
+        <td class="vo">干够 20 分钟，换 5 分钟。</td>
+      </tr>
+      <tr>
+        <td class="sh">S6</td><td class="t">17–24s<br>奖励+收尾 ★</td>
+        <td>他拿起手机，这次<b>心安理得</b>地靠回椅子看，<b>笑了</b>。放松、满足。这是"诚实"调性的落点。</td>
+        <td>中景，放松姿态</td>
+        <td><span class="screen">【手机】正常看 YouTube
+顶部小字：余额 05:20 倒数中</span></td>
+        <td class="cap">我还是照样看……不过这回，活也干了点。</td>
+        <td class="vo">我还是照样看……不过这回，活也干了点。</td>
+      </tr>
+      <tr>
+        <td class="sh">S7</td><td class="t">24–30s<br>END CARD</td>
+        <td>定格卡。干净、居中、可打印级清晰。</td>
+        <td>版式卡（非实拍）</td>
+        <td><span class="screen">主: Work to Watch（LOGO）
+Slogan: Work first. Watch later.
+副: Earn your entertainment. / 赚取你的娱乐时间
+CTA: Android · Beta 开放中 →（二维码 / @账号）
+角标: 全程本地运行，不上传云端</span></td>
+        <td>（同屏文字）</td>
+        <td class="vo">（收尾静默 + 配乐，或重复 slogan）</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px;color:var(--muted)">★ = 本片成败的两个关键镜头：S2「被掐断」撑起产品独特性，S6「诚实收尾」撑起调性。时间点为建议值，可按节奏微调，总长卡在 30s。</p>
+
+  <h2>二、要提前做好的"真实屏幕"素材清单（录屏）</h2>
+  <ol>
+    <li>卡住的半封工作邮件（Gmail 草稿，含"上次编辑 3 小时前"）—— S1</li>
+    <li>YouTube Shorts 快速上划的 feed —— S1</li>
+    <li>产品<b>阻止页</b> <span class="screen" style="display:inline;padding:1px 6px">00:00 / Work first. Watch later.</span> —— S2</li>
+    <li>工作页<b>"在场检测中 + 本地运行"标签</b> + 计时器走动 —— S3</li>
+    <li>邮件<b>从一句写到几段</b>的进度录屏（可加速）—— S4</li>
+    <li>产品<b>到账</b>界面 <span class="screen" style="display:inline;padding:1px 6px">Watch Time +05:20 ✓</span> —— S5</li>
+    <li>正常看 YouTube + <b>顶部余额倒数</b> —— S6</li>
+  </ol>
+  <p style="font-size:12.5px">录制方式：真开对应 app 打字/操作，手机投屏录（QuickTime/Scrcpy）或 OBS/手机自带录屏。零成本、完全可控。</p>
+
+  <h2>三、静音必读的四句字幕（务必上大字）</h2>
+  <ol>
+    <li><b>我最烦的 app，是我自己写的。</b></li>
+    <li><b>想看？先把活干了。</b></li>
+    <li><b>它只看我在不在，判断全在手机本地，不上传云端。</b></li>
+    <li><b>我还是照样看……不过这回，活也干了点。</b></li>
+  </ol>
+
+  <h2>四、交片前验收清单</h2>
+  <ul class="check">
+    <li>逐帧暂停：屏幕上<b>没有任何错字 / 乱码 / AI 水印</b>。</li>
+    <li>找个没看过产品的人看一遍，能复述出"<b>没额度 → YouTube 被拦 → 去干活 → 换回时间</b>"这个闭环。</li>
+    <li>看完<b>没有</b>"这玩意在监控我"的不适感；记得住"<b>本地运行、不上云</b>"。</li>
+    <li><b>关掉声音</b>从头看一遍，仍能看懂。</li>
+    <li>全片只出现<b>一个</b>产品名。</li>
+    <li>结尾三件套齐全：<b>产品名 + Slogan + CTA/获取方式</b>。</li>
+  </ul>
+
+  <div class="foot">
+    Work to Watch · 油管版推广短片分镜 v1 · 供拍摄与剪辑使用 ·
+    定位主张：<b>Work first. Watch later. — 不是禁止娱乐，而是赚取娱乐。</b>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WorkToWatch · 工作监控页设计提案</title>
+  <style>
+    :root { font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; color: #19212a; background: #edf0ee; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .review { width: min(1240px, 100%); margin: auto; padding: 30px 24px 56px; display: grid; grid-template-columns: minmax(300px, 540px) minmax(270px, 1fr); gap: 38px; align-items: start; }
+    .canvas-wrap { width: 100%; aspect-ratio: 9 / 16; position: relative; overflow: hidden; border-radius: 24px; box-shadow: 0 25px 80px #19212a27; background: #e5e2db; }
+    #stage { position: absolute; width: 1080px; height: 1920px; overflow: hidden; transform-origin: top left; background: radial-gradient(circle at 45% 42%, #f6f4ef, #e7e3dc 72%); }
+    .phone { position: absolute; left: 84px; top: 55px; width: 912px; height: 1810px; border: 9px solid #101317; border-radius: 116px; padding: 13px; background: #070a0d; box-shadow: 0 27px 45px #10131740, inset 0 0 0 3px #656b70; }
+    .screen { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 88px; background: #11191e; color: #f5f6f2; }
+    .camera-hole { position: absolute; z-index: 9; left: 50%; top: 29px; width: 33px; height: 33px; transform: translateX(-50%); border: 8px solid #090d10; border-radius: 50%; background: #16304a; box-shadow: 0 0 0 2px #343b42; }
+    .system-bar { position: absolute; z-index: 8; top: 32px; left: 60px; right: 58px; height: 45px; display: flex; align-items: center; justify-content: space-between; font: 700 28px Arial, sans-serif; }
+    .sys-icons { display: flex; gap: 9px; align-items: center; }
+    .sys-icons svg { display: block; }
+    .brand-row { position: absolute; z-index: 3; left: 62px; right: 62px; top: 138px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { font: 800 45px/1.1 Arial, sans-serif; letter-spacing: -1.3px; }
+    .help { border: 1px solid #ffffff6b; color: #fff; border-radius: 30px; padding: 11px 25px; font-size: 26px; background: #12202680; backdrop-filter: blur(8px); }
+    .camera-view { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #2b3030; }
+    /* The supplied photo area fills the phone; all interface content floats over it. Mockup media only. */
+    .camera-view::before { content: ""; position: absolute; inset: 0; background: url("worktowatch-tiktok-monitoring-14-59-draft-v2.png") 57.5% 28.4% / 331% auto no-repeat; }
+    .camera-view::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #071019ae 0%, #07101912 24%, #07101900 47%, #07101961 69%, #071019b9 100%); }
+    .camera-live { position: absolute; z-index: 1; left: 48px; top: 190px; display: flex; align-items: center; gap: 12px; padding: 13px 22px; border-radius: 30px; background: #10191d7a; border: 1px solid #ffffff40; backdrop-filter: blur(8px); font-size: 24px; font-weight: 700; }
+    .live-dot { width: 13px; height: 13px; border-radius: 50%; background: #ffc35c; box-shadow: 0 0 0 7px #ffc35c31; }
+    .presence { position: absolute; z-index: 1; left: 58px; right: 58px; top: 1030px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+    .presence-title { display: flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 800; text-shadow: 0 2px 8px #0008; }
+    .presence-check { display: grid; place-items: center; width: 37px; height: 37px; border-radius: 50%; color: #131b1b; background: #ffc35c; font: 900 27px Arial, sans-serif; text-shadow: none; }
+    .presence-sub { color: #e7e9e6; font-size: 22px; text-shadow: 0 2px 8px #0008; }
+    .monitor-panel { position: absolute; z-index: 2; left: 54px; right: 54px; top: 1140px; height: 315px; border-radius: 45px; background: #0b171b70; color: #fff; padding: 33px 38px; border: 1px solid #ffffff44; backdrop-filter: blur(10px); box-shadow: 0 16px 36px #0003; }
+    .panel-top { display: flex; justify-content: space-between; align-items: center; }
+    .section-label { color: #e5e9e7; font-size: 30px; font-weight: 700; }
+    .counting { display: flex; align-items: center; gap: 11px; color: #ffd480; font-size: 25px; font-weight: 800; }
+    .counting::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #e7a735; }
+    .time-row { display: flex; align-items: baseline; gap: 20px; margin-top: 0; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .time-now { font-size: 140px; line-height: 1.14; letter-spacing: -7px; font-weight: 800; color: #ffffffdf; }
+    .time-goal { color: #ffffffbf; font-size: 47px; font-weight: 700; letter-spacing: -2px; }
+    .bar { height: 17px; margin-top: 8px; border-radius: 12px; background: #ffffff48; overflow: hidden; }
+    .bar-fill { width: 56%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f5a92f, #ffce6b); }
+    .milestone { display: flex; justify-content: space-between; align-items: baseline; margin-top: 16px; font-size: 24px; color: #e5e9e7; }
+    .milestone strong { color: #ffd68c; font-weight: 800; }
+    .milestone .watch { color: #fff; font-weight: 800; }
+    .actions { position: absolute; z-index: 2; left: 54px; right: 54px; top: 1550px; display: flex; gap: 22px; }
+    .action { height: 105px; border-radius: 34px; display: grid; place-items: center; font-size: 32px; font-weight: 800; }
+    .action.pause { flex: 1.35; color: #101a1d; background: #ffc35ca8; border: 1px solid #ffe1a4ab; backdrop-filter: blur(12px); }
+    .action.end { flex: 1; color: #fff; background: #13222674; border: 2px solid #ffffff70; backdrop-filter: blur(12px); }
+    .privacy { position: absolute; z-index: 2; left: 0; right: 0; top: 1690px; text-align: center; color: #dbe3e3; font-size: 23px; }
+    .home-bar { position: absolute; z-index: 2; left: 50%; bottom: 17px; transform: translateX(-50%); width: 285px; height: 11px; border-radius: 10px; background: #dce2df; }
+    .notes { max-width: 560px; padding-top: 14px; }
+    .eyebrow { margin: 0 0 15px; color: #a96f16; font-size: 14px; font-weight: 900; letter-spacing: .13em; }
+    h1 { margin: 0; font-size: clamp(27px, 3vw, 42px); line-height: 1.18; letter-spacing: -.04em; }
+    .lead { margin: 22px 0 34px; font-size: 17px; line-height: 1.75; color: #4b5559; }
+    h2 { margin: 31px 0 13px; font-size: 21px; }
+    ul { margin: 0; padding-left: 1.3em; color: #465158; line-height: 1.75; }
+    li + li { margin-top: 7px; }
+    .decision { padding: 20px 22px; background: #fff; border-left: 5px solid #edb451; border-radius: 12px; line-height: 1.7; color: #38434a; }
+    .decision strong { color: #162128; }
+    .review-link { display: inline-block; margin-top: 22px; color: #815a17; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+    .disclaimer { margin-top: 30px; font-size: 13px; line-height: 1.65; color: #738087; }
+    body.frame { overflow: hidden; background: #e7e3dc; }
+    body.frame .review { display: block; width: 1080px; margin: 0; padding: 0; }
+    body.frame .canvas-wrap { width: 1080px; height: 1920px; border-radius: 0; box-shadow: none; }
+    body.frame .notes { display: none; }
+    @media (max-width: 830px) { .review { grid-template-columns: 1fr; justify-items: center; padding: 15px 12px 40px; } .notes { width: 100%; padding: 0 8px; } }
+  </style>
+</head>
+<body>
+  <main class="review">
+    <div class="canvas-wrap" id="canvasWrap">
+      <div id="stage" aria-label="WorkToWatch 工作监控页视觉设计稿">
+        <div class="phone"><div class="screen">
+          <div class="system-bar"><span>9:41</span><span class="sys-icons"><svg width="30" height="25" viewBox="0 0 30 25" aria-hidden="true"><path fill="white" d="M0 21h5v4H0zm8-6h5v10H8zm8-6h5v16h-5zm8-8h5v24h-5z"/></svg><svg width="31" height="26" viewBox="0 0 31 26" aria-hidden="true"><path d="M2 8Q15-3 29 8L16 23z" fill="white"/></svg><svg width="37" height="23" viewBox="0 0 37 23" aria-hidden="true"><rect x="1" y="1" width="32" height="21" rx="4" fill="none" stroke="white" stroke-width="2"/><rect x="4" y="4" width="26" height="15" rx="2" fill="white"/><rect x="35" y="7" width="2" height="9" rx="1" fill="white"/></svg></span></div>
+          <span class="camera-hole" aria-hidden="true"></span>
+          <div class="brand-row"><div class="brand">WorkToWatch</div><div class="help">说明</div></div>
+          <div class="camera-view" role="img" aria-label="参考图中的人物及暖色工作环境，仅作设计示意">
+            <div class="camera-live"><span class="live-dot"></span>监控中</div>
+            <div class="presence"><div class="presence-title"><span class="presence-check">✓</span>在场已确认</div><div class="presence-sub">本机画面</div></div>
+          </div>
+          <div class="monitor-panel">
+            <div class="panel-top"><span class="section-label">本轮有效工作</span><span class="counting">正在计时</span></div>
+            <div class="time-row"><span class="time-now" id="timeNow">08:24</span><span class="time-goal">/ 15:00</span></div>
+            <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+            <div class="milestone"><span>本轮目标</span><span><strong>15 分钟工作</strong>　<span class="watch">→ 5 分钟 Watch Time</span></span></div>
+          </div>
+          <div class="actions"><div class="action pause">暂停</div><div class="action end">结束工作</div></div>
+          <div class="privacy">摄像头画面仅在本机处理，不保存</div>
+          <div class="home-bar"></div>
+        </div></div>
+      </div>
+    </div>
+    <section class="notes">
+      <p class="eyebrow">工作监控页 · 视觉提案 03</p>
+      <h1>整屏都是人物，信息像玻璃一样浮在画面上。</h1>
+      <p class="lead">人物画面铺满手机屏幕，计时、状态和按钮都用半透明浮层呈现。示例数字仅用于展示排版，拍摄时可换成对应进度。</p>
+      <h2>画面安排</h2>
+      <ul>
+        <li>人物与室内环境成为全屏背景；上下只加渐暗层，保证文字可读。</li>
+        <li>“在场已确认”和“正在计时”分开：前者说明检测状态，后者说明时间确实在累计。</li>
+        <li>计时、目标和兑换规则叠在暗色玻璃卡片上；暂停与结束工作也采用半透明底色。</li>
+      </ul>
+      <h2>与现有页面如何共存</h2>
+      <div class="decision"><strong>建议先把它作为视频专用 HTML 画面。</strong>审稿和剪辑直接使用此文件，不加进正式 App 设置。若之后必须在真机上拍摄可操作的画面，再在独立 worktree 的拍摄分支做演示构建；是否采用为上市界面，等视频验证和产品体验评估后单独决定。</div>
+      <a class="review-link" href="worktowatch-tiktok-monitoring-14-59-draft-v2.png" target="_blank" rel="noopener">打开所参考的 v2 静帧</a>
+      <p class="disclaimer">设计稿放大了参考静帧中的人物区域，因原图不是竖版纯照片，边缘环境会被裁切；不接入摄像头或实际计时，也不代表当前 Android 页面已改变。地址末尾加 <code>?frame=1</code> 可只显示 1080×1920 竖屏画面；加 <code>?time=14:59</code> 可调整示意计时。</p>
+    </section>
+  </main>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const frame = params.has('frame');
+    if (frame) document.body.classList.add('frame');
+    const candidate = params.get('time');
+    const matched = candidate && /^(\d{1,2}):(\d{2})$/.exec(candidate);
+    if (matched && Number(matched[2]) < 60) {
+      const seconds = Number(matched[1]) * 60 + Number(matched[2]);
+      document.getElementById('timeNow').textContent = `${matched[1].padStart(2, '0')}:${matched[2]}`;
+      document.getElementById('barFill').style.width = `${Math.min(100, seconds / 900 * 100)}%`;
+    }
+    function fit() {
+      document.getElementById('stage').style.transform = `scale(${frame ? 1 : document.getElementById('canvasWrap').clientWidth / 1080})`;
+    }
+    window.addEventListener('resize', fit);
+    fit();
+  </script>
+</body>
+</html>
